@@ -136,7 +136,8 @@ if(Slicer_USE_PYTHONQT)
   if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(pythonpath_subdir "Lib")
   endif()
-  set(SLICER_PYTHONHOME ${Slicer_SUPERBUILD_DIR}/python-build)
+  #set(SLICER_PYTHONHOME ${Slicer_SUPERBUILD_DIR}/python-build)
+  set(SLICER_PYTHONHOME "D:/downloads/slicer/Python27+numpy+itcl/Python27")
   get_filename_component(SLICER_PYTHON_LIB_DIR ${PYTHON_LIBRARY} PATH)
   list(APPEND SLICER_LIBRARY_PATHS_BUILD
     ${CTK_DIR}/PythonQt-build/<CMAKE_CFG_INTDIR>
@@ -219,12 +220,16 @@ endif()
 
 if(Slicer_USE_PYTHONQT_WITH_TCL)
   # Search locations for TCL packages - space separated list
-  set(TCLLIBPATH "${Slicer_TCL_DIR}/lib/itcl${INCR_TCL_VERSION_DOT}")
-  set(TCLLIBPATH "${TCLLIBPATH} ${Slicer_TCL_DIR}/lib/itk${INCR_TCL_VERSION_DOT}")
+  #set(TCLLIBPATH "${Slicer_TCL_DIR}/lib/itcl${INCR_TCL_VERSION_DOT}")
+  #set(TCLLIBPATH "${TCLLIBPATH} ${Slicer_TCL_DIR}/lib/itk${INCR_TCL_VERSION_DOT}")
+  set(TCLLIBPATH "${SLICER_PYTHONHOME}/tcl/itcl${INCR_TCL_VERSION_DOT}")
+  set(TCLLIBPATH "${TCLLIBPATH} ${SLICER_PYTHONHOME}/tcl/itk${INCR_TCL_VERSION_DOT}")
 
   list(APPEND SLICER_ENVVARS_BUILD
-    "TCL_LIBRARY=${Slicer_TCL_DIR}/lib/tcl${TCL_TK_VERSION_DOT}"
-    "TK_LIBRARY=${Slicer_TCL_DIR}/lib/tk${TCL_TK_VERSION_DOT}"
+    #"TCL_LIBRARY=${Slicer_TCL_DIR}/lib/tcl${TCL_TK_VERSION_DOT}"
+    #"TK_LIBRARY=${Slicer_TCL_DIR}/lib/tk${TCL_TK_VERSION_DOT}"
+    "TCL_LIBRARY=${SLICER_PYTHONHOME}/tcl/tcl${TCL_TK_VERSION_DOT}"
+    "TK_LIBRARY=${SLICER_PYTHONHOME}/tcl/tk${TCL_TK_VERSION_DOT}"
     "TCLLIBPATH=${TCLLIBPATH}"
     )
 endif()
@@ -351,12 +356,16 @@ endif()
 
 if(Slicer_USE_PYTHONQT_WITH_TCL)
   # Search locations for TCL packages - space separated list
-  set(TCLLIBPATH "<APPLAUNCHER_DIR>/lib/TclTk/lib/itcl${INCR_TCL_VERSION_DOT}")
-  set(TCLLIBPATH "${TCLLIBPATH} <APPLAUNCHER_DIR>/lib/TclTk/lib/itk${INCR_TCL_VERSION_DOT}")
+  #set(TCLLIBPATH "<APPLAUNCHER_DIR>/lib/TclTk/lib/itcl${INCR_TCL_VERSION_DOT}")
+  #set(TCLLIBPATH "${TCLLIBPATH} <APPLAUNCHER_DIR>/lib/TclTk/lib/itk${INCR_TCL_VERSION_DOT}")
+  set(TCLLIBPATH "${SLICER_PYTHONHOME}/tcl/itcl${INCR_TCL_VERSION_DOT}")
+  set(TCLLIBPATH "${TCLLIBPATH} ${SLICER_PYTHONHOME}/tcl/itk${INCR_TCL_VERSION_DOT}")
 
   list(APPEND SLICER_ENVVARS_INSTALLED
-    "TCL_LIBRARY=<APPLAUNCHER_DIR>/lib/TclTk/lib/tcl${TCL_TK_VERSION_DOT}"
-    "TK_LIBRARY=<APPLAUNCHER_DIR>/lib/TclTk/lib/tk${TCL_TK_VERSION_DOT}"
+    #"TCL_LIBRARY=<APPLAUNCHER_DIR>/lib/TclTk/lib/tcl${TCL_TK_VERSION_DOT}"
+    #"TK_LIBRARY=<APPLAUNCHER_DIR>/lib/TclTk/lib/tk${TCL_TK_VERSION_DOT}"
+    "TCL_LIBRARY=${SLICER_PYTHONHOME}/tcl/tcl${TCL_TK_VERSION_DOT}"
+    "TK_LIBRARY=${SLICER_PYTHONHOME}/tcl/tk${TCL_TK_VERSION_DOT}"
     "TCLLIBPATH=${TCLLIBPATH}"
     )
 endif()

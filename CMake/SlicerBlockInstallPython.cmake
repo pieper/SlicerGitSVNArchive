@@ -4,7 +4,8 @@
 if(Slicer_USE_PYTHONQT)
 
   get_filename_component(SUPER_BUILD_DIR "${Slicer_BINARY_DIR}" PATH)
-  set(PYTHON_DIR "${SUPER_BUILD_DIR}/python-build")
+  #set(PYTHON_DIR "${SUPER_BUILD_DIR}/python-build")
+  set( PYTHON_DIR "D:/downloads/slicer/Python27+numpy+itcl/Python27")
   set(python_lib_subdir /Lib/)
   if(UNIX)
     set(python_lib_subdir /lib/python2.6/)

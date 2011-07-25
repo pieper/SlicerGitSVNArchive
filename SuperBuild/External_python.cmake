@@ -51,12 +51,22 @@ else()
   set(External_python_unix_PROJECT_INCLUDED 0)
 endif()
 
-#message(STATUS "MSVC_VERSION:${MSVC_VERSION}")
-#message(STATUS "python_URL:${python_URL}")
-#message(STATUS "CMAKE_GENERATOR:${CMAKE_GENERATOR}")
+message(STATUS "MSVC_VERSION:${MSVC_VERSION}")
+message(STATUS "python_URL:${python_URL}")
+message(STATUS "CMAKE_GENERATOR:${CMAKE_GENERATOR}")
 
-#message(STATUS "slicer_PYTHON_INCLUDE:${slicer_PYTHON_INCLUDE}")
-#message(STATUS "slicer_PYTHON_LIBRARY:${slicer_PYTHON_LIBRARY}")
-#message(STATUS "slicer_PYTHON_EXECUTABLE:${slicer_PYTHON_EXECUTABLE}")
+message(STATUS "slicer_PYTHON_INCLUDE:${slicer_PYTHON_INCLUDE}")
+message(STATUS "slicer_PYTHON_LIBRARY:${slicer_PYTHON_LIBRARY}")
+message(STATUS "slicer_PYTHON_EXECUTABLE:${slicer_PYTHON_EXECUTABLE}")
+
+if(Slicer_USE_SYSTEM_PYTHON)
+  set( slicer_PYTHON_INCLUDE "D:/downloads/slicer/Python27+numpy+itcl/Python27/include")
+  set( slicer_PYTHON_LIBRARY "D:/downloads/slicer/Python27+numpy+itcl/Python27/libs/python27.lib")
+  set( slicer_PYTHON_EXECUTABLE "D:/downloads/slicer/Python27+numpy+itcl/Python27/python.exe")
+endif(Slicer_USE_SYSTEM_PYTHON)
+
+message(STATUS "slicer_PYTHON_INCLUDE:${slicer_PYTHON_INCLUDE}")
+message(STATUS "slicer_PYTHON_LIBRARY:${slicer_PYTHON_LIBRARY}")
+message(STATUS "slicer_PYTHON_EXECUTABLE:${slicer_PYTHON_EXECUTABLE}")
 
 

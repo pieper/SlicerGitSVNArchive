@@ -173,6 +173,7 @@ mark_as_advanced(Slicer_FORCED_WC_REVISION)
 #-----------------------------------------------------------------------------
 # External projects related options
 #-----------------------------------------------------------------------------
+option(Slicer_USE_SYSTEM_PYTHON    "Specify the python executable and libraries to use." ON)
 option(Slicer_USE_PYTHONQT    "Integrate a python-QT interpreter into Slicer." ON)
 CMAKE_DEPENDENT_OPTION(
   Slicer_USE_PYTHONQT_WITH_TCL "Enable PythonQt Tcl adapter layer" ON
