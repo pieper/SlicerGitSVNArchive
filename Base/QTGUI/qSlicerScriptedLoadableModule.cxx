@@ -140,7 +140,8 @@ bool qSlicerScriptedLoadableModule::setPythonSource(const QString& newPythonSour
 
   // Open the file
 #ifdef _WIN32
-  FILE* pyfile = PyRun_OpenFile(newPythonSource.toLatin1());
+  //FILE* pyfile = PyRun_OpenFile(newPythonSource.toLatin1());
+  FILE* pyfile = fopen(newPythonSource.toLatin1(), "r");
 #else
   FILE* pyfile = fopen(newPythonSource.toLatin1(), "r");
 #endif
@@ -165,12 +166,14 @@ bool qSlicerScriptedLoadableModule::setPythonSource(const QString& newPythonSour
   if (!classToInstantiate)
     {
     PyDict_SetItemString(global_dict, "__name__", PyString_FromString(className.toLatin1()));
-    PyRun_File(pyfile, newPythonSource.toLatin1(), Py_file_input, global_dict, global_dict);
+	PyRun_SimpleString(QString("execfile('%1')").arg(newPythonSource).toLatin1());
+    //PyRun_File(pyfile, newPythonSource.toLatin1(), Py_file_input, global_dict, global_dict);
     classToInstantiate = PyDict_GetItemString(global_dict, className.toLatin1());
     PyDict_SetItemString(global_dict, "__name__", PyString_FromString("__main__"));
     }
 #ifdef _WIN32
-  PyRun_CloseFile(pyfile);
+  //PyRun_CloseFile(pyfile);
+  fclose(pyfile);
 #else
   fclose(pyfile);
 #endif
