@@ -13,7 +13,7 @@ endif()
 
 # Set dependency list
 set(CTK_DEPENDENCIES VTK ${ITK_EXTERNAL_NAME})
-if(Slicer_USE_PYTHONQT)
+if(Slicer_USE_PYTHONQT AND NOT Slicer_USE_SYSTEM_PYTHON)
   list(APPEND CTK_DEPENDENCIES python)
 endif()
 
@@ -35,10 +35,14 @@ if(NOT DEFINED CTK_DIR)
 
   set(optional_ep_args)
   if(Slicer_USE_PYTHONQT)
+    if(NOT Slicer_USE_SYSTEM_PYTHON)
+      list(APPEND optional_ep_args
+        -DPYTHON_LIBRARY:FILEPATH=${slicer_PYTHON_LIBRARY}
+        -DPYTHON_INCLUDE_DIR:PATH=${slicer_PYTHON_INCLUDE}
+        -DPYTHON_EXECUTABLE:FILEPATH=${slicer_PYTHON_EXECUTABLE}
+        )
+    endif()
     list(APPEND optional_ep_args
-      -DPYTHON_LIBRARY:FILEPATH=${slicer_PYTHON_LIBRARY}
-      -DPYTHON_INCLUDE_DIR:PATH=${slicer_PYTHON_INCLUDE}
-      -DPYTHON_EXECUTABLE:FILEPATH=${slicer_PYTHON_EXECUTABLE}
       -DCTK_LIB_Scripting/Python/Core:BOOL=${Slicer_USE_PYTHONQT}
       -DCTK_LIB_Scripting/Python/Core_PYTHONQT_USE_VTK:BOOL=${Slicer_USE_PYTHONQT}
       -DCTK_LIB_Scripting/Python/Core_PYTHONQT_WRAP_QTCORE:BOOL=${Slicer_USE_PYTHONQT}

@@ -409,6 +409,7 @@ void qSlicerCoreApplicationPrivate::discoverRepository()
 void qSlicerCoreApplicationPrivate::setPythonEnvironmentVariables()
 {
 #ifdef Slicer_USE_PYTHONQT
+#ifndef Slicer_USE_SYSTEM_PYTHON
   Q_Q(qSlicerCoreApplication);
   // Set PYTHONHOME if not already done
   if (this->Environment.value("PYTHONHOME").isEmpty())
@@ -430,6 +431,7 @@ void qSlicerCoreApplicationPrivate::setPythonEnvironmentVariables()
     this->setEnvironmentVariable(
           "PYTHONPATH", qSlicerCorePythonManager().pythonPaths().join(":"));
     }
+#endif
 #endif
 }
 

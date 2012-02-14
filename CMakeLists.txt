@@ -154,12 +154,20 @@ if(WIN32)
   option(Slicer_BUILD_WIN32_CONSOLE "Build SlicerQt executable as a console app on windows (allows debug output)" ON)
 endif()
 option(Slicer_USE_VTK_DEBUG_LEAKS "Enable VTKs Debug Leaks functionality in both VTK and Slicer." ON)
+
 option(Slicer_BUILD_QTLOADABLEMODULES "Build Slicer QT Loadable Modules" ON)
 mark_as_advanced(Slicer_BUILD_QTLOADABLEMODULES)
 CMAKE_DEPENDENT_OPTION(
   Slicer_BUILD_QTSCRIPTEDMODULES "Build Slicer Python QT Modules" ON
   "Slicer_USE_PYTHONQT" OFF)
 mark_as_advanced(Slicer_BUILD_QTSCRIPTEDMODULES)
+
+option(Slicer_USE_SYSTEM_PYTHON "Use system python not slicer's own build" OFF)
+mark_as_advanced(Slicer_USE_SYSTEM_PYTHON)
+#CMAKE_DEPENDENT_OPTION(
+#Slicer_USE_SYSTEM_PYTHON "Use system python not slicer's own build" OFF
+#"Slicer_USE_PYTHONQT" OFF)
+
 option(Slicer_BUILD_CLI_SUPPORT "Build Slicer with CLI support" ON)
 CMAKE_DEPENDENT_OPTION(
   Slicer_BUILD_CLI "Build Slicer CLI Plugins" ON

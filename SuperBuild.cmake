@@ -103,18 +103,22 @@ if (Slicer_USE_CTKAPPLAUNCHER)
   list(APPEND Slicer_DEPENDENCIES CTKAPPLAUNCHER)
 endif()
 if(Slicer_USE_PYTHONQT)
-  list(APPEND Slicer_DEPENDENCIES python)
-  if(Slicer_USE_NUMPY)
-    list(APPEND Slicer_DEPENDENCIES NUMPY)
-    if(Slicer_USE_WEAVE)
-      list(APPEND Slicer_DEPENDENCIES weave)
+  if(Slicer_USE_SYSTEM_PYTHON)
+    # nothing
+  else()
+    list(APPEND Slicer_DEPENDENCIES python)
+    if(Slicer_USE_NUMPY)
+      list(APPEND Slicer_DEPENDENCIES NUMPY)
+      if(Slicer_USE_WEAVE)
+        list(APPEND Slicer_DEPENDENCIES weave)
+      endif()
+      if(Slicer_USE_SCIPY)
+        list(APPEND Slicer_DEPENDENCIES SciPy)
+      endif()
     endif()
-    if(Slicer_USE_SCIPY)
-      list(APPEND Slicer_DEPENDENCIES SciPy)
+    if(Slicer_USE_PYTHONQT_WITH_TCL AND UNIX)
+      list(APPEND Slicer_DEPENDENCIES incrTcl)
     endif()
-  endif()
-  if(Slicer_USE_PYTHONQT_WITH_TCL AND UNIX)
-    list(APPEND Slicer_DEPENDENCIES incrTcl)
   endif()
 endif()
 
@@ -147,6 +151,7 @@ set(ep_cmake_boolean_args
   Slicer_BUILD_OpenIGTLinkIF
   Slicer_USE_PYTHONQT
   Slicer_USE_PYTHONQT_WITH_TCL
+  Slicer_USE_SYSTEM_PYTHON
   Slicer_USE_CTKAPPLAUNCHER
   Slicer_USE_BatchMake
   Slicer_USE_MIDAS
@@ -201,11 +206,13 @@ if(WIN32)
 endif()
 
 if(Slicer_USE_PYTHONQT)
-  list(APPEND ep_superbuild_extra_args
-    -DPYTHON_EXECUTABLE:FILEPATH=${slicer_PYTHON_EXECUTABLE}
-    -DPYTHON_INCLUDE_DIR:PATH=${slicer_PYTHON_INCLUDE}
-    -DPYTHON_LIBRARY:FILEPATH=${slicer_PYTHON_LIBRARY}
-    )
+  if(NOT Slicer_USE_SYSTEM_PYTHON)
+    list(APPEND ep_superbuild_extra_args
+      -DPYTHON_EXECUTABLE:FILEPATH=${slicer_PYTHON_EXECUTABLE}
+      -DPYTHON_INCLUDE_DIR:PATH=${slicer_PYTHON_INCLUDE}
+      -DPYTHON_LIBRARY:FILEPATH=${slicer_PYTHON_LIBRARY}
+      )
+  endif()
 endif()
 
 if(Slicer_USE_PYTHONQT_WITH_TCL)
@@ -282,6 +289,8 @@ endif()
 # Configure and build Slicer
 #------------------------------------------------------------------------------
 set(proj Slicer)
+
+message("DEPENDS ON: " ${Slicer_DEPENDENCIES})
 
 ExternalProject_Add(${proj}
   DEPENDS ${Slicer_DEPENDENCIES}

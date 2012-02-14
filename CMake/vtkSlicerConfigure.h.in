@@ -56,6 +56,7 @@
 #  define Slicer_PYTHON_VERSION_DOT "@Slicer_PYTHON_VERSION_DOT@"
 #  define Slicer_PYTHON_VERSION "@Slicer_PYTHON_VERSION@"
 #endif //Slicer_USE_PYTHONQT
+#cmakedefine Slicer_USE_SYSTEM_PYTHON
 
 #cmakedefine Slicer_BUILD_QTLOADABLEMODULES
 #define Slicer_QTLOADABLEMODULES_SUBDIR "@Slicer_QTLOADABLEMODULES_SUBDIR@"
