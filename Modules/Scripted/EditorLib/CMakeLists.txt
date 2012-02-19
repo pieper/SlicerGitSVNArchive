@@ -9,6 +9,7 @@ set(EditorLib_PYTHON_SCRIPTS
   Effect
   LabelEffect
   PaintEffect
+  DrawEffect
   )
 
 set(EditorLib_PYTHON_RESOURCES

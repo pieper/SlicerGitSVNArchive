@@ -7,3 +7,4 @@ from HelperBox import *
 from Effect import *
 from LabelEffect import *
 from PaintEffect import *
+from DrawEffect import *
