@@ -1,3 +1,4 @@
+import vtk
 import slicer
 
 #########################################################
@@ -125,6 +126,7 @@ class UndoRedo(object):
     self.undoSize = undoSize
     self.undoList = []
     self.redoList = []
+    self.editUtil = EditUtil()
 
   def undoEnabled(self):
     "for managing undo/redo button state"""
@@ -143,13 +145,14 @@ class UndoRedo(object):
       return
     if len(checkPointList) >= self.undoSize: 
       checkPointList = checkPointList[1:]
-    checkPointList.append(checkPoint(volumeNode))
+    checkPointList.append(self.checkPoint(volumeNode))
 
   def saveState(self):
     """Called by effects as they modify the label volume node
     """
     # store current state onto undoList
-    self.storeVolume(self.undoList,EditUtil.getLabelVolume())
+    self.storeVolume(self.undoList,self.editUtil.getLabelVolume())
+    self.redoList = []
 
   def undo(self):
     """Perform the operation when the user presses 
@@ -160,7 +163,7 @@ class UndoRedo(object):
     if self.undoList == []:
       return
     # store current state onto redoList
-    self.storeVolume(self.redoList,EditUtil.getLabelVolume())
+    self.storeVolume(self.redoList,self.editUtil.getLabelVolume())
     # get the checkPoint to restore and remove it from the list
     self.undoList[-1].restore()
     self.undoList = self.undoList[:-1]
@@ -174,7 +177,7 @@ class UndoRedo(object):
     if self.redoList == []:
       return
     # store current state onto undoList
-    self.storeVolume(self.undoList,EditUtil.getLabelVolume())
+    self.storeVolume(self.undoList,self.editUtil.getLabelVolume())
     # get the checkPoint to restore and remove it from the list
     self.redoList[-1].restore()
     self.redoList = self.redoList[:-1]

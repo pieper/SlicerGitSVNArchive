@@ -1,5 +1,6 @@
 import os
 from __main__ import qt
+from __main__ import ctk
 from __main__ import slicer
 from EditOptions import EditOptions
 import EditUtil
@@ -37,6 +38,30 @@ class LabelEffectOptions(Effect.EffectOptions):
 
   def create(self):
     super(LabelEffectOptions,self).create()
+    self.paintOver = qt.QCheckBox("Paint Over", self.frame)
+    self.paintOver.setToolTip("Allow effect to overwrite non-zero labels.")
+    self.frame.layout().addWidget(self.paintOver)
+    self.widgets.append(self.paintOver)
+
+    self.thresholdPaint = qt.QCheckBox("Threshold Paint", self.frame)
+    self.thresholdPaint.setToolTip("Enable/Disable threshold mode for labeling.")
+    self.frame.layout().addWidget(self.thresholdPaint)
+    self.widgets.append(self.thresholdPaint)
+
+    self.thresholdLabel = qt.QLabel("Threshold", self.frame)
+    self.thresholdLabel.setToolTip("In threshold mode, the label will only be set if the background value is within this range.")
+    self.frame.layout().addWidget(self.thresholdLabel)
+    self.widgets.append(self.thresholdLabel)
+    self.threshold = ctk.ctkRangeWidget(self.frame)
+    self.threshold.spinBoxAlignment = 0xff # put enties on top
+    self.threshold.singleStep = 0.01
+    self.setRangeWidgetToBackgroundRange(self.threshold)
+    self.frame.layout().addWidget(self.threshold)
+    self.widgets.append(self.threshold)
+
+    self.paintOver.connect( "clicked()", self.updateMRMLFromGUI )
+    self.thresholdPaint.connect( "clicked()", self.updateMRMLFromGUI )
+    self.threshold.connect( "valuesChanged(double,double)", self.onThresholdValuesChange )
 
   def destroy(self):
     super(LabelEffectOptions,self).destroy()
@@ -51,13 +76,44 @@ class LabelEffectOptions(Effect.EffectOptions):
 
   def setMRMLDefaults(self):
     super(LabelEffectOptions,self).setMRMLDefaults()
+    disableState = self.parameterNode.GetDisableModifiedEvent()
+    self.parameterNode.SetDisableModifiedEvent(1)
+    defaults = (
+      ("paintOver", "1"),
+      ("paintThreshold", "0"),
+      ("paintThresholdMin", "0"),
+      ("paintThresholdMax", "1000"),
+    )
+    for d in defaults:
+      param = "LabelEffect,"+d[0]
+      pvalue = self.parameterNode.GetParameter(param)
+      if pvalue == '':
+        self.parameterNode.SetParameter(param, d[1])
+    self.parameterNode.SetDisableModifiedEvent(disableState)
 
   def updateGUIFromMRML(self,caller,event):
     # first, check that parameter node has proper defaults for your effect
     # then, call superclass
     # then, update yourself from MRML parameter node
     # - follow pattern in EditOptions leaf classes
+    params = ("paintOver", "paintThreshold", "paintThresholdMin", "paintThresholdMax")
+    for p in params:
+      if self.parameterNode.GetParameter("LabelEffect,"+p) == '':
+        # don't update if the parameter node has not got all values yet
+        return
+    self.updatingGUI = True
     super(LabelEffectOptions,self).updateGUIFromMRML(caller,event)
+    self.paintOver.setChecked( int(self.parameterNode.GetParameter("LabelEffect,paintOver")) )
+    self.thresholdPaint.setChecked( int(self.parameterNode.GetParameter("LabelEffect,paintThreshold")) )
+    self.threshold.setMinimumValue( float(self.parameterNode.GetParameter("LabelEffect,paintThresholdMin")) )
+    self.threshold.setMaximumValue( float(self.parameterNode.GetParameter("LabelEffect,paintThresholdMax")) )
+    self.thresholdLabel.setHidden( not self.thresholdPaint.checked )
+    self.threshold.setHidden( not self.thresholdPaint.checked )
+    self.threshold.setEnabled( self.thresholdPaint.checked )
+    self.updatingGUI = False
+
+  def onThresholdValuesChange(self,min,max):
+    self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
     if self.updatingGUI:
@@ -65,7 +121,16 @@ class LabelEffectOptions(Effect.EffectOptions):
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(LabelEffectOptions,self).updateMRMLFromGUI()
-    # set mrml parameters here
+    if self.paintOver.checked:
+      self.parameterNode.SetParameter( "LabelEffect,paintOver", "1" )
+    else:
+      self.parameterNode.SetParameter( "LabelEffect,paintOver", "0" )
+    if self.thresholdPaint.checked:
+      self.parameterNode.SetParameter( "LabelEffect,paintThreshold", "1" )
+    else:
+      self.parameterNode.SetParameter( "LabelEffect,paintThreshold", "0" )
+    self.parameterNode.SetParameter( "LabelEffect,paintThresholdMin", str(self.threshold.minimumValue) )
+    self.parameterNode.SetParameter( "LabelEffect,paintThresholdMax", str(self.threshold.maximumValue) )
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()

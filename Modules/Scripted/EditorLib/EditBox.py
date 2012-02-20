@@ -406,6 +406,7 @@ itcl::body EditBox::setButtonState {effect state} {
           sliceWidget = layoutManager.sliceWidget(sliceNode.GetLayoutName())
           if sliceWidget:
             tool = effectClass.tool(sliceWidget)
+            tool.undoRedo = self.undoRedo
             self.currentTools.append(tool)
         self.currentOption.tools = self.currentTools
       else:

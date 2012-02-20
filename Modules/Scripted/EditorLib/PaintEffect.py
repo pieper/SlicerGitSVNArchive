@@ -329,9 +329,8 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
 
   def paintApply(self):
     if self.paintCoordinates != []:
-      # TODO:
-      # EditorStoreCheckPoint $_layers(label,node)
-      pass
+      if self.undoRedo:
+        self.undoRedo.saveState()
     
     for xy in self.paintCoordinates:
       self.paintBrush(xy[0], xy[1])
@@ -436,13 +435,20 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     brushCenter = xyToRAS.MultiplyPoint( (x, y, 0, 1) )[:3]
     brushRadius = self.radius
 
+    parameterNode = self.editUtil.getParameterNode()
+    paintLabel = int(parameterNode.GetParameter("label"))
+    paintOver = int(parameterNode.GetParameter("LabelEffect,paintOver"))
+    paintThreshold = int(parameterNode.GetParameter("LabelEffect,paintThreshold"))
+    paintThresholdMin = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMin"))
+    paintThresholdMax = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMax"))
+
     #
     # set up the painter class and let 'r rip!
     #
     if not hasattr(self,"painter"):
       self.painter = slicer.vtkImageSlicePaint()
-
-
     self.painter.SetBackgroundImage(backgroundImage)
     self.painter.SetBackgroundIJKToWorld(backgroundIJKToRAS)
     self.painter.SetWorkingImage(labelImage)
@@ -453,16 +459,11 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     self.painter.SetBottomRight( br[0], br[1], br[2] )
     self.painter.SetBrushCenter( brushCenter[0], brushCenter[1], brushCenter[2] )
     self.painter.SetBrushRadius( brushRadius )
-    self.painter.SetPaintLabel(1)
-    self.painter.SetPaintOver(1)
-    self.painter.SetThresholdPaint(0)
+    self.painter.SetPaintLabel(paintLabel)
+    self.painter.SetPaintOver(paintOver)
+    self.painter.SetThresholdPaint(paintThreshold)
+    self.painter.SetThresholdPaintRange(paintThresholdMin, paintThresholdMax)
     self.painter.Paint()
-
-    # TODO
-    #painter.SetPaintLabel( [EditorGetPaintLabel]
-    #$painter SetPaintOver $paintOver
-    #$painter SetThresholdPaint $paintThreshold
-    #$painter SetThresholdPaintRange $paintThresholdMin $paintThresholdMax
 
 
 #
