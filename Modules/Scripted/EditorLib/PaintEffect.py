@@ -1,9 +1,10 @@
 import os
 from __main__ import vtk
+from __main__ import ctk
 from __main__ import qt
 from __main__ import slicer
 from EditOptions import EditOptions
-import EditUtil
+from EditorLib import EditorLib
 import LabelEffect
 
 
@@ -67,7 +68,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
     self.frame.layout().addWidget(self.smudge)
     self.widgets.append(self.smudge)
 
-    HelpButton(self.frame, "Use this tool to paint with a round brush of the selected radius")
+    EditorLib.HelpButton(self.frame, "Use this tool to paint with a round brush of the selected radius")
 
     self.smudge.connect('clicked()', self.updateMRMLFromGUI)
     self.radius.connect('valueChanged(double)', self.onRadiusValueChanged)
@@ -83,7 +84,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
   # in each leaf subclass so that "self" in the observer
   # is of the correct type 
   def updateParameterNode(self, caller, event):
-    node = EditUtil.getParameterNode()
+    node = self.editUtil.getParameterNode()
     if node != self.parameterNode:
       if self.parameterNode:
         node.RemoveObserver(self.parameterNodeTag)
@@ -91,7 +92,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
       self.parameterNodeTag = node.AddObserver("ModifiedEvent", self.updateGUIFromMRML)
 
   def setMRMLDefaults(self):
-    super(PaintOptions,self).setMRMLDefaults()
+    super(PaintEffectOptions,self).setMRMLDefaults()
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     defaults = (
@@ -114,10 +115,14 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     self.updatingGUI = True
-    super(PaintOptions,self).updateGUIFromMRML(caller,event)
+    super(PaintEffectOptions,self).updateGUIFromMRML(caller,event)
     self.smudge.setChecked( int(self.parameterNode.GetParameter("Paint,smudge")) )
     self.radius.setValue( float(self.parameterNode.GetParameter("Paint,radius")) )
-    self.radiusSpinBox.setValue( float(self.parameterNode.GetParameter("Paint,radius")) )
+    radius = float(self.parameterNode.GetParameter("Paint,radius"))
+    self.radiusSpinBox.setValue( radius )
+    for tool in self.tools:
+      tool.radius = radius
+      tool.createGlyph(tool.brush)
     self.updatingGUI = False
 
   def onRadiusValueChanged(self,value):
@@ -141,7 +146,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
       return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
-    super(PaintOptions,self).updateMRMLFromGUI()
+    super(PaintEffectOptions,self).updateMRMLFromGUI()
     if self.smudge.checked:
       self.parameterNode.SetParameter( "Paint,smudge", "1" )
     else:
@@ -229,10 +234,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
       self.actor.VisibilityOff()
     else:
       print(caller,event,self.sliceWidget.sliceLogic().GetSliceNode().GetName())
-
     self.positionActors()
-
-
 
   def positionActors(self):
     """

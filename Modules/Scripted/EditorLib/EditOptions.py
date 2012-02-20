@@ -66,6 +66,7 @@ class EditOptions(object):
     self.parameterNode = None
     self.parameterNodeTag = None
     self.editUtil = EditUtil.EditUtil()
+    self.tools = []
     if parent == 0:
       self.parent = slicer.qMRMLWidget()
       self.parent.setLayout(qt.QVBoxLayout())

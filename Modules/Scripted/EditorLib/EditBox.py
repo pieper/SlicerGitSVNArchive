@@ -3,6 +3,7 @@ from __main__ import tcl
 from __main__ import qt
 from EditOptions import *
 import EditUtil
+import EditorLib
 
 
 #########################################################
@@ -47,6 +48,12 @@ class EditBox(object):
       slicer.modules.editorExtensions
     except AttributeError:
       slicer.modules.editorExtensions = {}
+
+    # register the builtin extensions
+    self.editorBuiltins = {}
+    self.editorBuiltins["PaintEffect"] = EditorLib.PaintEffect
+    self.editorBuiltins["DrawEffect"] = EditorLib.DrawEffect
+
 
     # embedded boolean specifies whether or not this edit box is to be embedded
     # into another moduleWidget
@@ -177,6 +184,9 @@ class EditBox(object):
     # combined list of all effects
     self.effects = self.mouseTools + self.operations
 
+    # add builtins that have been registered
+    self.effects = self.effects + tuple(self.editorBuiltins.keys())
+
     # add any extensions that have been registered
     self.effects = self.effects + tuple(slicer.modules.editorExtensions.keys())
 
@@ -206,6 +216,7 @@ class EditBox(object):
 
         self.effectModes[effect] = iconMode
 
+    # TOOD: add icons for builtins
     if effect in slicer.modules.editorExtensions.keys():
       extensionEffect = slicer.modules.editorExtensions[effect]()
       module = eval('slicer.modules.%s' % effect.lower())
@@ -272,13 +283,21 @@ class EditBox(object):
     if (not self.embedded):
       self.createButtonRow( ("DefaultTool", "EraseLabel", "Paint", "Draw", "LevelTracing", "ImplicitRectangle", "IdentifyIslands", "ChangeIsland", "RemoveIslands", "SaveIsland") )
       self.createButtonRow( ("ErodeLabel", "DilateLabel", "Threshold", "ChangeLabel", "MakeModel", "GrowCutSegment") )
+
+      builtins = []
+      for k in self.editorBuiltins:
+        builtins.append(k)
+      self.createButtonRow( builtins )
+
       extensions = []
       for k in slicer.modules.editorExtensions:
         extensions.append(k)
       self.createButtonRow( extensions )
+
       # TODO: add back prev/next fiducial
       #self.createButtonRow( ("PreviousFiducial", "NextFiducial") )
       self.createButtonRow( ("PreviousCheckPoint", "NextCheckPoint"), rowLabel="Undo/Redo: " )
+
     # if using embedded format: create all of the buttons in the effects list in a single row
     else:
       self.createButtonRow(self.effects)
@@ -338,8 +357,17 @@ itcl::body EditBox::setButtonState {effect state} {
   #
   # manage the editor effects
   #
-  def selectEffect(self, effect):
+  def selectEffect(self, effectName):
     from slicer import app
+    print('selecting %s' % effectName)
+
+    #
+    # If there is no background volume or label map, do nothing
+    #
+    if not self.editUtil.getBackgroundVolume():
+      return
+    if not self.editUtil.getLabelVolume():
+      return
     
     #
     # if a modal effect was selected, build an options GUI
@@ -349,16 +377,27 @@ itcl::body EditBox::setButtonState {effect state} {
     # in the editorExtensions map and use those to create the 
     # effect
     #
-    if not self.nonmodal.__contains__(effect):
+    if not self.nonmodal.__contains__(effectName):
+
       if self.currentOption:
+        # clean up any existing effect
         self.currentOption.__del__()
         self.currentOption = None
         for tool in self.currentTools:
           tool.cleanup()
         self.currentTools = []
-      if effect in slicer.modules.editorExtensions.keys():
-        extensionEffect = slicer.modules.editorExtensions[effect]()
-        self.currentOption = extensionEffect.options(self.optionsFrame)
+
+      # look at builtins and extensions 
+      # - TODO: other effect styles are deprecated
+      effectClass = None
+      if effectName in slicer.modules.editorExtensions.keys():
+        effectClass = slicer.modules.editorExtensions[effectName]()
+      elif effectName in self.editorBuiltins.keys():
+        effectClass = self.editorBuiltins[effectName]()
+      if effectClass:
+        # for effects, create an options gui and an
+        # instance for every slice view
+        self.currentOption = effectClass.options(self.optionsFrame)
         layoutManager = slicer.app.layoutManager()
         sliceNodeCount = slicer.mrmlScene.GetNumberOfNodesByClass('vtkMRMLSliceNode')
         for nodeIndex in xrange(sliceNodeCount):
@@ -366,60 +405,54 @@ itcl::body EditBox::setButtonState {effect state} {
           sliceNode = slicer.mrmlScene.GetNthNodeByClass(nodeIndex, 'vtkMRMLSliceNode')
           sliceWidget = layoutManager.sliceWidget(sliceNode.GetLayoutName())
           if sliceWidget:
-            tool = extensionEffect.tool(sliceWidget)
+            tool = effectClass.tool(sliceWidget)
             self.currentTools.append(tool)
+        self.currentOption.tools = self.currentTools
       else:
+        # fallback to internal classes
         try:
-          options = eval("%sOptions" % effect)
+          options = eval("%sOptions" % effectName)
           self.currentOption = options(self.optionsFrame)
         except NameError, AttributeError:
           # No options for this effect, skip it
           pass
 
-    #
-    # If there is no background volume or label map, do nothing
-    #
-    # TODO should do this regardless of whether or not there is an option
-    if not self.editUtil.getBackgroundVolume():
-      return
-    if not self.editUtil.getLabelVolume():
-      return
-
     app.restoreOverrideCursor()
-    self.setActiveToolLabel(effect)
-    if not self.nonmodal.__contains__(effect):
+    self.setActiveToolLabel(effectName)
+    if not self.nonmodal.__contains__(effectName):
       tcl('EffectSWidget::RemoveAll')
-      tcl('EditorSetActiveToolLabel %s' % effect)
+      tcl('EditorSetActiveToolLabel %s' % effectName)
 
     # mouse tool changes cursor, and dismisses popup/menu
     mouseTool = False
-    if self.mouseTools.__contains__(effect):
+    if self.mouseTools.__contains__(effectName):
       mouseTool = True
 
-    if effect == "DefaultTool":
+    if effectName == "DefaultTool":
         # do nothing - this will reset cursor mode
         tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effect == "GoToEditorModule":
+    elif effectName == "GoToEditorModule":
         tcl('EditorSelectModule')
         tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effect == "LabelCheckPoint":
+    elif effectName == "LabelCheckPoint":
         # save a copy of the current label layer into the scene
         tcl('EditorLabelCheckPoint')
         tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effect == "PreviousFiducial":
+    elif effectName == "PreviousFiducial":
         tcl('::FiducialsSWidget::JumpAllToNextFiducial -1')
         tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effect == "NextFiducial":
+    elif effectName == "NextFiducial":
         tcl('::FiducialsSWidget::JumpAllToNextFiducial 1')
         tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effect ==  "EraseLabel":
+    elif effectName ==  "EraseLabel":
         tcl('EditorToggleErasePaintLabel')
-    elif effect ==  "PreviousCheckPoint":
+    elif effectName ==  "PreviousCheckPoint":
         self.undoRedo.undo()
-    elif effect == "NextCheckPoint":
+    elif effectName == "NextCheckPoint":
         self.undoRedo.redo()
     else:
-        if effect == "GrowCutSegment":
+        # Not a special case, so create the effectName
+        if effectName == "GrowCutSegment":
           self.editorGestureCheckPoint()
           #volumesLogic = slicer.modules.volumes.logic()
           #print ("VolumesLogic is %s " % volumesLogic)
@@ -428,7 +461,7 @@ itcl::body EditBox::setButtonState {effect state} {
           # TODO: make some nice custom cursor shapes
           # - for now use the built in override cursor
           #pix = qt.QPixmap()
-          #pix.load(self.effectIconFiles[effect,""])
+          #pix.load(self.effectIconFiles[effectName,""])
           #cursor = qt.QCursor(pix)
           #app.setOverrideCursor(cursor, 0, 0)
           cursor = qt.QCursor(1)
@@ -441,12 +474,12 @@ itcl::body EditBox::setButtonState {effect state} {
         # - have the effect reset the tool label when completed
         #
      
-        ret = tcl('catch "EffectSWidget::Add %s" res' % self.effectClasses[effect])
+        ret = tcl('catch "EffectSWidget::Add %s" res' % self.effectClasses[effectName])
         if ret != '0':
           dialog = qt.QErrorMessage(self.parent)
           dialog.showMessage("Could not select effect.\n\nError was:\n%s" % tcl('set res'))
         else:
-          tcl('EffectSWidget::ConfigureAll %s -exitCommand "EditorSetActiveToolLabel DefaultTool"' % self.effectClasses[effect])
+          tcl('EffectSWidget::ConfigureAll %s -exitCommand "EditorSetActiveToolLabel DefaultTool"' % self.effectClasses[effectName])
 
   def updateCheckPointButtons(self):
     if not self.embedded:

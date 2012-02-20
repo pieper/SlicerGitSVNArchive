@@ -106,6 +106,9 @@ class EffectTool(object):
     self.interactor = self.sliceView.interactorStyle().GetInteractor()
     self.renderWindow = self.sliceWidget.sliceView().renderWindow()
     self.renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
+    
+    # optionally set by users of the class
+    self.undoRedo = None
 
     # actors in the renderer that need to be cleaned up on destruction
     self.actors = []
