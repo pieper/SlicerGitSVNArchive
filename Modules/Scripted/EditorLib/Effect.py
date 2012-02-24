@@ -166,7 +166,6 @@ class EffectLogic(object):
   """
 
   def __init__(self):
-    # TODO: flesh this out
     pass
 
 

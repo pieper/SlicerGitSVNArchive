@@ -1,9 +1,10 @@
 import os
 from __main__ import vtk
+from __main__ import ctk
 from __main__ import qt
 from __main__ import slicer
 from EditOptions import EditOptions
-import EditUtil
+from EditorLib import EditorLib
 import LabelEffect
 
 
@@ -43,11 +44,11 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
     self.frame.layout().addWidget(self.radiusFrame)
     self.widgets.append(self.radiusFrame)
     self.radiusLabel = qt.QLabel("Radius:", self.radiusFrame)
-    self.radiusLabel.setToolTip("Set the radius of the draw brush in millimeters")
+    self.radiusLabel.setToolTip("Set the radius of the paint brush in millimeters")
     self.radiusFrame.layout().addWidget(self.radiusLabel)
     self.widgets.append(self.radiusLabel)
     self.radiusSpinBox = qt.QDoubleSpinBox(self.radiusFrame)
-    self.radiusSpinBox.setToolTip("Set the radius of the draw brush in millimeters")
+    self.radiusSpinBox.setToolTip("Set the radius of the paint brush in millimeters")
     self.radiusSpinBox.minimum = 0.01
     self.radiusSpinBox.maximum = 100
     self.radiusSpinBox.suffix = "mm"
@@ -67,7 +68,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
     self.frame.layout().addWidget(self.smudge)
     self.widgets.append(self.smudge)
 
-    HelpButton(self.frame, "Use this tool to draw with a round brush of the selected radius")
+    EditorLib.HelpButton(self.frame, "Use this tool to paint with a round brush of the selected radius")
 
     self.smudge.connect('clicked()', self.updateMRMLFromGUI)
     self.radius.connect('valueChanged(double)', self.onRadiusValueChanged)
@@ -83,7 +84,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
   # in each leaf subclass so that "self" in the observer
   # is of the correct type 
   def updateParameterNode(self, caller, event):
-    node = EditUtil.getParameterNode()
+    node = self.editUtil.getParameterNode()
     if node != self.parameterNode:
       if self.parameterNode:
         node.RemoveObserver(self.parameterNodeTag)
@@ -91,7 +92,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
       self.parameterNodeTag = node.AddObserver("ModifiedEvent", self.updateGUIFromMRML)
 
   def setMRMLDefaults(self):
-    super(DrawOptions,self).setMRMLDefaults()
+    super(DrawEffectOptions,self).setMRMLDefaults()
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     defaults = (
@@ -114,10 +115,14 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     self.updatingGUI = True
-    super(DrawOptions,self).updateGUIFromMRML(caller,event)
+    super(DrawEffectOptions,self).updateGUIFromMRML(caller,event)
     self.smudge.setChecked( int(self.parameterNode.GetParameter("Draw,smudge")) )
     self.radius.setValue( float(self.parameterNode.GetParameter("Draw,radius")) )
-    self.radiusSpinBox.setValue( float(self.parameterNode.GetParameter("Draw,radius")) )
+    radius = float(self.parameterNode.GetParameter("Draw,radius"))
+    self.radiusSpinBox.setValue( radius )
+    for tool in self.tools:
+      tool.radius = radius
+      tool.createGlyph(tool.brush)
     self.updatingGUI = False
 
   def onRadiusValueChanged(self,value):
@@ -141,7 +146,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
       return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
-    super(DrawOptions,self).updateMRMLFromGUI()
+    super(DrawEffectOptions,self).updateMRMLFromGUI()
     if self.smudge.checked:
       self.parameterNode.SetParameter( "Draw,smudge", "1" )
     else:
@@ -175,7 +180,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
     # interaction state variables
     self.position = [0, 0, 0]
-    self.drawCoordinates = []
+    self.paintCoordinates = []
     self.feedbackActors = []
     self.lastRadius = 0
 
@@ -210,18 +215,18 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     handle events from the render window interactor
     """
     if event == "LeftButtonPressEvent":
-      self.actionState = "drawing"
+      self.actionState = "painting"
       xy = self.interactor.GetEventPosition()
-      self.drawAddPoint(xy[0], xy[1])
+      self.paintAddPoint(xy[0], xy[1])
       self.abortEvent(event)
     elif event == "LeftButtonReleaseEvent":
-      self.drawApply()
+      self.paintApply()
       self.actionState = None
     elif event == "MouseMoveEvent":
       self.actor.VisibilityOn()
-      if self.actionState == "drawing":
+      if self.actionState == "painting":
         xy = self.interactor.GetEventPosition()
-        self.drawAddPoint(xy[0], xy[1])
+        self.paintAddPoint(xy[0], xy[1])
         self.abortEvent(event)
     elif event == "EnterEvent":
       self.actor.VisibilityOn()
@@ -229,14 +234,11 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
       self.actor.VisibilityOff()
     else:
       print(caller,event,self.sliceWidget.sliceLogic().GetSliceNode().GetName())
-
     self.positionActors()
-
-
 
   def positionActors(self):
     """
-    update draw feedback glyph to follow mouse
+    update paint feedback glyph to follow mouse
     """
     self.actor.SetPosition( self.interactor.GetEventPosition() )
     self.sliceView.scheduleRender()
@@ -259,7 +261,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     import math
     xyRadius = math.sqrt( xyRadius[0]**2 + xyRadius[1]**2 + xyRadius[2]**2 )
 
-    # make a circle draw brush
+    # make a circle paint brush
     points = vtk.vtkPoints()
     lines = vtk.vtkCellArray()
     polyData.SetPoints(points)
@@ -290,32 +292,32 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     idList.InsertNextId(firstPoint)
     polyData.InsertNextCell( vtk.VTK_LINE, idList )
 
-  def drawAddPoint(self, x, y):
+  def paintAddPoint(self, x, y):
     """
-    depending on the delayedDraw mode, either draw the
+    depending on the delayedDraw mode, either paint the
     given point or queue it up with a marker for later 
-    drawing
+    painting
     """
-    self.drawCoordinates.append( (x, y) )
+    self.paintCoordinates.append( (x, y) )
     if self.delayedDraw:
-      self.drawFeedback()
+      self.paintFeedback()
     else:
-      self.drawApply()
+      self.paintApply()
 
-  def drawFeedback(self):
+  def paintFeedback(self):
     """
-    add a feedback actor (copy of the draw radius
+    add a feedback actor (copy of the paint radius
     actor) for any points that don't have one yet.
     If the list is empty, clear out the old actors
     """
 
-    if self.drawCoordinates == []:
+    if self.paintCoordinates == []:
       for a in self.feedbackActors:
         self.renderer.RemoveActor2D(a)
       self.feedbackActors = []
       return
 
-    for xy in self.drawCoordinates[len(self.feedbackActors):]:
+    for xy in self.paintCoordinates[len(self.feedbackActors):]:
       a = vtk.vtkActor2D()
       self.feedbackActors.append(a)
       a.SetMapper(self.mapper)
@@ -325,16 +327,15 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
       property.SetOpacity( .5 )
       self.renderer.AddActor2D( a )
 
-  def drawApply(self):
-    if self.drawCoordinates != []:
-      # TODO:
-      # EditorStoreCheckPoint $_layers(label,node)
-      pass
+  def paintApply(self):
+    if self.paintCoordinates != []:
+      if self.undoRedo:
+        self.undoRedo.saveState()
     
-    for xy in self.drawCoordinates:
-      self.drawBrush(xy[0], xy[1])
-    self.drawCoordinates = []
-    self.drawFeedback()
+    for xy in self.paintCoordinates:
+      self.paintBrush(xy[0], xy[1])
+    self.paintCoordinates = []
+    self.paintFeedback()
 
     # TODO: workaround for new pipeline in slicer4
     # - editing image data of the calling modified on the node
@@ -354,9 +355,9 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     else:
       labelNode.Modified()
 
-  def drawBrush(self, x, y):
+  def paintBrush(self, x, y):
     """
-    draw with a brush that is circular in XY space 
+    paint with a brush that is circular in XY space 
      (could be streched or rotate when transformed to IJK)
      - make sure to hit ever pixel in IJK space 
      - apply the threshold if selected
@@ -371,7 +372,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     backgroundImage = backgroundNode.GetImageData()
 
     if not labelNode:
-      # if there's no label, we can't draw
+      # if there's no label, we can't paint
       return
 
     #
@@ -434,33 +435,35 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     brushCenter = xyToRAS.MultiplyPoint( (x, y, 0, 1) )[:3]
     brushRadius = self.radius
 
+    parameterNode = self.editUtil.getParameterNode()
+    paintLabel = int(parameterNode.GetParameter("label"))
+    paintOver = int(parameterNode.GetParameter("LabelEffect,paintOver"))
+    paintThreshold = int(parameterNode.GetParameter("LabelEffect,paintThreshold"))
+    paintThresholdMin = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMin"))
+    paintThresholdMax = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMax"))
+
     #
-    # set up the drawer class and let 'r rip!
+    # set up the painter class and let 'r rip!
     #
-    if not hasattr(self,"drawer"):
-      self.drawer = slicer.vtkImageSlicePaint()
-
-
-    self.drawer.SetBackgroundImage(backgroundImage)
-    self.drawer.SetBackgroundIJKToWorld(backgroundIJKToRAS)
-    self.drawer.SetWorkingImage(labelImage)
-    self.drawer.SetWorkingIJKToWorld(labelIJKToRAS)
-    self.drawer.SetTopLeft( tl[0], tl[1], tl[2] )
-    self.drawer.SetTopRight( tr[0], tr[1], tr[2] )
-    self.drawer.SetBottomLeft( bl[0], bl[1], bl[2] )
-    self.drawer.SetBottomRight( br[0], br[1], br[2] )
-    self.drawer.SetBrushCenter( brushCenter[0], brushCenter[1], brushCenter[2] )
-    self.drawer.SetBrushRadius( brushRadius )
-    self.drawer.SetPaintLabel(1)
-    self.drawer.SetPaintOver(1)
-    self.drawer.SetThresholdPaint(0)
-    self.drawer.Paint()
-
-    # TODO
-    #drawer.SetPaintLabel( [EditorGetPaintLabel]
-    #$drawer SetPaintOver $drawOver
-    #$drawer SetThresholdPaint $drawThreshold
-    #$drawer SetThresholdPaintRange $drawThresholdMin $drawThresholdMax
+    if not hasattr(self,"painter"):
+      self.painter = slicer.vtkImageSliceDraw()
+    self.painter.SetBackgroundImage(backgroundImage)
+    self.painter.SetBackgroundIJKToWorld(backgroundIJKToRAS)
+    self.painter.SetWorkingImage(labelImage)
+    self.painter.SetWorkingIJKToWorld(labelIJKToRAS)
+    self.painter.SetTopLeft( tl[0], tl[1], tl[2] )
+    self.painter.SetTopRight( tr[0], tr[1], tr[2] )
+    self.painter.SetBottomLeft( bl[0], bl[1], bl[2] )
+    self.painter.SetBottomRight( br[0], br[1], br[2] )
+    self.painter.SetBrushCenter( brushCenter[0], brushCenter[1], brushCenter[2] )
+    self.painter.SetBrushRadius( brushRadius )
+    self.painter.SetDrawLabel(paintLabel)
+    self.painter.SetDrawOver(paintOver)
+    self.painter.SetThresholdDraw(paintThreshold)
+    self.painter.SetThresholdDrawRange(paintThresholdMin, paintThresholdMax)
+    self.painter.Draw()
 
 
 #
@@ -496,16 +499,8 @@ class DrawEffect(LabelEffect.LabelEffect):
     # name is used to define the name of the icon image resource (e.g. DrawEffect.png)
     self.name = "DrawEffect"
     # tool tip is displayed on mouse hover
-    self.toolTip = "Draw: free hand outline drawing for label map editing"
+    self.toolTip = "Draw: circular paint brush for label map editing"
 
     self.options = DrawEffectOptions
     self.tool = DrawEffectTool
     self.logic = DrawEffectLogic
-
-""" Test:
-
-sw = slicer.app.layoutManager().sliceWidget('Red')
-import EditorLib
-pet = EditorLib.DrawEffectTool(sw)
-
-"""
