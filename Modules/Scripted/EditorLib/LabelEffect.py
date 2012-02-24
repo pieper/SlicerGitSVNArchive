@@ -215,17 +215,19 @@ class LabelEffectLogic(Effect.EffectLogic):
     
      ps uses the slicer2-based vtkImageFillROI filter
     """
-    set maskIJKToRAS [vtkMatrix4x4 New]
-    $maskIJKToRAS DeepCopy [$_sliceNode GetXYToRAS]
-    [$polyData GetPoints] Modified
-    set bounds [$polyData GetBounds]
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    sliceNode = self.sliceLogic.GetSliceNode()
+    maskIJKToRAS = vtk.vtkMatrix4x4()
+    maskIJKToRAS.DeepCopy(sliceNode.GetXYToRAS())
+    polyData.GetPoints().Modified()
+    bounds = polyData.GetBounds()
     foreach {xlo xhi ylo yhi zlo zhi} $bounds {}
-    set xlo [expr $xlo - 1]
-    set ylo [expr $ylo - 1]
-    set originRAS [$this xyToRAS "$xlo $ylo"]
-    $maskIJKToRAS SetElement 0 3  [lindex $originRAS 0]
-    $maskIJKToRAS SetElement 1 3  [lindex $originRAS 1]
-    $maskIJKToRAS SetElement 2 3  [lindex $originRAS 2]
+    xlo = bounds[0] - 1
+    ylo = bounds[2] - 1
+    originRAS = self.xyToRAS((xlo,ylo))
+    maskIJKToRAS.SetElement( 0, 3, originRAS[0] )
+    maskIJKToRAS.SetElement( 1, 3, originRAS[1] )
+    maskIJKToRAS.SetElement( 2, 3, originRAS[2] )
 
     #
     # get a good size for the draw buffer 
@@ -237,11 +239,11 @@ class LabelEffectLogic(Effect.EffectLogic):
     #    side for the width in order to end up with a single extra
     #    pixel in the rasterized image map.  Probably has to 
     #    do with how boundary conditions are handled in the filler
-    set w [expr int($xhi - $xlo) + 32]
-    set h [expr int($yhi - $ylo) + 32]
+    w = int(xhi - xlo) + 32
+    h = int(yhi - ylo) + 32
 
-    set imageData [vtkImageData New]
-    $imageData SetDimensions $w $h 1
+    imageData = vtk.vtkImageData()
+    imageData.SetDimensions( w, h, 1 )
 
     if { $_layers(label,image) != "" } {
       $imageData SetScalarType [$_layers(label,image) GetScalarType]

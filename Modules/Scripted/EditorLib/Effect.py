@@ -165,8 +165,32 @@ class EffectLogic(object):
   by other code without the need for a view context.
   """
 
-  def __init__(self):
-    pass
+  def __init__(self,sliceLogic):
+    self.sliceLogic = sliceLogic
+
+  def rasToXY(self,rasPoint):
+    return self.rasToXYZ()[0:2]
+    
+  def rasToXYZ(self,rasPoint):
+    """return x y for a give r a s"""
+    sliceNode = self.sliceLogic.GetSliceNode()
+    rasToXY = vtk.vtkMatrix4x4()
+    rasToXY.DeepCopy(sliceNode.GetXYToRAS()
+    rasToXY.Invert()
+    xyzw = rasToXY.MultiplyPoint(rasPoint+(1,))
+    return xyzw[:3]
+
+  def xyToRAS(self,xyPoint):
+    """return r a s for a given x y"""
+    sliceNode = self.sliceLogic.GetSliceNode()
+    rast = sliceNode.GetXYToRAS().MultiplyPoint(xyPoint + (0,1,))
+    return rast[:3]
+
+  def xyzToRAS(self,xyzPoint):
+    """return r a s for a given x y z"""
+    sliceNode = self.sliceLogic.GetSliceNode()
+    rast = sliceNode.GetXYToRAS().MultiplyPoint(xyzPoint + (1,))
+    return rast[:3]
 
 
 #
