@@ -122,18 +122,15 @@ bool qSlicerScriptedLoadableModuleWidget::setPythonSource(const QString& newPyth
 
   Q_ASSERT(newPythonSource.endsWith(".py"));
 
-  // Open the file
-#ifdef _WIN32
-  FILE* pyfile = PyRun_OpenFile(newPythonSource.toLatin1());
-#else
+  // Open the file to check for existance
   FILE* pyfile = fopen(newPythonSource.toLatin1(), "r");
-#endif
   if (!pyfile)
     {
     PyErr_Print();
     qCritical() << "setPythonSource - File" << newPythonSource << "doesn't exist !";
     return false;
     }
+  fclose(pyfile);
 
   // Extract moduleName from the provided filename
   QString classNameToLoad = className;
@@ -155,7 +152,7 @@ bool qSlicerScriptedLoadableModuleWidget::setPythonSource(const QString& newPyth
   PyObject * classToInstantiate = PyDict_GetItemString(global_dict, classNameToLoad.toLatin1());
   if (!classToInstantiate)
     {
-    PyRun_File(pyfile, newPythonSource.toLatin1(), Py_file_input, global_dict, global_dict);
+	PyRun_SimpleString(QString("execfile('%1')").arg(newPythonSource).toLatin1());
     classToInstantiate = PyDict_GetItemString(global_dict, classNameToLoad.toLatin1());
     }
 
@@ -170,11 +167,6 @@ bool qSlicerScriptedLoadableModuleWidget::setPythonSource(const QString& newPyth
     return false;
     }
 
-#ifdef _WIN32
-  PyRun_CloseFile(pyfile);
-#else
-  fclose(pyfile);
-#endif
 
   PyObject * wrappedThis = PythonQt::self()->priv()->wrapQObject(this);
   if (!wrappedThis)
