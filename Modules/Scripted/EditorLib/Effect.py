@@ -167,6 +167,7 @@ class EffectLogic(object):
 
   def __init__(self,sliceLogic):
     self.sliceLogic = sliceLogic
+    self.editUtil = EditUtil.EditUtil()
 
   def rasToXY(self,rasPoint):
     return self.rasToXYZ()[0:2]
@@ -175,7 +176,7 @@ class EffectLogic(object):
     """return x y for a give r a s"""
     sliceNode = self.sliceLogic.GetSliceNode()
     rasToXY = vtk.vtkMatrix4x4()
-    rasToXY.DeepCopy(sliceNode.GetXYToRAS()
+    rasToXY.DeepCopy(sliceNode.GetXYToRAS())
     rasToXY.Invert()
     xyzw = rasToXY.MultiplyPoint(rasPoint+(1,))
     return xyzw[:3]

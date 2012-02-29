@@ -200,11 +200,15 @@ class LabelEffectLogic(Effect.EffectLogic):
     self.paintThresholdMin = 1
     self.paintThresholdMax = 1
     self.paintOver = 1
+    self.extractImage = None
     self.painter = slicer.vtkImageSlicePaint()
 
 
   def makeMaskImage(self,polyData):
     """
+    Create a screen space (2D) mask image for the given
+    polydata.
+
     Need to know the mapping from RAS into polygon space
     so the painter can use this as a mask
     - need the bounds in RAS space
@@ -213,7 +217,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     - origin is the lower left of the polygon bounds
     - TODO: need to account for the boundary pixels
     
-     ps uses the slicer2-based vtkImageFillROI filter
+     Note: uses the slicer2-based vtkImageFillROI filter
     """
     labelLogic = self.sliceLogic.GetLabelLayer()
     sliceNode = self.sliceLogic.GetSliceNode()
@@ -221,7 +225,6 @@ class LabelEffectLogic(Effect.EffectLogic):
     maskIJKToRAS.DeepCopy(sliceNode.GetXYToRAS())
     polyData.GetPoints().Modified()
     bounds = polyData.GetBounds()
-    foreach {xlo xhi ylo yhi zlo zhi} $bounds {}
     xlo = bounds[0] - 1
     ylo = bounds[2] - 1
     originRAS = self.xyToRAS((xlo,ylo))
@@ -245,58 +248,35 @@ class LabelEffectLogic(Effect.EffectLogic):
     imageData = vtk.vtkImageData()
     imageData.SetDimensions( w, h, 1 )
 
-    if { $_layers(label,image) != "" } {
-      $imageData SetScalarType [$_layers(label,image) GetScalarType]
-    }
-    $imageData AllocateScalars
+    labelNode = labelLogic.GetVolumeNode()
+    if not labelNode: return
+    labelImage = labelNode.GetImageData()
+    if not labelImage: return
+    imageData.SetScalarType(labelImage.GetScalarType()) 
+    imageData.AllocateScalars()
 
     #
     # move the points so the lower left corner of the 
     # bounding box is at 1, 1 (to avoid clipping)
     #
-    set translate [vtkTransform New]
-    $translate Translate [expr -1. * $xlo] [expr -1. * $ylo] 0
+    translate = vtk.vtkTransform()
+    translate.Translate( -1. * xlo, -1. * ylo, 0)
     set drawPoints [vtkPoints New]
-    $drawPoints Reset
-    $translate TransformPoints [$polyData GetPoints] $drawPoints
-    $translate Delete
-    $drawPoints Modified
+    drawPoints.Reset()
+    translate.TransformPoints( polyData.GetPoints(), drawPoints )
+    translate.Delete()
+    drawPoints.Modified()
 
-    set fill [vtkImageFillROI New]
-    $fill SetInput $imageData
-    $fill SetValue 1
-    $fill SetPoints $drawPoints
-    [$fill GetOutput] Update
+    fill.slicer.vtkImageFillROI()
+    fill.SetInput(imageData)
+    fill.SetValue(1)
+    fill.SetPoints(drawPoints)
+    fill.GetOutput().Update()
 
-    set mask [vtkImageData New]
-    $mask DeepCopy [$fill GetOutput]
+    mask = vtk.vtkImageData()
+    mask.DeepCopy(fill.GetOutput())
 
-    if { $polygonDebugViewer } {
-      #
-      # make a little preview window for debugging pleasure
-      #
-      catch "viewer Delete"
-      catch "viewerImage Delete"
-      vtkImageViewer viewer
-      vtkImageData viewerImage
-      viewerImage DeepCopy [$fill GetOutput]
-      viewer SetInput viewerImage
-      viewer SetColorWindow 2
-      viewer SetColorLevel 1
-      viewer Render
-    }
-
-
-    #
-    # clean up our local class instances
-    #
-    $fill Delete
-    $imageData Delete
-    $drawPoints Delete
-
-    return [list $maskIJKToRAS $mask]
-  }
-  """
+    return [maskIJKToRAS, mask]
 
   def applyPolyMask(self,polyData):
     """
@@ -305,25 +285,17 @@ class LabelEffectLogic(Effect.EffectLogic):
     - points are specified in current XY space
     """
 
-    """
-      foreach {x y} [$_interactor GetEventPosition] {}
-      $this queryLayers $x $y
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    sliceNode = self.sliceLogic.GetSliceNode()
+    labelNode = labelLogic.GetVolumeNode()
+    if not sliceNode or not labelNode: return
 
-      if { $_layers(label,node) == "" } {
-        # if there's no label, we can't draw
-        return
-      }
+    maskIJKToRAS, mask = self.makeMaskImage(polyData)
 
-      set maskResult [$this makeMaskImage $polyData]
-      foreach {maskIJKToRAS mask} $maskResult {}
+    polyData.GetPoints().Modified()
+    bounds = polyData.GetBounds()
 
-      [$polyData GetPoints] Modified
-      set bounds [$polyData GetBounds]
-
-      $this applyImageMask $maskIJKToRAS $mask $bounds
-
-    }
-    """
+    self.applyImageMask(maskIJKToRAS, mask, bounds)
 
   def applyImageMask(self, maskIJKToRAS, mask, bounds):
     """
@@ -332,139 +304,126 @@ class LabelEffectLogic(Effect.EffectLogic):
     - mask is a vtkImageData
     - bounds are the xy extents of the mask (zlo and zhi ignored)
     """
+    backgroundLogic = self.sliceLogic.GetBackgroundLayer()
+    backgroundNode = backgroundLogic.GetVolumeNode()
+    if not backgroundNode: return
+    backgroundImage = backgroundNode.GetImageData()
+    if not backgroundImage: return
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    labelNode = labelLogic.GetVolumeNode()
+    if not labelNode: return
+    labelImage = labelNode.GetImageData()
+    if not labelImage: return
     
-    itcl::body Labeler::applyImageMask { maskIJKToRAS mask bounds } {
+    #
+    # at this point, the mask vtkImageData contains a rasterized
+    # version of the polygon and now needs to be added to the label
+    # image
+    #
 
-      #
-      # at this point, the mask vtkImageData contains a rasterized
-      # version of the polygon and now needs to be added to the label
-      # image
-      #
-      
-      # store a backup copy of the label map for undo
-      # (this happens in it's own thread, so it is cheap)
-      EditorStoreCheckPoint $_layers(label,node)
+    # store a backup copy of the label map for undo
+    # (this happens in it's own thread, so it is cheap)
+    if self.undoRedo:
+      self.undoRedo.saveState()
 
-      #
-      # get the brush bounding box in ijk coordinates
-      # - get the xy bounds
-      # - transform to ijk
-      # - clamp the bounds to the dimensions of the label image
-      #
+    #
+    # get the mask bounding box in ijk coordinates
+    # - get the xy bounds
+    # - transform to ijk
+    # - clamp the bounds to the dimensions of the label image
+    #
 
-      foreach {xlo xhi ylo yhi zlo zhi} $bounds {}
-      set xyToIJK [[$_layers(label,logic) GetXYToIJKTransform] GetMatrix]
-      set tlIJK [$xyToIJK MultiplyPoint $xlo $yhi 0 1]
-      set trIJK [$xyToIJK MultiplyPoint $xhi $yhi 0 1]
-      set blIJK [$xyToIJK MultiplyPoint $xlo $ylo 0 1]
-      set brIJK [$xyToIJK MultiplyPoint $xhi $ylo 0 1]
+    xlo, xhi, ylo, yhi, zlo, zhi = bounds
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
+    tlIJK = xyToIJK.MultiplyPoint( xlo, yhi, 0, 1)[:3]
+    trIJK = xyToIJK.MultiplyPoint( xhi, yhi, 0, 1)[:3]
+    blIJK = xyToIJK.MultiplyPoint( xlo, ylo, 0, 1)[:3]
+    brIJK = xyToIJK.MultiplyPoint( xhi, ylo, 0, 1)[:3]
 
-      # do the clamping
-      set dims [$_layers(label,image) GetDimensions]
-      foreach v {i j k} c [lrange $tlIJK 0 2] d $dims {
-        set tl($v) [expr int(round($c))]
-        if { $tl($v) < 0 } { set tl($v) 0 }
-        if { $tl($v) >= $d } { set tl($v) [expr $d - 1] }
-      }
-      foreach v {i j k} c [lrange $trIJK 0 2] d $dims {
-        set tr($v) [expr int(round($c))]
-        if { $tr($v) < 0 } { set tr($v) 0 }
-        if { $tr($v) >= $d } { set tr($v) [expr $d - 1] }
-      }
-      foreach v {i j k} c [lrange $blIJK 0 2] d $dims {
-        set bl($v) [expr int(round($c))]
-        if { $bl($v) < 0 } { set bl($v) 0 }
-        if { $bl($v) >= $d } { set bl($v) [expr $d - 1] }
-      }
-      foreach v {i j k} c [lrange $brIJK 0 2] d $dims {
-        set br($v) [expr int(round($c))]
-        if { $br($v) < 0 } { set br($v) 0 }
-        if { $br($v) >= $d } { set br($v) [expr $d - 1] }
-      }
+    # do the clamping of the four corners
+    dims = labelImage.GetDimensions()
+    tl = [0,] * 3
+    tr = [0,] * 3
+    bl = [0,] * 3
+    br = [0,] * 3
+    corners = ((tlIJK, tl),(trIJK, tr),(blIJK, bl),(brIJK, br))
+    foreach corner,clampedCorner in corners:
+      for d in xrange(3):
+        clamped = int(round(corner[d]))
+        if clamped < 0: clamped = 0
+        if clamped >= dims[d]: clamped = dims[d]-1
+        clampedCorner[d] = clamped
 
+    #
+    # get the ijk to ras matrices including transforms
+    # (use the maskToRAS calculated above)
+    #
 
-      #
-      # get the ijk to ras matrices 
-      # (use the maskToRAS calculated above)
-      #
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    labelNode = labelLogic.GetVolumeNode()
+    backgroundLogic = self.sliceLogic.GetLabelLayer()
+    backgroundNode = backgroundLogic.GetVolumeNode()
 
+    backgroundIJKToRAS = vtk.vtkMatrix4x4()
+    labelIJKToRAS = vtk.vtkMatrix4x4()
 
-      set backgroundIJKToRAS [vtkMatrix4x4 New]
-      set labelIJKToRAS [vtkMatrix4x4 New]
-      foreach layer {background label} {
-        set ijkToRAS ${layer}IJKToRAS
-        $_layers($layer,node) GetIJKToRASMatrix [set $ijkToRAS]
-        set transformNode [$_layers($layer,node) GetParentTransformNode]
-        if { $transformNode != "" } {
-          if { [$transformNode IsTransformToWorldLinear] } {
-            set rasToRAS [vtkMatrix4x4 New]
-            $transformNode GetMatrixTransformToWorld $rasToRAS
-            $rasToRAS Multiply4x4 $rasToRAS [set $ijkToRAS] [set $ijkToRAS]
-            $rasToRAS Delete
-          } else {
-            error "Cannot handle non-linear transforms"
-          }
-        }
-      }
+    sets = ( (backgroundNode, backgroundIJKToRAS), (labelNode, labelIJKToRAS) )
+    for node,ijkToRAS in sets:
+      node.GetIJKToRASMatrix(ijkToRAS)
+      transformNode = node.GetParentTransformNode()
+      if transformNode:
+        if transformNode.IsTransformToWorldLinear():
+          rasToRAS = vtk.vtkMatrix4x4()
+          transformNode.GetMatrixTransformToWorld(rasToRAS)
+          rasToRAS.Multiply4x4(rasToRAS, ijkToRAS, ijkToRAS)
+        else:
+          print ("Cannot handle non-linear transforms")
+          return
 
+    #
+    # create an exract image for undo if it doesn't exist yet.
+    #
 
-      #
-      # create an exract image for undo if it doesn't exist yet
-      #
-      if { ![info exists o(extractImage)] } {
-        set o(extractImage) [vtkNew vtkImageData]
-      }
+    if not self.extractImage:
+      self.extractImage = vtk.vtkImageData()
 
-      #
-      # set up the painter class and let 'r rip!
-      #
-      $o(painter) SetBackgroundImage [$this getInputBackground]
-      $o(painter) SetBackgroundIJKToWorld $backgroundIJKToRAS
-      $o(painter) SetWorkingImage [$this getInputLabel]
-      $o(painter) SetWorkingIJKToWorld $labelIJKToRAS
-      $o(painter) SetMaskImage $mask
-      $o(painter) SetExtractImage $o(extractImage)
-      $o(painter) SetReplaceImage ""
-      $o(painter) SetMaskIJKToWorld $maskIJKToRAS
-      $o(painter) SetTopLeft $tl(i) $tl(j) $tl(k)
-      $o(painter) SetTopRight $tr(i) $tr(j) $tr(k)
-      $o(painter) SetBottomLeft $bl(i) $bl(j) $bl(k)
-      $o(painter) SetBottomRight $br(i) $br(j) $br(k)
-      $o(painter) SetPaintLabel [EditorGetPaintLabel]
-      $o(painter) SetPaintOver $paintOver
-      $o(painter) SetThresholdPaint $paintThreshold
-      $o(painter) SetThresholdPaintRange $paintThresholdMin $paintThresholdMax
+    parameterNode = self.editUtil.getParameterNode()
+    paintLabel = int(parameterNode.GetParameter("label"))
+    paintOver = int(parameterNode.GetParameter("LabelEffect,paintOver"))
+    paintThreshold = int(parameterNode.GetParameter("LabelEffect,paintThreshold"))
+    paintThresholdMin = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMin"))
+    paintThresholdMax = float(
+        parameterNode.GetParameter("LabelEffect,paintThresholdMax"))
 
-      $o(painter) Paint
+    #
+    # set up the painter class and let 'r rip!
+    #
+    self.painter.SetBackgroundImage( backgroundImage )
+    self.painter.SetBackgroundIJKToWorld( backgroundIJKToRAS )
+    self.painter.SetWorkingImage( labelImage )
+    self.painter.SetWorkingIJKToWorld( labelIJKToRAS )
+    self.painter.SetMaskImage( mask )
+    self.painter.SetExtractImage( self.extractImage )
+    self.painter.SetReplaceImage(None)
+    self.painter.SetMaskIJKToWorld( maskIJKToRAS )
+    self.painter.SetTopLeft(tl)
+    self.painter.SetTopRight(tr)
+    self.painter.SetBottomLeft(bl)
+    self.painter.SetBottomRight(br)
 
-      $labelIJKToRAS Delete
-      $backgroundIJKToRAS Delete
-      $maskIJKToRAS Delete
-      $mask Delete
+    self.painter.SetPaintLabel( paintLabel )
+    self.painter.SetPaintOver( paintOver )
+    self.painter.SetThresholdPaint( paintThreshold )
+    self.painter.SetThresholdPaintRange( paintThresholdMin, paintThresholdMax )
 
-      # TODO: workaround for new pipeline in slicer4
-      # - editing image data of the calling modified on the node
-      #   does not pull the pipeline chain
-      # - so we trick it by changing the image data first
-      $_layers(label,node) SetModifiedSinceRead 1
-      set workaround 1
-      if { $workaround } {
-        if { ![info exists o(tempImageData)] } {
-          set o(tempImageData) [vtkNew vtkImageData]
-        }
-        set imageData [$_layers(label,node) GetImageData]
-        $_layers(label,node) SetAndObserveImageData $o(tempImageData)
-        $_layers(label,node) SetAndObserveImageData $imageData
-      } else {
-        $_layers(label,node) Modified
-      }
-
-      return
-    }
-    """
+    self.painter.Paint()
 
 
   def undoLastApply(self):
+    #TODO: optimized path for undo/redo - not currently available
+    pass
     """
     # use the 'save under' information from last paint apply
     # to restore the original value of the working volume

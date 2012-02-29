@@ -14,7 +14,7 @@ import LabelEffect
 comment = """
 
   DrawEffect is a subclass of LabelEffect
-  that implements the interactive drawing tool
+  that implements the interactive paintbrush tool
   in the slicer editor
 
 # TODO : 
@@ -39,43 +39,21 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
   def create(self):
     super(DrawEffectOptions,self).create()
 
-    self.radiusFrame = qt.QFrame(self.frame)
-    self.radiusFrame.setLayout(qt.QHBoxLayout())
-    self.frame.layout().addWidget(self.radiusFrame)
-    self.widgets.append(self.radiusFrame)
-    self.radiusLabel = qt.QLabel("Radius:", self.radiusFrame)
-    self.radiusLabel.setToolTip("Set the radius of the paint brush in millimeters")
-    self.radiusFrame.layout().addWidget(self.radiusLabel)
-    self.widgets.append(self.radiusLabel)
-    self.radiusSpinBox = qt.QDoubleSpinBox(self.radiusFrame)
-    self.radiusSpinBox.setToolTip("Set the radius of the paint brush in millimeters")
-    self.radiusSpinBox.minimum = 0.01
-    self.radiusSpinBox.maximum = 100
-    self.radiusSpinBox.suffix = "mm"
-    self.radiusFrame.layout().addWidget(self.radiusSpinBox)
-    self.widgets.append(self.radiusSpinBox)
+    self.apply = qt.QPushButton("Apply", self.frame)
+    self.apply.setToolTip("Apply current outline.\nUse the 'a' or 'Enter' hotkey to apply in slice window")
+    self.frame.layout().addWidget(self.apply)
+    self.widgets.append(self.apply)
 
-    self.radius = ctk.ctkDoubleSlider(self.frame)
-    self.radius.minimum = 0.01
-    self.radius.maximum = 100
-    self.radius.orientation = 1
-    self.radius.singleStep = 0.01
-    self.frame.layout().addWidget(self.radius)
-    self.widgets.append(self.radius)
+    EditorLib.HelpButton(self.frame, "Use this tool to draw an outline.\n\nLeft Click: add point.\nLeft Drag: add multiple points.\nx: delete last point.\na: apply outline.")
 
-    self.smudge = qt.QCheckBox("Smudge", self.frame)
-    self.smudge.setToolTip("Set the label number automatically by sampling the pixel location where the brush stroke starts.")
-    self.frame.layout().addWidget(self.smudge)
-    self.widgets.append(self.smudge)
-
-    EditorLib.HelpButton(self.frame, "Use this tool to paint with a round brush of the selected radius")
-
-    self.smudge.connect('clicked()', self.updateMRMLFromGUI)
-    self.radius.connect('valueChanged(double)', self.onRadiusValueChanged)
-    self.radiusSpinBox.connect('valueChanged(double)', self.onRadiusSpinBoxChanged)
+    self.apply.connect('clicked()', self.onApply)
 
     # Add vertical spacer
     self.frame.layout().addStretch(1)
+
+  def onApply(self):
+    for tool in self.tools:
+      tool.apply()
 
   def destroy(self):
     super(DrawEffectOptions,self).destroy()
@@ -93,65 +71,18 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
 
   def setMRMLDefaults(self):
     super(DrawEffectOptions,self).setMRMLDefaults()
-    disableState = self.parameterNode.GetDisableModifiedEvent()
-    self.parameterNode.SetDisableModifiedEvent(1)
-    defaults = (
-      ("radius", "5"),
-      ("smudge", "0"),
-    )
-    for d in defaults:
-      param = "Draw,"+d[0]
-      pvalue = self.parameterNode.GetParameter(param)
-      if pvalue == '':
-        self.parameterNode.SetParameter(param, d[1])
-    self.parameterNode.SetDisableModifiedEvent(disableState)
 
   def updateGUIFromMRML(self,caller,event):
-    if self.updatingGUI:
-      return
-    params = ("radius", "smudge")
-    for p in params:
-      if self.parameterNode.GetParameter("Draw,"+p) == '':
-        # don't update if the parameter node has not got all values yet
-        return
     self.updatingGUI = True
-    super(DrawEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.smudge.setChecked( int(self.parameterNode.GetParameter("Draw,smudge")) )
-    self.radius.setValue( float(self.parameterNode.GetParameter("Draw,radius")) )
-    radius = float(self.parameterNode.GetParameter("Draw,radius"))
-    self.radiusSpinBox.setValue( radius )
-    for tool in self.tools:
-      tool.radius = radius
-      tool.createGlyph(tool.brush)
+    super(DrawOptions,self).updateGUIFromMRML(caller,event)
     self.updatingGUI = False
-
-  def onRadiusValueChanged(self,value):
-    if self.updatingGUI:
-      return
-    self.updatingGUI = True
-    self.radiusSpinBox.setValue(self.radius.value)
-    self.updatingGUI = False
-    self.updateMRMLFromGUI()
-
-  def onRadiusSpinBoxChanged(self,value):
-    if self.updatingGUI:
-      return
-    self.updatingGUI = True
-    self.radius.setValue(self.radiusSpinBox.value)
-    self.updatingGUI = False
-    self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
     if self.updatingGUI:
       return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
-    super(DrawEffectOptions,self).updateMRMLFromGUI()
-    if self.smudge.checked:
-      self.parameterNode.SetParameter( "Draw,smudge", "1" )
-    else:
-      self.parameterNode.SetParameter( "Draw,smudge", "0" )
-    self.parameterNode.SetParameter( "Draw,radius", str(self.radius.value) )
+    super(DrawOptions,self).updateMRMLFromGUI()
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()
@@ -172,299 +103,194 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
   def __init__(self, sliceWidget):
     super(DrawEffectTool,self).__init__(sliceWidget)
-
-    # configuration variables
-    self.radius = 5
-    self.smudge = 0
-    self.delayedDraw = 1
-
     # interaction state variables
-    self.position = [0, 0, 0]
-    self.paintCoordinates = []
-    self.feedbackActors = []
-    self.lastRadius = 0
-
-    # scratch variables
-    self.rasToXY = vtk.vtkMatrix4x4()
+    self.activeSlice = None
+    self.lastInsertSLiceNodeMTime = None
+    self.actionState = None
 
     # initialization
-    self.brush = vtk.vtkPolyData()
-    self.createGlyph(self.brush)
+    self.xyPoints = vtk.vtkPoints()
+    self.rasPoints = vtk.vtkPoints()
+    self.polyData = self.createPolyData()
+
     self.mapper = vtk.vtkPolyDataMapper2D()
     self.actor = vtk.vtkActor2D()
-    self.mapper.SetInput(self.brush)
+    self.mapper.SetInput(self.polyData)
     self.actor.SetMapper(self.mapper)
-    self.actor.VisibilityOff()
-
-    self.renderer.AddActor2D(self.actor)
-    self.actors.append(self.actor)
-
-    self.processEvent()
+    property_ = self.actor.GetProperty()
+    property_.SetColor(1,1,0)
+    property_.SetLineWidth(1)
+    self.renderer.AddActor2D( self.actor )
+    self.actors.append( self.actor )
 
   def cleanup(self):
     """
-    Remove actors from renderer and call superclass
+    call superclass to clean up actor
     """
-    for a in self.feedbackActors:
-      self.renderer.RemoveActor2D(a)
-    self.sliceView.scheduleRender()
     super(DrawEffectTool,self).cleanup()
+
+  def setLineMode(self,mode="solid"):
+    property_ = self.actor.GetProperty()
+    if mode == "solid":
+      property_.SetLineStipplePattern(65535)
+    elif mode == "dashed":
+      property_.SetLineStipplePattern(0xff00)
 
   def processEvent(self, caller=None, event=None):
     """
     handle events from the render window interactor
     """
+
+    # TODO: might need preProcessEvent method like DrawEffect.tcl
+    # TODO: might need grabID
+
+    # events from the interactory
     if event == "LeftButtonPressEvent":
-      self.actionState = "painting"
+      self.actionState = "drawing"
       xy = self.interactor.GetEventPosition()
-      self.paintAddPoint(xy[0], xy[1])
+      self.addPoint(self.xyToRAS(xy))
       self.abortEvent(event)
-    elif event == "LeftButtonReleaseEvent":
-      self.paintApply()
-      self.actionState = None
+    elif event == "LeftButtonPressEvent":
+      self.actionState = ""
+    elif event == "RightButtonPressEvent":
+      self.lastInsertSLiceNodeMTime = sliceNode.GetMTime()
+    elif event == "RightButtonReleaseEvent":
+      sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
+      if self.lastInsertSLiceNodeMTime == sliceNode.GetMTime():
+        self.apply()
+        self.actionState = None
     elif event == "MouseMoveEvent":
-      self.actor.VisibilityOn()
-      if self.actionState == "painting":
+      if self.actionState == "drawing":
         xy = self.interactor.GetEventPosition()
-        self.paintAddPoint(xy[0], xy[1])
+        self.addPoint(self.xyToRAS(xy))
         self.abortEvent(event)
-    elif event == "EnterEvent":
-      self.actor.VisibilityOn()
     elif event == "LeaveEvent":
       self.actor.VisibilityOff()
+    elif event == "KeyPressEvent":
+      key = self.interactor.GetKeySym()
+      if key == 'a' or key == 'Return':
+        self.apply()
+        self.abortEvent(event)
+      if key == 'x':
+        self.deleteLastPoint()
+        self.abortEvent(event)
     else:
       print(caller,event,self.sliceWidget.sliceLogic().GetSliceNode().GetName())
+
+    # events from the slice node
+    if caller and caller.IsA('vtkMRMLSliceNode'):
+      # 
+      # make sure all points are on the current slice plane
+      # - if the SliceToRAS has been modified, then we're on a different plane
+      #
+      sliceLogic = self.sliceWidget.sliceLogic()
+      lineMode = "solid"
+      currentSlice = logic.GetSliceOffset()
+      if self.activeSlice:
+        offset = abs(currentSlice - self.activeSlice)
+        if offset > 0.01:
+          lineMode = "dashed"
+      self.setLineMode(lineMode)
+
     self.positionActors()
 
   def positionActors(self):
     """
-    update paint feedback glyph to follow mouse
+    update draw feedback to follow slice node
     """
-    self.actor.SetPosition( self.interactor.GetEventPosition() )
+    rasToXY = vtk.vtkTransform()
+    rasToXY.SetMatrix( self.sliceNode.GetXYToRAS() )
+    rasToXY.Inverse()
+    self.xyPoints.Reset()
+    rasToXY.TransformPoints( self.rasPoints, self.xyPoints )
+    self.polyData.Modified()
     self.sliceView.scheduleRender()
-    
 
-  def createGlyph(self, polyData):
-    """
-    create a brush circle of the right radius in XY space
-    - assume uniform scaling between XY and RAS which
-      is enforced by the view interactors
-    """
-    sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
-    self.rasToXY.DeepCopy(sliceNode.GetXYToRAS())
-    self.rasToXY.Invert()
-    if self.rasToXY.GetElement(0, 0) != 0:
-      point = (self.radius, 0, 0, 0)
-    else:
-      point = (0, self.radius,  0, 0)
-    xyRadius = self.rasToXY.MultiplyPoint(point)
-    import math
-    xyRadius = math.sqrt( xyRadius[0]**2 + xyRadius[1]**2 + xyRadius[2]**2 )
+  def apply(self):
 
-    # make a circle paint brush
-    points = vtk.vtkPoints()
+    lines = self.polyData.GetLines()
+    if lines.GetNumberOfCells() == 0: return
+
+    # close the polyline back to the first point
+    idArray = lines.GetData()
+    p = idArray.GetTuple1(1)
+    idArray.InsertNextTuple1(p)
+    idArray.SetTuple1(0, idArray.GetNumberOfTuples() - 1)
+
+    self.applyPolyMask(self.polyData)
+    self.resetPolyData()
+
+  def createPolyData(self):
+    """make an empty single-polyline polydata"""
+
+    polyData = vtk.vtkPolyData()
+    polyData.SetPoints(self.xyPoints)
+
     lines = vtk.vtkCellArray()
-    polyData.SetPoints(points)
     polyData.SetLines(lines)
-    PI = 3.1415926
-    TWOPI = PI * 2
-    PIoverSIXTEEN = PI / 16
-    prevPoint = -1
-    firstPoint = -1
-    angle = 0
-    while angle <= TWOPI:
-      x = xyRadius * math.cos(angle)
-      y = xyRadius * math.sin(angle)
-      p = points.InsertNextPoint( x, y, 0 )
-      if prevPoint != -1:
-        idList = vtk.vtkIdList()
-        idList.InsertNextId(prevPoint)
-        idList.InsertNextId(p)
-        polyData.InsertNextCell( vtk.VTK_LINE, idList )
-      prevPoint = p
-      if firstPoint == -1:
-        firstPoint = p
-      angle = angle + PIoverSIXTEEN
+    idArray = lines.GetData()
+    idArray.Reset()
+    idArray.InsertNextTuple1(0)
 
-    # make the last line in the circle
-    idList = vtk.vtkIdList()
-    idList.InsertNextId(p)
-    idList.InsertNextId(firstPoint)
-    polyData.InsertNextCell( vtk.VTK_LINE, idList )
+    polygons = vtk.vtkCellArray()
+    polyData.SetPolys(polygons)
+    idArray = polygons.GetData()
+    idArray.Reset()
+    idArray.InsertNextTuple1(0)
 
-  def paintAddPoint(self, x, y):
-    """
-    depending on the delayedDraw mode, either paint the
-    given point or queue it up with a marker for later 
-    painting
-    """
-    self.paintCoordinates.append( (x, y) )
-    if self.delayedDraw:
-      self.paintFeedback()
-    else:
-      self.paintApply()
+    return polyData
 
-  def paintFeedback(self):
-    """
-    add a feedback actor (copy of the paint radius
-    actor) for any points that don't have one yet.
-    If the list is empty, clear out the old actors
-    """
 
-    if self.paintCoordinates == []:
-      for a in self.feedbackActors:
-        self.renderer.RemoveActor2D(a)
-      self.feedbackActors = []
-      return
+  def resetPolyData(self):
+    """return the polyline to initial state with no points"""
+    lines = polyData.GetLines()
+    idArray = lines.GetData()
+    idArray.Reset()
+    idArray.InsertNextTuple1(0)
+    self.xyPoints.Reset()
+    self.rasPointsReset()
+    lines.SetNumberOfCells(0)
+    self.activeSlice = None
 
-    for xy in self.paintCoordinates[len(self.feedbackActors):]:
-      a = vtk.vtkActor2D()
-      self.feedbackActors.append(a)
-      a.SetMapper(self.mapper)
-      a.SetPosition(xy[0], xy[1])
-      property = a.GetProperty()
-      property.SetColor(.7, .7, 0)
-      property.SetOpacity( .5 )
-      self.renderer.AddActor2D( a )
-
-  def paintApply(self):
-    if self.paintCoordinates != []:
-      if self.undoRedo:
-        self.undoRedo.saveState()
+  def addPoint(self,ras):
+    """add a world space point to the current outline"""
+    # store active slice when first point is added
+    sliceLogic = self.sliceWidget.sliceLogic()
+    self.currentSlice = logic.GetSliceOffset()
+    if not self.activeSlice:
+      self.activeSlice = currentSlice
+      self.setLineMode("solid")
     
-    for xy in self.paintCoordinates:
-      self.paintBrush(xy[0], xy[1])
-    self.paintCoordinates = []
-    self.paintFeedback()
+    # don't allow adding points on except on the active slice (where
+    # first point was laid down)
+    if self.activeSlice != currentSlice: return
 
-    # TODO: workaround for new pipeline in slicer4
-    # - editing image data of the calling modified on the node
-    #   does not pull the pipeline chain
-    # - so we trick it by changing the image data first
-    sliceLogic = self.sliceWidget.sliceLogic()
-    labelLogic = sliceLogic.GetLabelLayer()
-    labelNode = labelLogic.GetVolumeNode()
-    labelNode.SetModifiedSinceRead(1)
-    workaround = 1
-    if workaround:
-      if not hasattr(self,"tempImageData"):
-        self.tempImageData = vtk.vtkImageData()
-      imageData = labelNode.GetImageData()
-      labelNode.SetAndObserveImageData(self.tempImageData)
-      labelNode.SetAndObserveImageData(imageData)
-    else:
-      labelNode.Modified()
-
-  def paintBrush(self, x, y):
-    """
-    paint with a brush that is circular in XY space 
-     (could be streched or rotate when transformed to IJK)
-     - make sure to hit ever pixel in IJK space 
-     - apply the threshold if selected
-    """
-    sliceLogic = self.sliceWidget.sliceLogic()
+    # keep track of node state (in case of pan/zoom)
     sliceNode = sliceLogic.GetSliceNode()
-    labelLogic = sliceLogic.GetLabelLayer()
-    labelNode = labelLogic.GetVolumeNode()
-    labelImage = labelNode.GetImageData()
-    backgroundLogic = sliceLogic.GetBackgroundLayer()
-    backgroundNode = backgroundLogic.GetVolumeNode()
-    backgroundImage = backgroundNode.GetImageData()
+    self.lastInsertSliceNodeMTime(sliceNode.GetMTime())
 
-    if not labelNode:
-      # if there's no label, we can't paint
-      return
+    p = self.rasPoints.InsertNextPoint(ras)
+    lines = self.polyData.GetLines()
+    idArray = lines.GetData()
+    idArray.InsertNextTuple1(p)
+    dArray.SetTuple1(0, idArray.GetNumberOfTuples()-1)
+    lines.SetNumberOfCells(1)
 
-    #
-    # get the brush bounding box in ijk coordinates
-    # - get the xy bounds
-    # - transform to ijk
-    # - clamp the bounds to the dimensions of the label image
-    #
-    bounds = self.brush.GetPoints().GetBounds()
-    left = x + bounds[0]
-    right = x + bounds[1]
-    bottom = y + bounds[2]
-    top = y + bounds[3]
+  def deleteLastPoint():
+    """unwind through addPoint list back to empy polydata"""
 
-    xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
-    tlIJK = xyToIJK.MultiplyPoint( (left, top, 0, 1) )
-    trIJK = xyToIJK.MultiplyPoint( (right, top, 0, 1) )
-    blIJK = xyToIJK.MultiplyPoint( (left, bottom, 0, 1) )
-    brIJK = xyToIJK.MultiplyPoint( (right, bottom, 0, 1) )
+    pcount = self.rasPoints.GetNumberOfPoints()
+    if pcount <= 0: return
 
-    dims = labelImage.GetDimensions()
+    pcount = pcount - 1
+    self.rasPoints.SetNumberOfPoints(pcount)
 
-    # clamp the top, bottom, left, right to the 
-    # valid dimensions of the label image
-    tl = [0,0,0]
-    tr = [0,0,0]
-    bl = [0,0,0]
-    br = [0,0,0]
-    for i in xrange(3):
-      tl[i] = int(round(tlIJK[i]))
-      if tl[i] < 0:
-        tl[i] = 0
-      if tl[i] >= dims[i]:
-        tl[i] = dims[i] - 1
-      tr[i] = int(round(trIJK[i]))
-      if tr[i] < 0:
-        tr[i] = 0
-      if tr[i] > dims[i]:
-        tr[i] = dims[i] - 1
-      bl[i] = int(round(blIJK[i]))
-      if bl[i] < 0:
-        bl[i] = 0
-      if bl[i] > dims[i]:
-        bl[i] = dims[i] - 1
-      br[i] = int(round(brIJK[i]))
-      if br[i] < 0:
-        br[i] = 0
-      if br[i] > dims[i]:
-        br[i] = dims[i] - 1
-        
-    #
-    # get the ijk to ras matrices 
-    #
-    backgroundIJKToRAS = vtk.vtkMatrix4x4()
-    backgroundNode.GetIJKToRASMatrix(backgroundIJKToRAS)
-    labelIJKToRAS = vtk.vtkMatrix4x4()
-    labelNode.GetIJKToRASMatrix(labelIJKToRAS)
+    lines = self.polyData.GetLines()
+    idArray = lines.GetData()
+    idArray.SetTuple1(0, pcount)
+    idArray.SetNumberOfTuples(pcount+1)
 
-    xyToRAS = sliceNode.GetXYToRAS()
-    brushCenter = xyToRAS.MultiplyPoint( (x, y, 0, 1) )[:3]
-    brushRadius = self.radius
-
-    parameterNode = self.editUtil.getParameterNode()
-    paintLabel = int(parameterNode.GetParameter("label"))
-    paintOver = int(parameterNode.GetParameter("LabelEffect,paintOver"))
-    paintThreshold = int(parameterNode.GetParameter("LabelEffect,paintThreshold"))
-    paintThresholdMin = float(
-        parameterNode.GetParameter("LabelEffect,paintThresholdMin"))
-    paintThresholdMax = float(
-        parameterNode.GetParameter("LabelEffect,paintThresholdMax"))
-
-    #
-    # set up the painter class and let 'r rip!
-    #
-    if not hasattr(self,"painter"):
-      self.painter = slicer.vtkImageSliceDraw()
-    self.painter.SetBackgroundImage(backgroundImage)
-    self.painter.SetBackgroundIJKToWorld(backgroundIJKToRAS)
-    self.painter.SetWorkingImage(labelImage)
-    self.painter.SetWorkingIJKToWorld(labelIJKToRAS)
-    self.painter.SetTopLeft( tl[0], tl[1], tl[2] )
-    self.painter.SetTopRight( tr[0], tr[1], tr[2] )
-    self.painter.SetBottomLeft( bl[0], bl[1], bl[2] )
-    self.painter.SetBottomRight( br[0], br[1], br[2] )
-    self.painter.SetBrushCenter( brushCenter[0], brushCenter[1], brushCenter[2] )
-    self.painter.SetBrushRadius( brushRadius )
-    self.painter.SetDrawLabel(paintLabel)
-    self.painter.SetDrawOver(paintOver)
-    self.painter.SetThresholdDraw(paintThreshold)
-    self.painter.SetThresholdDrawRange(paintThresholdMin, paintThresholdMax)
-    self.painter.Draw()
-
+    self.positionActors()
 
 #
 # DrawEffectLogic
@@ -504,3 +330,11 @@ class DrawEffect(LabelEffect.LabelEffect):
     self.options = DrawEffectOptions
     self.tool = DrawEffectTool
     self.logic = DrawEffectLogic
+
+""" Test:
+
+sw = slicer.app.layoutManager().sliceWidget('Red')
+import EditorLib
+pet = EditorLib.DrawEffectTool(sw)
+
+"""
