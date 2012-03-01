@@ -74,7 +74,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
 
   def updateGUIFromMRML(self,caller,event):
     self.updatingGUI = True
-    super(DrawOptions,self).updateGUIFromMRML(caller,event)
+    super(DrawEffectOptions,self).updateGUIFromMRML(caller,event)
     self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
@@ -82,7 +82,7 @@ class DrawEffectOptions(LabelEffect.LabelEffectOptions):
       return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
-    super(DrawOptions,self).updateMRMLFromGUI()
+    super(DrawEffectOptions,self).updateMRMLFromGUI()
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()
@@ -198,8 +198,10 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     """
     update draw feedback to follow slice node
     """
+    sliceLogic = self.sliceWidget.sliceLogic()
+    sliceNode = sliceLogic.GetSliceNode()
     rasToXY = vtk.vtkTransform()
-    rasToXY.SetMatrix( self.sliceNode.GetXYToRAS() )
+    rasToXY.SetMatrix( sliceNode.GetXYToRAS() )
     rasToXY.Inverse()
     self.xyPoints.Reset()
     rasToXY.TransformPoints( self.rasPoints, self.xyPoints )

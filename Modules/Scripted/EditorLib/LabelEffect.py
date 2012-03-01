@@ -261,7 +261,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     #
     translate = vtk.vtkTransform()
     translate.Translate( -1. * xlo, -1. * ylo, 0)
-    set drawPoints [vtkPoints New]
+    drawPointsi = vtk.vtkPoints()
     drawPoints.Reset()
     translate.TransformPoints( polyData.GetPoints(), drawPoints )
     translate.Delete()
@@ -348,7 +348,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     bl = [0,] * 3
     br = [0,] * 3
     corners = ((tlIJK, tl),(trIJK, tr),(blIJK, bl),(brIJK, br))
-    foreach corner,clampedCorner in corners:
+    for corner,clampedCorner in corners:
       for d in xrange(3):
         clamped = int(round(corner[d]))
         if clamped < 0: clamped = 0
