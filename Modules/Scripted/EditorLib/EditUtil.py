@@ -80,7 +80,10 @@ class EditUtil(object):
         return ( dispNode.GetColorNode() )
 
   def getLabel(self):
-    return self.getParameterNode().GetParameter('label')
+    return int(self.getParameterNode().GetParameter('label'))
+
+  def setLabel(self,label):
+    return self.getParameterNode().SetParameter('label',str(label))
 
 
 class UndoRedo(object):

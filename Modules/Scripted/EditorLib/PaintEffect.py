@@ -116,11 +116,13 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
         return
     self.updatingGUI = True
     super(PaintEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.smudge.setChecked( int(self.parameterNode.GetParameter("Paint,smudge")) )
+    smudge = not 0 == int(self.parameterNode.GetParameter("Paint,smudge"))
+    self.smudge.setChecked( smudge )
     self.radius.setValue( float(self.parameterNode.GetParameter("Paint,radius")) )
     radius = float(self.parameterNode.GetParameter("Paint,radius"))
     self.radiusSpinBox.setValue( radius )
     for tool in self.tools:
+      tool.smudge = smudge
       tool.radius = radius
       tool.createGlyph(tool.brush)
     self.updatingGUI = False
@@ -175,7 +177,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
 
     # configuration variables
     self.radius = 5
-    self.smudge = 0
+    self.smudge = False
     self.delayedPaint = 1
 
     # interaction state variables
@@ -210,6 +212,19 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     self.sliceView.scheduleRender()
     super(PaintEffectTool,self).cleanup()
 
+  def getLabelPixel(self,xy):
+    sliceLogic = self.sliceWidget.sliceLogic()
+    labelLogic = sliceLogic.GetLabelLayer()
+    xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
+    i,j,k,l = xyToIJK.MultiplyPoint( xy + (0, 1) )
+    i = int(round(i))
+    j = int(round(j))
+    k = int(round(k))
+    labelImage = labelLogic.GetVolumeNode().GetImageData()
+    pixel = int(labelImage.GetScalarComponentAsDouble(i,j,k,0))
+    return(pixel)
+    
+
   def processEvent(self, caller=None, event=None):
     """
     handle events from the render window interactor
@@ -217,6 +232,8 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     if event == "LeftButtonPressEvent":
       self.actionState = "painting"
       xy = self.interactor.GetEventPosition()
+      if self.smudge:
+        self.editUtil.setLabel(self.getLabelPixel(xy))
       self.paintAddPoint(xy[0], xy[1])
       self.abortEvent(event)
     elif event == "LeftButtonReleaseEvent":
