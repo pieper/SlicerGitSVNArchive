@@ -103,6 +103,11 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
   def __init__(self, sliceWidget):
     super(DrawEffectTool,self).__init__(sliceWidget)
+    
+    # create a logic instance to do the non-gui work
+    self.logic = DrawEffectLogic(self.sliceWidget.sliceLogic())
+    self.logic.undoRedo = self.undoRedo
+
     # interaction state variables
     self.activeSlice = None
     self.lastInsertSLiceNodeMTime = None
@@ -148,11 +153,12 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     if event == "LeftButtonPressEvent":
       self.actionState = "drawing"
       xy = self.interactor.GetEventPosition()
-      self.addPoint(self.xyToRAS(xy))
+      self.addPoint(self.logic.xyToRAS(xy))
       self.abortEvent(event)
     elif event == "LeftButtonPressEvent":
       self.actionState = ""
     elif event == "RightButtonPressEvent":
+      sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
       self.lastInsertSLiceNodeMTime = sliceNode.GetMTime()
     elif event == "RightButtonReleaseEvent":
       sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
@@ -162,7 +168,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     elif event == "MouseMoveEvent":
       if self.actionState == "drawing":
         xy = self.interactor.GetEventPosition()
-        self.addPoint(self.xyToRAS(xy))
+        self.addPoint(self.logic.xyToRAS(xy))
         self.abortEvent(event)
     elif event == "LeaveEvent":
       self.actor.VisibilityOff()
@@ -185,7 +191,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
       #
       sliceLogic = self.sliceWidget.sliceLogic()
       lineMode = "solid"
-      currentSlice = logic.GetSliceOffset()
+      currentSlice = sliceLogic.GetSliceOffset()
       if self.activeSlice:
         offset = abs(currentSlice - self.activeSlice)
         if offset > 0.01:
@@ -219,7 +225,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     idArray.InsertNextTuple1(p)
     idArray.SetTuple1(0, idArray.GetNumberOfTuples() - 1)
 
-    self.applyPolyMask(self.polyData)
+    self.logic.applyPolyMask(self.polyData)
     self.resetPolyData()
 
   def createPolyData(self):
@@ -245,12 +251,12 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
   def resetPolyData(self):
     """return the polyline to initial state with no points"""
-    lines = polyData.GetLines()
+    lines = self.polyData.GetLines()
     idArray = lines.GetData()
     idArray.Reset()
     idArray.InsertNextTuple1(0)
     self.xyPoints.Reset()
-    self.rasPointsReset()
+    self.rasPoints.Reset()
     lines.SetNumberOfCells(0)
     self.activeSlice = None
 
@@ -258,7 +264,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     """add a world space point to the current outline"""
     # store active slice when first point is added
     sliceLogic = self.sliceWidget.sliceLogic()
-    self.currentSlice = logic.GetSliceOffset()
+    currentSlice = sliceLogic.GetSliceOffset()
     if not self.activeSlice:
       self.activeSlice = currentSlice
       self.setLineMode("solid")
@@ -269,13 +275,13 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
     # keep track of node state (in case of pan/zoom)
     sliceNode = sliceLogic.GetSliceNode()
-    self.lastInsertSliceNodeMTime(sliceNode.GetMTime())
+    self.lastInsertSliceNodeMTime = sliceNode.GetMTime()
 
     p = self.rasPoints.InsertNextPoint(ras)
     lines = self.polyData.GetLines()
     idArray = lines.GetData()
     idArray.InsertNextTuple1(p)
-    dArray.SetTuple1(0, idArray.GetNumberOfTuples()-1)
+    idArray.SetTuple1(0, idArray.GetNumberOfTuples()-1)
     lines.SetNumberOfCells(1)
 
   def deleteLastPoint():
@@ -309,9 +315,8 @@ class DrawEffectLogic(LabelEffect.LabelEffectLogic):
   by other code without the need for a view context.
   """
 
-  def __init__(self):
-    # TODO: flesh this out
-    pass
+  def __init__(self,sliceLogic):
+    super(DrawEffectLogic,self).__init__(sliceLogic)
 
 
 #

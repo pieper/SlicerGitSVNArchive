@@ -1,4 +1,5 @@
 import os
+from __main__ import vtk
 from __main__ import qt
 from __main__ import ctk
 from __main__ import slicer
@@ -194,8 +195,8 @@ class LabelEffectLogic(Effect.EffectLogic):
   by other code without the need for a view context.
   """
 
-  def __init__(self):
-    super(LabelEffectLogic,self).__init__()
+  def __init__(self,sliceLogic):
+    super(LabelEffectLogic,self).__init__(sliceLogic)
     self.paintThreshold = 0
     self.paintThresholdMin = 1
     self.paintThresholdMax = 1
@@ -226,7 +227,9 @@ class LabelEffectLogic(Effect.EffectLogic):
     polyData.GetPoints().Modified()
     bounds = polyData.GetBounds()
     xlo = bounds[0] - 1
+    xhi = bounds[1]
     ylo = bounds[2] - 1
+    yhi = bounds[3]
     originRAS = self.xyToRAS((xlo,ylo))
     maskIJKToRAS.SetElement( 0, 3, originRAS[0] )
     maskIJKToRAS.SetElement( 1, 3, originRAS[1] )
@@ -261,13 +264,12 @@ class LabelEffectLogic(Effect.EffectLogic):
     #
     translate = vtk.vtkTransform()
     translate.Translate( -1. * xlo, -1. * ylo, 0)
-    drawPointsi = vtk.vtkPoints()
+    drawPoints = vtk.vtkPoints()
     drawPoints.Reset()
     translate.TransformPoints( polyData.GetPoints(), drawPoints )
-    translate.Delete()
     drawPoints.Modified()
 
-    fill.slicer.vtkImageFillROI()
+    fill = slicer.vtkImageFillROI()
     fill.SetInput(imageData)
     fill.SetValue(1)
     fill.SetPoints(drawPoints)
@@ -336,10 +338,10 @@ class LabelEffectLogic(Effect.EffectLogic):
     xlo, xhi, ylo, yhi, zlo, zhi = bounds
     labelLogic = self.sliceLogic.GetLabelLayer()
     xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
-    tlIJK = xyToIJK.MultiplyPoint( xlo, yhi, 0, 1)[:3]
-    trIJK = xyToIJK.MultiplyPoint( xhi, yhi, 0, 1)[:3]
-    blIJK = xyToIJK.MultiplyPoint( xlo, ylo, 0, 1)[:3]
-    brIJK = xyToIJK.MultiplyPoint( xhi, ylo, 0, 1)[:3]
+    tlIJK = xyToIJK.MultiplyPoint( (xlo, yhi, 0, 1) )[:3]
+    trIJK = xyToIJK.MultiplyPoint( (xhi, yhi, 0, 1) )[:3]
+    blIJK = xyToIJK.MultiplyPoint( (xlo, ylo, 0, 1) )[:3]
+    brIJK = xyToIJK.MultiplyPoint( (xhi, ylo, 0, 1) )[:3]
 
     # do the clamping of the four corners
     dims = labelImage.GetDimensions()
