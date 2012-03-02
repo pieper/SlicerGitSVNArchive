@@ -155,7 +155,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
       xy = self.interactor.GetEventPosition()
       self.addPoint(self.logic.xyToRAS(xy))
       self.abortEvent(event)
-    elif event == "LeftButtonPressEvent":
+    elif event == "LeftButtonReleaseEvent":
       self.actionState = ""
     elif event == "RightButtonPressEvent":
       sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
@@ -170,8 +170,6 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
         xy = self.interactor.GetEventPosition()
         self.addPoint(self.logic.xyToRAS(xy))
         self.abortEvent(event)
-    elif event == "LeaveEvent":
-      self.actor.VisibilityOff()
     elif event == "KeyPressEvent":
       key = self.interactor.GetKeySym()
       if key == 'a' or key == 'Return':
@@ -284,7 +282,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     idArray.SetTuple1(0, idArray.GetNumberOfTuples()-1)
     lines.SetNumberOfCells(1)
 
-  def deleteLastPoint():
+  def deleteLastPoint(self):
     """unwind through addPoint list back to empy polydata"""
 
     pcount = self.rasPoints.GetNumberOfPoints()
