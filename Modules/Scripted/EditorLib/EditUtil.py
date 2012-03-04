@@ -47,25 +47,35 @@ class EditUtil(object):
       compNode = slicer.mrmlScene.GetNthNodeByClass(n, 'vtkMRMLSliceCompositeNode')
       if compNode.GetLayoutName() == layoutName:
         return compNode
+
+  def getBackgroundImage(self):
+    backgroundVolume = self.getBackgroundVolume()
+    if backgroundVolume:
+      return backgroundVolume.GetImageData()
     
-  def getBackgroundVolume(self,):
+  def getBackgroundVolume(self):
     compNode = self.getCompositeNode()
     if compNode:
       backgroundID = compNode.GetBackgroundVolumeID()
       if backgroundID:
         return slicer.mrmlScene.GetNodeByID(backgroundID)
   
-  def getBackgroundID(self,):
+  def getBackgroundID(self):
     compNode = self.getCompositeNode()
     if compNode:
       return compNode.GetBackgroundVolumeID()
 
-  def getLabelID(self,):
+  def getLabelImage(self):
+    labelVolume = self.getLabelVolume()
+    if labelVolume:
+      return labelVolume.GetImageData()
+
+  def getLabelID(self):
     compNode = self.getCompositeNode()
     if compNode:
       return compNode.GetLabelVolumeID()
 
-  def getLabelVolume(self,):
+  def getLabelVolume(self):
     compNode = self.getCompositeNode()
     if compNode:
       labelID = compNode.GetLabelVolumeID()
