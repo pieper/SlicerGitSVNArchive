@@ -11,6 +11,7 @@ set(EditorLib_PYTHON_SCRIPTS
   PaintEffect
   DrawEffect
   ThresholdEffect
+  RectangleEffect
   )
 
 set(EditorLib_PYTHON_RESOURCES

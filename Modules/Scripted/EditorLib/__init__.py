@@ -9,3 +9,4 @@ from LabelEffect import *
 from PaintEffect import *
 from DrawEffect import *
 from ThresholdEffect import *
+from RectangleEffect import *

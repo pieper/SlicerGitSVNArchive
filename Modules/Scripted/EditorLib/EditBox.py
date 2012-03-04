@@ -45,6 +45,7 @@ class EditBox(object):
     self.editorBuiltins["PaintEffect"] = EditorLib.PaintEffect
     self.editorBuiltins["DrawEffect"] = EditorLib.DrawEffect
     self.editorBuiltins["ThresholdEffect"] = EditorLib.ThresholdEffect
+    self.editorBuiltins["RectangleEffect"] = EditorLib.RectangleEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
@@ -197,6 +198,7 @@ class EditBox(object):
     self.effectIconFiles["PaintEffect",""] = self.effectIconFiles["Paint",""]
     self.effectIconFiles["DrawEffect",""] = self.effectIconFiles["Draw",""]
     self.effectIconFiles["ThresholdEffect",""] = self.effectIconFiles["Threshold",""]
+    self.effectIconFiles["RectangleEffect",""] = self.effectIconFiles["ImplicitRectangle",""]
 
   #
   # create a row of the edit box given a list of 
