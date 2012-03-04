@@ -32,6 +32,7 @@ class EditBox(object):
     self.effectMapper.connect('mapped(const QString&)', self.selectEffect)
     self.editUtil = EditUtil.EditUtil()
     self.undoRedo = EditUtil.UndoRedo()
+    self.undoRedo.stateChangedCallback = self.updateUndoRedoButtons
 
     # check for extensions - if none have been registered, just create the empty dictionary
     try:
@@ -283,7 +284,7 @@ class EditBox(object):
     self.toolsActiveToolName.setStyleSheet("background-color: rgb(232,230,235)")
     self.toolsActiveToolFrame.layout().addWidget(self.toolsActiveToolName)
 
-    self.updateCheckPointButtons()
+    self.updateUndoRedoButtons()
    
   def setActiveToolLabel(self,name):
     if EditBox.displayNames.has_key(name):
@@ -369,6 +370,7 @@ itcl::body EditBox::setButtonState {effect state} {
         # for effects, create an options gui and an
         # instance for every slice view
         self.currentOption = effectClass.options(self.optionsFrame)
+        self.currentOption.undoRedo = self.undoRedo
         self.currentOption.defaultEffect = self.defaultEffect
         layoutManager = slicer.app.layoutManager()
         sliceNodeCount = slicer.mrmlScene.GetNumberOfNodesByClass('vtkMRMLSliceNode')
@@ -403,22 +405,9 @@ itcl::body EditBox::setButtonState {effect state} {
 
     if effectName == "DefaultTool":
         # do nothing - this will reset cursor mode
-        tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effectName == "GoToEditorModule":
-        tcl('EditorSelectModule')
-        tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effectName == "LabelCheckPoint":
-        # save a copy of the current label layer into the scene
-        tcl('EditorLabelCheckPoint')
-        tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effectName == "PreviousFiducial":
-        tcl('::FiducialsSWidget::JumpAllToNextFiducial -1')
-        tcl('EditorSetActiveToolLabel DefaultTool')
-    elif effectName == "NextFiducial":
-        tcl('::FiducialsSWidget::JumpAllToNextFiducial 1')
-        tcl('EditorSetActiveToolLabel DefaultTool')
+        self.defaultEffect()
     elif effectName ==  "EraseLabel":
-        tcl('EditorToggleErasePaintLabel')
+        self.editUtil.toggleLabel()
     elif effectName ==  "PreviousCheckPoint":
         self.undoRedo.undo()
     elif effectName == "NextCheckPoint":
@@ -454,7 +443,7 @@ itcl::body EditBox::setButtonState {effect state} {
         else:
           tcl('EffectSWidget::ConfigureAll %s -exitCommand "EditorSetActiveToolLabel DefaultTool"' % self.effectClasses[effectName])
 
-  def updateCheckPointButtons(self):
+  def updateUndoRedoButtons(self):
     self.effectButtons["PreviousCheckPoint"].enabled = self.undoRedo.undoEnabled()
     self.effectButtons["NextCheckPoint"].enabled = self.undoRedo.redoEnabled()
 

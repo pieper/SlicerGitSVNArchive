@@ -168,6 +168,8 @@ class EffectLogic(object):
   def __init__(self,sliceLogic):
     self.sliceLogic = sliceLogic
     self.editUtil = EditUtil.EditUtil()
+    # optionally set by users of the class
+    self.undoRedo = None
 
   def rasToXY(self,rasPoint):
     return self.rasToXYZ()[0:2]

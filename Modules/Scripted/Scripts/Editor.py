@@ -74,7 +74,6 @@ class EditorWidget:
     else:
       self.parent = parent
       self.layout = parent.layout()
-      self.setup()
 
   def enter(self):
     """
@@ -130,7 +129,7 @@ class EditorWidget:
 
   def updateGUIFromMRML(self, caller, event):
     if self.toolsBox:
-      self.toolsBox.updateCheckPointButtons()
+      self.toolsBox.updateUndoRedoButtons()
 
   def pauseEffect(self):
     if self.toolsBox:

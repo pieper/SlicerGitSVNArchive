@@ -95,6 +95,14 @@ class EditUtil(object):
   def setLabel(self,label):
     return self.getParameterNode().SetParameter('label',str(label))
 
+  def toggleLabel(self):
+    storedLabelParam = self.getParameterNode().GetParameter('storedLabel')
+    if storedLabelParam == '':
+      self.getParameterNode().SetParameter('storedLabel','0')
+    storedLabel = int(self.getParameterNode().GetParameter('storedLabel'))
+    self.getParameterNode().SetParameter('storedLabel',str(self.getLabel()))
+    self.setLabel(storedLabel)
+
 
 class UndoRedo(object):
   """ Code to manage a list of undo/redo volumes
@@ -140,13 +148,20 @@ class UndoRedo(object):
     self.undoList = []
     self.redoList = []
     self.editUtil = EditUtil()
+    self.stateChangedCallback = self.defaultStateChangedCallback
+
+  def defaultStateChangedCallback(self):
+    """placeholder so that using class can define a callable
+    for when the state of the stacks changes (e.g. for updating the
+    enable state of menu items or buttons"""
+    pass
 
   def undoEnabled(self):
-    "for managing undo/redo button state"""
+    """for managing undo/redo button state"""
     return self.enabled and self.undoList != []
 
   def redoEnabled(self):
-    "for managing undo/redo button state"""
+    """for managing undo/redo button state"""
     return self.enabled and self.redoList != []
 
   def storeVolume(self,checkPointList,volumeNode):
@@ -159,6 +174,7 @@ class UndoRedo(object):
     if len(checkPointList) >= self.undoSize: 
       checkPointList = checkPointList[1:]
     checkPointList.append(self.checkPoint(volumeNode))
+    self.stateChangedCallback()
 
   def saveState(self):
     """Called by effects as they modify the label volume node
@@ -166,6 +182,7 @@ class UndoRedo(object):
     # store current state onto undoList
     self.storeVolume(self.undoList,self.editUtil.getLabelVolume())
     self.redoList = []
+    self.stateChangedCallback()
 
   def undo(self):
     """Perform the operation when the user presses 
@@ -180,6 +197,7 @@ class UndoRedo(object):
     # get the checkPoint to restore and remove it from the list
     self.undoList[-1].restore()
     self.undoList = self.undoList[:-1]
+    self.stateChangedCallback()
 
   def redo(self):
     """Perform the operation when the user presses 
@@ -194,3 +212,4 @@ class UndoRedo(object):
     # get the checkPoint to restore and remove it from the list
     self.redoList[-1].restore()
     self.redoList = self.redoList[:-1]
+    self.stateChangedCallback()

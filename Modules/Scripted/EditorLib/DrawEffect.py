@@ -106,7 +106,6 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     
     # create a logic instance to do the non-gui work
     self.logic = DrawEffectLogic(self.sliceWidget.sliceLogic())
-    self.logic.undoRedo = self.undoRedo
 
     # interaction state variables
     self.activeSlice = None
@@ -223,6 +222,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     idArray.InsertNextTuple1(p)
     idArray.SetTuple1(0, idArray.GetNumberOfTuples() - 1)
 
+    self.logic.undoRedo = self.undoRedo
     self.logic.applyPolyMask(self.polyData)
     self.resetPolyData()
 
