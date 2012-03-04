@@ -119,8 +119,8 @@ class UndoRedo(object):
       self.volumeNode = volumeNode
       self.stashImage = vtk.vtkImageData()
       self.stash = slicer.vtkImageStash()
-      self.stashImage.DeepCopy(volumeNode.GetImageData())
-      self.stash.SetStashImage(self.stashImage)
+      self.stashImage.DeepCopy( volumeNode.GetImageData() )
+      self.stash.SetStashImage( self.stashImage )
       self.stash.ThreadedStash()
 
     def restore(self):
@@ -137,8 +137,8 @@ class UndoRedo(object):
       while self.stash.GetStashing():
         pass
       self.stash.Unstash()
-      self.volumeNode.GetImageData().DeepCopy(self.stashImage)
-      self.volumeNode.SetModifiedSinceRead(1)
+      self.volumeNode.GetImageData().DeepCopy( self.stashImage )
+      self.volumeNode.SetModifiedSinceRead( 1 )
       self.volumeNode.Modified()
 
 
@@ -171,16 +171,18 @@ class UndoRedo(object):
     """
     if not self.enabled or not volumeNode or not volumeNode.GetImageData():
       return
-    if len(checkPointList) >= self.undoSize: 
-      checkPointList = checkPointList[1:]
-    checkPointList.append(self.checkPoint(volumeNode))
+    checkPointList.append( self.checkPoint(volumeNode) )
     self.stateChangedCallback()
+    if len(checkPointList) >= self.undoSize: 
+      return( checkPointList[1:] )
+    else:
+      return( checkPointList )
 
   def saveState(self):
     """Called by effects as they modify the label volume node
     """
     # store current state onto undoList
-    self.storeVolume(self.undoList,self.editUtil.getLabelVolume())
+    self.undoList = self.storeVolume( self.undoList, self.editUtil.getLabelVolume() )
     self.redoList = []
     self.stateChangedCallback()
 
@@ -193,7 +195,7 @@ class UndoRedo(object):
     if self.undoList == []:
       return
     # store current state onto redoList
-    self.storeVolume(self.redoList,self.editUtil.getLabelVolume())
+    self.redoList = self.storeVolume( self.redoList, self.editUtil.getLabelVolume() )
     # get the checkPoint to restore and remove it from the list
     self.undoList[-1].restore()
     self.undoList = self.undoList[:-1]
@@ -208,7 +210,7 @@ class UndoRedo(object):
     if self.redoList == []:
       return
     # store current state onto undoList
-    self.storeVolume(self.undoList,self.editUtil.getLabelVolume())
+    self.undoList = self.storeVolume( self.undoList, self.editUtil.getLabelVolume() )
     # get the checkPoint to restore and remove it from the list
     self.redoList[-1].restore()
     self.redoList = self.redoList[:-1]
