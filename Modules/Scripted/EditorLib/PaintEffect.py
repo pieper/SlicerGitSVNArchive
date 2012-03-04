@@ -362,15 +362,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     labelLogic = sliceLogic.GetLabelLayer()
     labelNode = labelLogic.GetVolumeNode()
     labelNode.SetModifiedSinceRead(1)
-    workaround = 1
-    if workaround:
-      if not hasattr(self,"tempImageData"):
-        self.tempImageData = vtk.vtkImageData()
-      imageData = labelNode.GetImageData()
-      labelNode.SetAndObserveImageData(self.tempImageData)
-      labelNode.SetAndObserveImageData(imageData)
-    else:
-      labelNode.Modified()
+    labelNode.Modified()
 
   def paintBrush(self, x, y):
     """
