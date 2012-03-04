@@ -135,9 +135,9 @@ class ThresholdEffectOptions(Effect.EffectOptions):
   def onUseForPainting(self):
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
-    self.parameterNode.SetParameter( "Labeler,paintThreshold", "1" )
-    self.parameterNode.SetParameter( "Labeler,paintThresholdMin", str(self.threshold.minimumValue) )
-    self.parameterNode.SetParameter( "Labeler,paintThresholdMax", str(self.threshold.maximumValue) )
+    self.parameterNode.SetParameter( "LabelEffect,paintThreshold", "1" )
+    self.parameterNode.SetParameter( "LabelEffect,paintThresholdMin", str(self.threshold.minimumValue) )
+    self.parameterNode.SetParameter( "LabelEffect,paintThresholdMax", str(self.threshold.maximumValue) )
     self.parameterNode.SetDisableModifiedEvent(disableState)
     self.parameterNode.InvokePendingModifiedEvent()
 
