@@ -43,6 +43,7 @@ class EditBox(object):
     self.editorBuiltins = {}
     self.editorBuiltins["PaintEffect"] = EditorLib.PaintEffect
     self.editorBuiltins["DrawEffect"] = EditorLib.DrawEffect
+    self.editorBuiltins["ThresholdEffect"] = EditorLib.ThresholdEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
@@ -194,6 +195,7 @@ class EditBox(object):
     # TOOD: add icons for builtins as resource or installed image directory
     self.effectIconFiles["PaintEffect",""] = self.effectIconFiles["Paint",""]
     self.effectIconFiles["DrawEffect",""] = self.effectIconFiles["Draw",""]
+    self.effectIconFiles["ThresholdEffect",""] = self.effectIconFiles["Threshold",""]
 
   #
   # create a row of the edit box given a list of 
@@ -310,13 +312,19 @@ itcl::body EditBox::setButtonState {effect state} {
   # Pause running the current effect, reverting to the default tool
   #
   def pauseEffect(self):
-    self.selectEffect("DefaultTool")
+    self.defaultEffect()
 
   #
   # Resume running the effect that was being used before a pause (TODO)
   #
   def resumeEffect(self):
     pass
+
+  #
+  # switch to the default tool
+  #
+  def defaultEffect(self):
+    self.selectEffect("DefaultTool")
 
   #
   # manage the editor effects
@@ -361,6 +369,7 @@ itcl::body EditBox::setButtonState {effect state} {
         # for effects, create an options gui and an
         # instance for every slice view
         self.currentOption = effectClass.options(self.optionsFrame)
+        self.currentOption.defaultEffect = self.defaultEffect
         layoutManager = slicer.app.layoutManager()
         sliceNodeCount = slicer.mrmlScene.GetNumberOfNodesByClass('vtkMRMLSliceNode')
         for nodeIndex in xrange(sliceNodeCount):

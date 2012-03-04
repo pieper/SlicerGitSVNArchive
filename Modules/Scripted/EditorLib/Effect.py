@@ -193,6 +193,18 @@ class EffectLogic(object):
     rast = sliceNode.GetXYToRAS().MultiplyPoint(xyzPoint + (1,))
     return rast[:3]
 
+  def getPaintColor(self):
+    """Return rgba for the current paint label in the current 
+    label layers color table"""
+    labelLogic = self.sliceLogic.GetLayerLogic()
+    volumeDisplayNode = logic.GetVolumeDisplayNode()
+    if volumeDisplayNode:
+      colorNode = volumeDisplayNode.GetColorNode()
+      lut = colorNode.GetLookupTable()
+      index = self.editUtil.getLabel()
+      return(lut.GetTableValue(index))
+    return (0,0,0,0)
+
 
 #
 # The Effect class definition 

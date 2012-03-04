@@ -422,6 +422,10 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     self.painter.Paint()
 
+    labelNode.SetModifiedSinceRead(1)
+    labelNode.Modified()
+
+
 
   def undoLastApply(self):
     #TODO: optimized path for undo/redo - not currently available

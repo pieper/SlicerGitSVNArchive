@@ -10,6 +10,7 @@ set(EditorLib_PYTHON_SCRIPTS
   LabelEffect
   PaintEffect
   DrawEffect
+  ThresholdEffect
   )
 
 set(EditorLib_PYTHON_RESOURCES
