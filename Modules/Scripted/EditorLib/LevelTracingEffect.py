@@ -157,10 +157,16 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
     # figure out which plane to use
     i0,j0,k0 = ijk
     x,y = xy
-    i1,j1,k1 = self.logic.backgroundXYToIJK( (x+1,y+1) )
-    if i0 == i1: self.tracingFilter.SetPlaneToJK()
-    if j0 == j1: self.tracingFilter.SetPlaneToIK()
-    if k0 == k1: self.tracingFilter.SetPlaneToIJ()
+    offset = max(self.sliceWidget.sliceLogic().GetSliceNode().GetDimensions())
+    i1,j1,k1 = self.logic.backgroundXYToIJK( (x+offset,y+offset) )
+    if i0 == i1 and j0 == j1 and k0 == k1:
+      return
+    if i0 == i1:
+      self.tracingFilter.SetPlaneToJK()
+    if j0 == j1:
+      self.tracingFilter.SetPlaneToIK()
+    if k0 == k1:
+      self.tracingFilter.SetPlaneToIJ()
 
     self.tracingFilter.Update()
     polyData = self.tracingFilter.GetOutput()
