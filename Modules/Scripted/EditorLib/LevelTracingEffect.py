@@ -170,10 +170,11 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
     xyToIJK = backgroundLayer.GetXYToIJKTransform().GetMatrix()
     self.ijkToXY.SetMatrix( xyToIJK )
     self.ijkToXY.Inverse()
-    self.ijkToXY.TransformPoints( self.polyData.GetPoints(), self.xyPoints )
+    self.ijkToXY.TransformPoints( polyData.GetPoints(), self.xyPoints )
 
     self.polyData.DeepCopy( polyData )
     self.polyData.GetPoints().DeepCopy( self.xyPoints )
+    self.sliceView.scheduleRender()
 
   def apply(self):
     lines = self.polyData.GetLines()
