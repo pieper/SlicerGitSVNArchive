@@ -189,6 +189,25 @@ class EffectLogic(object):
     rast = sliceNode.GetXYToRAS().MultiplyPoint(xyPoint + (0,1,))
     return rast[:3]
 
+  def layerXYToIJK(self,layerLogic,xyPoint):
+    """return i j k in image space of the layer for a given x y"""
+    xyToIJK = layerLogic.GetXYToIJKTransform().GetMatrix()
+    ijk = xyToIJK.MultiplyPoint(xyPoint + (0,1,))[:3]
+    i = int(round(ijk[0]))
+    j = int(round(ijk[1]))
+    k = int(round(ijk[2]))
+    return (i,j,k)
+
+  def backgroundXYToIJK(self,xyPoint):
+    """return i j k in background image for a given x y"""
+    layerLogic = self.sliceLogic.GetBackgroundLayer()
+    return self.layerXYToIJK(layerLogic,xyPoint)
+
+  def labelXYToIJK(self,xyPoint):
+    """return i j k in label image for a given x y"""
+    layerLogic = self.sliceLogic.GetLabelLayer()
+    return self.layerXYToIJK(layerLogic,xyPoint)
+
   def xyzToRAS(self,xyzPoint):
     """return r a s for a given x y z"""
     sliceNode = self.sliceLogic.GetSliceNode()

@@ -12,6 +12,7 @@ set(EditorLib_PYTHON_SCRIPTS
   DrawEffect
   ThresholdEffect
   RectangleEffect
+  LevelTracingEffect
   )
 
 set(EditorLib_PYTHON_RESOURCES

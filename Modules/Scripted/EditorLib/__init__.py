@@ -10,3 +10,4 @@ from PaintEffect import *
 from DrawEffect import *
 from ThresholdEffect import *
 from RectangleEffect import *
+from LevelTracingEffect import *

@@ -46,6 +46,7 @@ class EditBox(object):
     self.editorBuiltins["DrawEffect"] = EditorLib.DrawEffect
     self.editorBuiltins["ThresholdEffect"] = EditorLib.ThresholdEffect
     self.editorBuiltins["RectangleEffect"] = EditorLib.RectangleEffect
+    self.editorBuiltins["LevelTracingEffect"] = EditorLib.LevelTracingEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
@@ -199,6 +200,7 @@ class EditBox(object):
     self.effectIconFiles["DrawEffect",""] = self.effectIconFiles["Draw",""]
     self.effectIconFiles["ThresholdEffect",""] = self.effectIconFiles["Threshold",""]
     self.effectIconFiles["RectangleEffect",""] = self.effectIconFiles["ImplicitRectangle",""]
+    self.effectIconFiles["LevelTracingEffect",""] = self.effectIconFiles["LevelTracing",""]
 
   #
   # create a row of the edit box given a list of 
@@ -407,7 +409,7 @@ itcl::body EditBox::setButtonState {effect state} {
 
     if effectName == "DefaultTool":
         # do nothing - this will reset cursor mode
-        self.defaultEffect()
+        pass
     elif effectName ==  "EraseLabel":
         self.editUtil.toggleLabel()
     elif effectName ==  "PreviousCheckPoint":
