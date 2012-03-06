@@ -124,6 +124,7 @@ class EffectTool(object):
     #   event processors
     self.interactorObserverTags = []
     events = ( "LeftButtonPressEvent", "LeftButtonReleaseEvent",
+      "MiddleButtonPressEvent", "MiddleButtonReleaseEvent",
       "RightButtonPressEvent", "RightButtonReleaseEvent",
       "MouseMoveEvent", "KeyPressEvent", "EnterEvent", "LeaveEvent" )
     for e in events:
