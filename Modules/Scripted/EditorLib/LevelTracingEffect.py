@@ -101,6 +101,9 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
     # create a logic instance to do the non-gui work
     self.logic = LevelTracingEffectLogic(self.sliceWidget.sliceLogic())
 
+    # instance variables
+    self.actionState = ''
+
     # initialization
     self.xyPoints = vtk.vtkPoints()
     self.rasPoints = vtk.vtkPoints()
@@ -133,17 +136,19 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
     handle events from the render window interactor
     """
 
-    # TODO: might need preProcessEvent method like LevelTracingEffect.tcl
-    # TODO: might need grabID
-
     # events from the interactory
     if event == "LeftButtonPressEvent":
       self.apply()
       self.abortEvent(event)
     elif event == "MouseMoveEvent":
-      xy = self.interactor.GetEventPosition()
-      self.preview(xy)
-      self.abortEvent(event)
+      if self.actionState == '':
+        xy = self.interactor.GetEventPosition()
+        self.preview(xy)
+        self.abortEvent(event)
+    if event == "RightButtonPressEvent" or event == "MiddleButtonPressEvent":
+      self.actionState = 'interacting'
+    if event == "RightButtonReleaseEvent" or event == "MiddleButtonReleaseEvent":
+      self.actionState = ''
     elif event == "EnterEvent":
       self.actor.VisibilityOn()
     elif event == "LeaveEvent":
