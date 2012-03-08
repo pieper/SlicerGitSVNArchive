@@ -45,11 +45,38 @@ class EffectOptions(EditOptions):
   def __init__(self, parent=0):
     super(EffectOptions,self).__init__(parent)
 
+    #
+    # options for operating only on a portion of the input volume
+    # ('All' meaning the full volume or 'Visible' meaning defined by
+    # the current slice node are supported)
+    # if a subclass provides a list of scope options 
+    # then a selection menu will be provided.
+    #
+    self.availableScopeOptions = ('All','Visible')
+    self.scopeOptions = ('All',)
+    self.scope = 'All'
+
   def __del__(self):
     super(EffectOptions,self).__del__()
 
   def create(self):
     super(EffectOptions,self).create()
+
+    # interface for the scope options
+    self.scopeFrame = qt.QFrame(self.frame)
+    self.scopeFrame.setLayout(qt.QHBoxLayout())
+    self.frame.layout().addWidget(self.scopeFrame)
+    self.scopeLabel = qt.QLabel('Scope:')
+    self.scopeFrame.layout().addWidget(self.scopeLabel)
+    self.scopeComboBox = qt.QComboBox(self.scopeFrame)
+    for scopeOption in self.scopeOptions:
+      self.scopeComboBox.addItem(scopeOption)
+    self.scopeComboBox.toolTip = "Choose the scope for applying this tool.  Scope of 'visible' refers to contents of Red slice by default (or slice clicked in)"
+    self.scopeComboBox.connect('indexChanged(int)', self.onScopeChanged)
+    self.scopeFrame.layout().addWidget(self.scopeComboBox)
+    self.widgets.append(self.scopeComboBox)
+    if len(self.scopeOptions) <= 1:
+      self.scopeFrame.hide()
 
   def destroy(self):
     super(EffectOptions,self).destroy()
@@ -64,6 +91,17 @@ class EffectOptions(EditOptions):
 
   def setMRMLDefaults(self):
     super(EffectOptions,self).setMRMLDefaults()
+    disableState = self.parameterNode.GetDisableModifiedEvent()
+    self.parameterNode.SetDisableModifiedEvent(1)
+    defaults = (
+      ("scope", "All"),
+    )
+    for d in defaults:
+      param = "Effect,"+d[0]
+      pvalue = self.parameterNode.GetParameter(param)
+      if pvalue == '':
+        self.parameterNode.SetParameter(param, d[1])
+    self.parameterNode.SetDisableModifiedEvent(disableState)
 
   def updateGUIFromMRML(self,caller,event):
     # first, check that parameter node has proper defaults for your effect
@@ -71,6 +109,20 @@ class EffectOptions(EditOptions):
     # then, update yourself from MRML parameter node
     # - follow pattern in EditOptions leaf classes
     super(EffectOptions,self).updateGUIFromMRML(caller,event)
+    params = ("scope",)
+    for p in params:
+      if self.parameterNode.GetParameter("Effect,"+p) == '':
+        # don't update if the parameter node has not got all values yet
+        return
+    self.updatingGUI = True
+    super(EffectOptions,self).updateGUIFromMRML(caller,event)
+    self.scope = self.parameterNode.GetParameter("Effect,scope")
+    scopeIndex = self.availableScopeOptions.index(self.scope)
+    self.scopeComboBox.currentIndex = scopeIndex 
+    self.updatingGUI = False
+
+  def onScopeChanged(self,index):
+    self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
     if self.updatingGUI:
@@ -78,7 +130,8 @@ class EffectOptions(EditOptions):
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(EffectOptions,self).updateMRMLFromGUI()
-    # set mrml parameters here
+    self.scope = self.availableScopeOptions[self.scopeComboBox.currentIndex]
+    self.parameterNode.SetParameter( "Effect,scope", str(self.scope) )
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()
@@ -130,6 +183,10 @@ class EffectTool(object):
     for e in events:
       tag = self.interactor.AddObserver(e, self.processEvent, 1.0)
       self.interactorObserverTags.append(tag)
+
+  def processEvent(self, caller=None, event=None):
+    """Default implementation for tools that ignore events"""
+    pass
 
   def abortEvent(self,event):
     """Set the AbortFlag on the vtkCommand associated 
