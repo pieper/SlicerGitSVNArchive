@@ -1,4 +1,5 @@
 import os
+from __main__ import vtk
 from __main__ import qt
 from __main__ import slicer
 from EditOptions import EditOptions
@@ -108,7 +109,6 @@ class EffectOptions(EditOptions):
     # then, call superclass
     # then, update yourself from MRML parameter node
     # - follow pattern in EditOptions leaf classes
-    super(EffectOptions,self).updateGUIFromMRML(caller,event)
     params = ("scope",)
     for p in params:
       if self.parameterNode.GetParameter("Effect,"+p) == '':
@@ -160,7 +160,7 @@ class EffectTool(object):
     self.renderWindow = self.sliceWidget.sliceView().renderWindow()
     self.renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
     self.editUtil = EditUtil.EditUtil()
-    
+
     # optionally set by users of the class
     self.undoRedo = None
 
@@ -228,6 +228,14 @@ class EffectLogic(object):
     self.editUtil = EditUtil.EditUtil()
     # optionally set by users of the class
     self.undoRedo = None
+    self.scope = 'All'
+
+    #
+    # instance variables used internally
+    # - buffer for result of scoped editing
+    self.scopedImageBuffer = vtk.vtkImageData()
+    # - slice paint is used to extract/replace scoped regions
+    self.scopedSlicePaint = slicer.vtkImageSlicePaint()
 
   def rasToXY(self,rasPoint):
     return self.rasToXYZ()[0:2]
@@ -284,6 +292,90 @@ class EffectLogic(object):
       return(lut.GetTableValue(index))
     return (0,0,0,0)
 
+  #
+  # methods for getting/setting data based on the current scope
+  # setting.  When scope is 'Visible' a vtkImageData is provided
+  # that corresponds to the sliceNode's dimensions and xyToRAS
+  # so the effect can draw exactly in the corresponding portion
+  # of the label volume.
+  #
+  def getScopedLayer(self,layerLogic):
+    volumeNode = layerLogic.GetVolumeNode()
+    if not volumeNode: return None
+    imageData = volumeNode.GetImageData()
+    if not imageData: return None
+
+    if self.scope == "All":
+      return imageData
+    elif self.scope == "Visible":
+      self.scopedSlicePaint.SetWorkingImage( imageData )
+      self.scopedSlicePaint.SetExtractImage( self.scopedImageBuffer )
+      self.getVisibleCorners( layerLogic, self.scopedSlicePaint )
+      self.scopedSlicePaint.Paint()
+      return( self.scopedImageBuffer )
+    else:
+      print("Invalid scope option %s" % self.scope)
+    return None
+
+  def getScopedBackground(self):
+    """return a vtkImageData corresponding to the scope"""
+    layerLogic = self.sliceLogic.GetBackgroundLayer()
+    return( self.getScopedLayer(layerLogic) )
+
+  def getScopedLabelInput(self):
+    """return a vtkImageData corresponding to the scope"""
+    layerLogic = self.sliceLogic.GetLabelLayer()
+    return( self.getScopedLayer(layerLogic) )
+
+  def getScopedLabelOutput(self):
+    """return a vtkImageData to write output into
+    -- the caller is responsible for making this match
+    the imageData returned from getScopedLabelInput
+    (for example, by making this the end of a pipeline)
+    """
+    return( self.scopedImageBuffer )
+
+  def applyScopedLabel(self):
+    """Put the output label into the right spot depending on the 
+    scope mode"""
+    layerLogic = self.sliceLogic.GetLabelLayer()
+    volumeNode = layerLogic.GetVolumeNode()
+    if self.undoRedo:
+      self.undoRedo.saveState()
+    targetImage = volumeNode.GetImageData()
+    if self.scope == "All":
+      targetImage.DeepCopy( self.scopedImageBuffer )
+    elif self.scope == "Visible":
+      self.scopedSlicePaint.SetWorkingImage( targetImage )
+      self.scopedSlicePaint.SetReplaceImage( self.scopedImageBuffer )
+      self.getVisibleCorners( layerLogic, self.scopedSlicePaint )
+      self.scopedSlicePaint.Paint()
+    else:
+      print("Invalid scope option %s" % self.scope)
+    volumeNode.SetModifiedSinceRead(1)
+    volumeNode.Modified()
+
+  def getVisibleCorners(self,layerLogic,slicePaint=None):
+    """return a nested list of ijk coordinates representing
+    the indices of the corners of the currently visible 
+    slice view for the given layerLogic
+    - optionally set those as the corners of a vtkImageSlicePaint"""
+
+    xyToIJK = layerLogic.GetXYToIJKTransform().GetMatrix()
+    w,h,d = layerLogic.GetImageData().GetDimensions()
+    xyCorners = ( (0,0), (w,0), (0,h), (w,h) )
+    ijkCorners = []
+    for xy in xyCorners:
+      ijk = xyToIJK.MultiplyPoint(xy + (0,1))[:3]
+      ijkCorners.append(map(round, ijk))
+      
+    if slicePaint:
+      slicePaint.SetTopLeft(ijkCorners[0])
+      slicePaint.SetTopRight(ijkCorners[1])
+      slicePaint.SetBottomLeft(ijkCorners[2])
+      slicePaint.SetBottomRight(ijkCorners[3])
+
+    return( ijkCorners )
 
 #
 # The Effect class definition 

@@ -80,8 +80,8 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     self.frame.layout().addStretch(1)
 
   def onApply(self):
-    min = float(self.parameterNode.GetParameter("Threshold,min"))
-    max = float(self.parameterNode.GetParameter("Threshold,max"))
+    min = float(self.parameterNode.GetParameter("ThresholdEffect,min"))
+    max = float(self.parameterNode.GetParameter("ThresholdEffect,max"))
     try:
       # only apply in the first tool (the operation is global and will be the same in all)
       tool = self.tools[0]
@@ -118,15 +118,15 @@ class ThresholdEffectOptions(Effect.EffectOptions):
       ("max", "100"),
     )
     for d in defaults:
-      param = "Threshold,"+d[0]
+      param = "ThresholdEffect,"+d[0]
       pvalue = self.parameterNode.GetParameter(param)
       if pvalue == '':
         self.parameterNode.SetParameter(param, d[1])
     # override default min/max settings based on current background
     success, lo, hi = self.getBackgroundScalarRange()
     if success:
-      self.parameterNode.SetParameter("Threshold,min", str(lo + 0.25 * (hi-lo)))
-      self.parameterNode.SetParameter("Threshold,max", str(hi))
+      self.parameterNode.SetParameter("ThresholdEffect,min", str(lo + 0.25 * (hi-lo)))
+      self.parameterNode.SetParameter("ThresholdEffect,max", str(hi))
     self.parameterNode.SetDisableModifiedEvent(disableState)
 
   def onThresholdValuesChanged(self,min,max):
@@ -145,13 +145,13 @@ class ThresholdEffectOptions(Effect.EffectOptions):
   def updateGUIFromMRML(self,caller,event):
     params = ("min", "max")
     for p in params:
-      if self.parameterNode.GetParameter("Threshold,"+p) == '':
+      if self.parameterNode.GetParameter("ThresholdEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
     self.updatingGUI = True
     super(ThresholdEffectOptions,self).updateGUIFromMRML(caller,event)
-    min = float(self.parameterNode.GetParameter("Threshold,min"))
-    max = float(self.parameterNode.GetParameter("Threshold,max"))
+    min = float(self.parameterNode.GetParameter("ThresholdEffect,min"))
+    max = float(self.parameterNode.GetParameter("ThresholdEffect,max"))
     self.threshold.setMinimumValue( min )
     self.threshold.setMaximumValue( max )
     for tool in self.tools:
@@ -165,16 +165,16 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(ThresholdEffectOptions,self).updateMRMLFromGUI()
-    self.parameterNode.SetParameter( "Threshold,min", str(self.threshold.minimumValue) )
-    self.parameterNode.SetParameter( "Threshold,max", str(self.threshold.maximumValue) )
+    self.parameterNode.SetParameter( "ThresholdEffect,min", str(self.threshold.minimumValue) )
+    self.parameterNode.SetParameter( "ThresholdEffect,max", str(self.threshold.maximumValue) )
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()
 
   def preview(self):
     opacity = 0.5 + self.previewState / (2. * self.previewSteps)
-    min = float(self.parameterNode.GetParameter("Threshold,min"))
-    max = float(self.parameterNode.GetParameter("Threshold,max"))
+    min = float(self.parameterNode.GetParameter("ThresholdEffect,min"))
+    max = float(self.parameterNode.GetParameter("ThresholdEffect,max"))
     for tool in self.tools:
       tool.min = min
       tool.max = max

@@ -59,7 +59,8 @@ class EditOptions(object):
   TODO: no support yet for scope options
   """
 
-  def __init__(self, parent=0):
+  def __init__(self, parent=None):
+    self.parent = parent
     self.updatingGUI = False
     self.observerTags = []
     self.widgets = []
@@ -67,23 +68,12 @@ class EditOptions(object):
     self.parameterNodeTag = None
     self.editUtil = EditUtil.EditUtil()
     self.tools = []
-    if parent == 0:
-      self.parent = slicer.qMRMLWidget()
-      self.parent.setLayout(qt.QVBoxLayout())
-      self.parent.setMRMLScene(slicer.mrmlScene)
-      self.create()
-      self.parent.show()
-    else:
-      self.parent = parent
-      self.create()
 
     # 1) find the parameter node in the scene and observe it
     # 2) set the defaults (will only set them if they are not
     # already set)
-    # 3) update the GUI to match the defaults
     self.updateParameterNode( self.parameterNode, "ModifiedEvent" )
     self.setMRMLDefaults()
-    self.updateGUIFromMRML( self.parameterNode, "ModifiedEvent" )
 
     # TODO: change this to look for specfic events (added, removed...)
     # but this requires being able to access events by number from wrapped code
@@ -98,6 +88,11 @@ class EditOptions(object):
       tagpair[0].RemoveObserver(tagpair[1])
 
   def create(self):
+    if not self.parent:
+      self.parent = slicer.qMRMLWidget()
+      self.parent.setLayout(qt.QVBoxLayout())
+      self.parent.setMRMLScene(slicer.mrmlScene)
+      self.parent.show()
     self.frame = qt.QFrame(self.parent)
     self.frame.setLayout(qt.QVBoxLayout())
     self.parent.layout().addWidget(self.frame)
@@ -123,6 +118,13 @@ class EditOptions(object):
   #
   def updateGUIFromMRML(self,caller,event):
     pass
+
+  #
+  # update the GUI from MRML
+  # - to be overriden by the subclass
+  #
+  def updateGUI(self):
+    self.updateGUIFromMRML(self.parameterNode,"ModifiedEvent")
 
   #
   # set the default option values

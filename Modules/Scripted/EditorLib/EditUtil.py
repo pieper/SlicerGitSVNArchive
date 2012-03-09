@@ -48,6 +48,18 @@ class EditUtil(object):
       if compNode.GetLayoutName() == layoutName:
         return compNode
 
+  def getSliceWidget(self,layoutName='Red'):
+    """ use the Red slice widget as the default"""
+    layoutManager = slicer.app.layoutManager()
+    sliceWidget = layoutManager.sliceWidget(layoutName)
+    return sliceWidget
+
+  def getSliceLogic(self,layoutName='Red'):
+    """ use the Red slice logic as the default for operations that are
+    not specific to a slice widget"""
+    sliceWidget = self.getSliceWidget(layoutName)
+    return sliceWidget.sliceLogic()
+
   def getBackgroundImage(self):
     backgroundVolume = self.getBackgroundVolume()
     if backgroundVolume:
