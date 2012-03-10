@@ -32,7 +32,9 @@ class MorphologyEffectOptions(Effect.EffectOptions):
 
   def __init__(self, parent=0):
     super(MorphologyEffectOptions,self).__init__(parent)
-    self.scopeOptions = ('All','Visible')
+    # TODO: figure out if Visible scope makes sense for these effects
+    #self.scopeOptions = ('All','Visible')
+    self.scopeOptions = ('All',)
 
   def __del__(self):
     super(MorphologyEffectOptions,self).__del__()
