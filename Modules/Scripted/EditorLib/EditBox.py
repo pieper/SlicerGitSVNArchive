@@ -47,6 +47,10 @@ class EditBox(object):
     self.editorBuiltins["ThresholdEffect"] = EditorLib.ThresholdEffect
     self.editorBuiltins["RectangleEffect"] = EditorLib.RectangleEffect
     self.editorBuiltins["LevelTracingEffect"] = EditorLib.LevelTracingEffect
+    self.editorBuiltins["MakeModelEffect"] = EditorLib.MakeModelEffect
+    self.editorBuiltins["ErodeEffect"] = EditorLib.ErodeEffect
+    self.editorBuiltins["DilateEffect"] = EditorLib.DilateEffect
+    self.editorBuiltins["ChangeLabelEffect"] = EditorLib.ChangeLabelEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
@@ -201,6 +205,16 @@ class EditBox(object):
     self.effectIconFiles["ThresholdEffect",""] = self.effectIconFiles["Threshold",""]
     self.effectIconFiles["RectangleEffect",""] = self.effectIconFiles["ImplicitRectangle",""]
     self.effectIconFiles["LevelTracingEffect",""] = self.effectIconFiles["LevelTracing",""]
+    self.effectIconFiles["MakeModelEffect",""] = self.effectIconFiles["MakeModel",""]
+    self.effectIconFiles["ErodeEffect",""] = self.effectIconFiles["ErodeLabel",""]
+    self.effectIconFiles["DilateEffect",""] = self.effectIconFiles["DilateLabel",""]
+    self.effectIconFiles["IdentifyIslandsEffect",""] = self.effectIconFiles["IdentifyIslands",""]
+    self.effectIconFiles["ChangeIslandEffect",""] = self.effectIconFiles["ChangeIsland",""]
+    self.effectIconFiles["RemoveIslandsEffect",""] = self.effectIconFiles["RemoveIslands",""]
+    self.effectIconFiles["SaveIslandEffect",""] = self.effectIconFiles["SaveIsland",""]
+    self.effectIconFiles["ChangeIslandEffect",""] = self.effectIconFiles["ChangeIsland",""]
+    self.effectIconFiles["ChangeLabelEffect",""] = self.effectIconFiles["ChangeLabel",""]
+    self.effectIconFiles["GrowCutEffect",""] = self.effectIconFiles["GrowCutSegment",""]
 
   #
   # create a row of the edit box given a list of 
@@ -335,7 +349,6 @@ itcl::body EditBox::setButtonState {effect state} {
   # manage the editor effects
   #
   def selectEffect(self, effectName):
-    print('selecting %s' % effectName)
 
     #
     # If there is no background volume or label map, do nothing
@@ -376,6 +389,8 @@ itcl::body EditBox::setButtonState {effect state} {
         self.currentOption = effectClass.options(self.optionsFrame)
         self.currentOption.undoRedo = self.undoRedo
         self.currentOption.defaultEffect = self.defaultEffect
+        self.currentOption.create()
+        self.currentOption.updateGUI()
         layoutManager = slicer.app.layoutManager()
         sliceNodeCount = slicer.mrmlScene.GetNumberOfNodesByClass('vtkMRMLSliceNode')
         for nodeIndex in xrange(sliceNodeCount):

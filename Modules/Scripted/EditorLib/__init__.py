@@ -11,3 +11,13 @@ from DrawEffect import *
 from ThresholdEffect import *
 from RectangleEffect import *
 from LevelTracingEffect import *
+from MakeModelEffect import *
+from MorphologyEffect import *
+from ErodeEffect import *
+from DilateEffect import *
+from IdentifyIslandsEffect import *
+from ChangeIslandEffect import *
+from RemoveIslandsEffect import *
+from SaveIslandEffect import *
+from ChangeLabelEffect import *
+from GrowCutEffect import *
