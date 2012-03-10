@@ -54,8 +54,8 @@ class MorphologyEffectOptions(Effect.EffectOptions):
     # TODO: fill option not yet supported
     # TODO: iterations option not yet supported
 
-    self.eightNeighbors.connect('clicked()', self.updateMRMLFromGUI)
-    self.fourNeighbors.connect('clicked()', self.updateMRMLFromGUI)
+    self.connections.append( (self.eightNeighbors, 'clicked()', self.updateMRMLFromGUI) )
+    self.connections.append( (self.fourNeighbors, 'clicked()', self.updateMRMLFromGUI) )
 
   def destroy(self):
     super(MorphologyEffectOptions,self).destroy()
@@ -94,8 +94,8 @@ class MorphologyEffectOptions(Effect.EffectOptions):
       if self.parameterNode.GetParameter("MorphologyEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
     super(MorphologyEffectOptions,self).updateGUIFromMRML(caller,event)
+    self.disconnectConnections()
     neighborMode = self.parameterNode.GetParameter("MorphologyEffect,neighborMode")
     if neighborMode == '8':
       self.eightNeighbors.checked = True
@@ -103,12 +103,10 @@ class MorphologyEffectOptions(Effect.EffectOptions):
     elif neighborMode == '4':
       self.eightNeighbors.checked = False
       self.fourNeighbors.checked = True
+    self.connectConnections()
     # todo: handle iterations and fill options
-    self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(MorphologyEffectOptions,self).updateMRMLFromGUI()

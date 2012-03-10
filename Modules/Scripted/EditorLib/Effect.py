@@ -73,11 +73,12 @@ class EffectOptions(EditOptions):
     for scopeOption in self.scopeOptions:
       self.scopeComboBox.addItem(scopeOption)
     self.scopeComboBox.toolTip = "Choose the scope for applying this tool.  Scope of 'visible' refers to contents of Red slice by default (or slice clicked in)"
-    self.scopeComboBox.connect('indexChanged(int)', self.onScopeChanged)
     self.scopeFrame.layout().addWidget(self.scopeComboBox)
     self.widgets.append(self.scopeComboBox)
     if len(self.scopeOptions) <= 1:
       self.scopeFrame.hide()
+
+    self.connections.append( (self.scopeComboBox, 'currentIndexChanged(int)', self.onScopeChanged) )
 
   def destroy(self):
     super(EffectOptions,self).destroy()
@@ -114,19 +115,17 @@ class EffectOptions(EditOptions):
       if self.parameterNode.GetParameter("Effect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
     super(EffectOptions,self).updateGUIFromMRML(caller,event)
+    self.disconnectConnections()
     self.scope = self.parameterNode.GetParameter("Effect,scope")
     scopeIndex = self.availableScopeOptions.index(self.scope)
     self.scopeComboBox.currentIndex = scopeIndex 
-    self.updatingGUI = False
+    self.connectConnections()
 
   def onScopeChanged(self,index):
     self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(EffectOptions,self).updateMRMLFromGUI()

@@ -57,9 +57,7 @@ class ChangeLabelEffectOptions(Effect.EffectOptions):
 
     EditorLib.HelpButton(self.frame, "Replace all instances of input color with output color in current label map")
 
-    self.inputColor.colorSpin.connect('valueChanged()', self.onColorChanged)
-    self.outputColor.colorSpin.connect('valueChanged()', self.onColorChanged)
-    self.apply.connect('clicked()', self.onApply)
+    self.connections.append( (self.apply, 'clicked()', self.onApply) )
 
     # Add vertical spacer
     self.frame.layout().addStretch(1)
@@ -107,15 +105,13 @@ class ChangeLabelEffectOptions(Effect.EffectOptions):
       if self.parameterNode.GetParameter("ChangeLabelEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
     super(ChangeLabelEffectOptions,self).updateGUIFromMRML(caller,event)
+    self.disconnectConnections()
     self.inputColor.colorSpin.setValue( int(self.parameterNode.GetParameter("ChangeLabelEffect,inputColor")) )
     self.outputColor.colorSpin.setValue( int(self.parameterNode.GetParameter("ChangeLabelEffect,outputColor")) )
-    self.updatingGUI = False
+    self.connectConnections()
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(ChangeLabelEffectOptions,self).updateMRMLFromGUI()

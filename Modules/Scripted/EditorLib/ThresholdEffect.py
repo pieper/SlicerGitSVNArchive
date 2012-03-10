@@ -69,10 +69,10 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     self.previewSteps = 5
     self.timer.start(200)
 
-    self.timer.connect('timeout()', self.preview)
-    self.useForPainting.connect('clicked()', self.onUseForPainting)
-    self.threshold.connect('valuesChanged(double,double)', self.onThresholdValuesChanged)
-    self.apply.connect('clicked()', self.onApply)
+    self.connections.append( (self.timer, 'timeout()', self.preview) )
+    self.connections.append( (self.useForPainting, 'clicked()', self.onUseForPainting) )
+    self.connections.append( (self.threshold, 'valuesChanged(double,double)', self.onThresholdValuesChanged) )
+    self.connections.append( (self.apply, 'clicked()', self.onApply) )
 
     EditorLib.HelpButton(self.frame, "Set labels based on threshold range.  Note: this replaces the current label map values.")
 
@@ -148,8 +148,8 @@ class ThresholdEffectOptions(Effect.EffectOptions):
       if self.parameterNode.GetParameter("ThresholdEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
     super(ThresholdEffectOptions,self).updateGUIFromMRML(caller,event)
+    self.disconnectConnections()
     min = float(self.parameterNode.GetParameter("ThresholdEffect,min"))
     max = float(self.parameterNode.GetParameter("ThresholdEffect,max"))
     self.threshold.setMinimumValue( min )
@@ -157,11 +157,9 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     for tool in self.tools:
       tool.min = min
       tool.max = max
-    self.updatingGUI = False
+    self.connectConnections()
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(ThresholdEffectOptions,self).updateMRMLFromGUI()

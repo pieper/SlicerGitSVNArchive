@@ -67,13 +67,9 @@ class LevelTracingEffectOptions(LabelEffect.LabelEffectOptions):
     super(LevelTracingEffectOptions,self).setMRMLDefaults()
 
   def updateGUIFromMRML(self,caller,event):
-    self.updatingGUI = True
     super(LevelTracingEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(LevelTracingEffectOptions,self).updateMRMLFromGUI()

@@ -45,7 +45,7 @@ class ErodeEffectOptions(MorphologyEffect.MorphologyEffectOptions):
 
     EditorLib.HelpButton(self.frame, "Use this tool to remove pixels from the boundary of the current label.")
 
-    self.apply.connect('clicked()', self.onApply)
+    self.connections.append( (self.apply, 'clicked()', self.onApply) )
 
     # Add vertical spacer
     self.frame.layout().addStretch(1)
@@ -76,13 +76,9 @@ class ErodeEffectOptions(MorphologyEffect.MorphologyEffectOptions):
     super(ErodeEffectOptions,self).setMRMLDefaults()
 
   def updateGUIFromMRML(self,caller,event):
-    self.updatingGUI = True
     super(ErodeEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(ErodeEffectOptions,self).updateMRMLFromGUI()

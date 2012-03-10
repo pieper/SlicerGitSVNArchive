@@ -62,13 +62,9 @@ class RectangleEffectOptions(LabelEffect.LabelEffectOptions):
     super(RectangleEffectOptions,self).setMRMLDefaults()
 
   def updateGUIFromMRML(self,caller,event):
-    self.updatingGUI = True
     super(RectangleEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(RectangleEffectOptions,self).updateMRMLFromGUI()

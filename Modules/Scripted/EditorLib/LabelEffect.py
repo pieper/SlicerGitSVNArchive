@@ -102,8 +102,8 @@ class LabelEffectOptions(Effect.EffectOptions):
       if self.parameterNode.GetParameter("LabelEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.disconnectConnections()
     super(LabelEffectOptions,self).updateGUIFromMRML(caller,event)
+    self.disconnectConnections()
     self.paintOver.setChecked( 
                 int(self.parameterNode.GetParameter("LabelEffect,paintOver")) )
     self.thresholdPaint.setChecked( 

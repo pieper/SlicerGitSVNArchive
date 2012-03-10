@@ -82,8 +82,8 @@ class MakeModelEffectOptions(Effect.EffectOptions):
     # Add vertical spacer
     self.frame.layout().addStretch(1)
 
-    self.apply.connect('clicked()', self.onApply)
-    self.goToModelMaker.connect('clicked()', self.onGoToModelMaker)
+    self.connections.append( (self.apply, 'clicked()', self.onApply) )
+    self.connections.append( (self.goToModelMaker, 'clicked()', self.onGoToModelMaker) )
 
   def destroy(self):
     super(MakeModelEffectOptions,self).destroy()
@@ -94,7 +94,12 @@ class MakeModelEffectOptions(Effect.EffectOptions):
     defined in the leaf classes in EditOptions.py
     in each leaf subclass so that "self" in the observer
     is of the correct type """
-    pass
+    node = self.editUtil.getParameterNode()
+    if node != self.parameterNode:
+      if self.parameterNode:
+        node.RemoveObserver(self.parameterNodeTag)
+      self.parameterNode = node
+      self.parameterNodeTag = node.AddObserver("ModifiedEvent", self.updateGUIFromMRML)
 
   def onGoToModelMaker(self):
     m = slicer.util.mainWindow()
@@ -107,13 +112,9 @@ class MakeModelEffectOptions(Effect.EffectOptions):
     super(MakeModelEffectOptions,self).setMRMLDefaults()
 
   def updateGUIFromMRML(self,caller,event):
-    self.updatingGUI = True
     super(MakeModelEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.updatingGUI = False
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(MakeModelOptions,self).updateMRMLFromGUI()
