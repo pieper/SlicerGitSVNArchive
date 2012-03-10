@@ -69,6 +69,16 @@ class EditOptions(object):
     self.editUtil = EditUtil.EditUtil()
     self.tools = []
 
+    # connections is a list of widget/signal/slot tripples
+    # for the options gui that can be connected/disconnected
+    # as needed to prevent triggering mrml updates while
+    # updating the state of the gui
+    # - each level of the inheritance tree can add entries
+    #   to this list for use by the connectConnections
+    #   and disconnectConnections methods
+    self.connections = []
+    self.connectionsConnected = False
+
     # 1) find the parameter node in the scene and observe it
     # 2) set the defaults (will only set them if they are not
     # already set)
@@ -86,6 +96,24 @@ class EditOptions(object):
       self.parameterNode.RemoveObserver(self.parameterNodeTag)
     for tagpair in self.observerTags:
       tagpair[0].RemoveObserver(tagpair[1])
+
+  def connectConnections(self):
+    if self.connectionsConnected: return
+    for widget,signal,slot in self.connections:
+      success = widget.connect(signal,slot)
+      if not success:
+        print("Could not connect {signal} to {slot} for {widget}".format(
+          signal = signal, slot = slot, widget = widget))
+    self.connectionsConnected = True
+
+  def disconnectConnections(self):
+    if not self.connectionsConnected: return
+    for widget,signal,slot in self.connections:
+      success = widget.disconnect(signal,slot)
+      if not success:
+        print("Could not disconnect {signal} to {slot} for {widget}".format(
+          signal = signal, slot = slot, widget = widget))
+    self.connectionsConnected = False
 
   def create(self):
     if not self.parent:
@@ -192,6 +220,15 @@ class EditOptions(object):
 
   def statusText(self,text):
     slicer.util.showStatusMessage(text)
+
+  def debug(self,text):
+    import inspect
+    print('*'*80)
+    print(text)
+    print(self)
+    stack = inspect.stack()
+    for frame in stack:
+      print(frame)
 
 #### Labeler
 class LabelerOptions(EditOptions):

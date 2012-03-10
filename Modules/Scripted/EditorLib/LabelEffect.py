@@ -60,9 +60,9 @@ class LabelEffectOptions(Effect.EffectOptions):
     self.frame.layout().addWidget(self.threshold)
     self.widgets.append(self.threshold)
 
-    self.paintOver.connect( "clicked()", self.updateMRMLFromGUI )
-    self.thresholdPaint.connect( "clicked()", self.updateMRMLFromGUI )
-    self.threshold.connect( "valuesChanged(double,double)", self.onThresholdValuesChange )
+    self.connections.append( (self.paintOver, "clicked()", self.updateMRMLFromGUI ) )
+    self.connections.append( (self.thresholdPaint, "clicked()", self.updateMRMLFromGUI ) )
+    self.connections.append( (self.threshold, "valuesChanged(double,double)", self.onThresholdValuesChange ) )
 
   def destroy(self):
     super(LabelEffectOptions,self).destroy()
@@ -102,7 +102,7 @@ class LabelEffectOptions(Effect.EffectOptions):
       if self.parameterNode.GetParameter("LabelEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
+    self.disconnectConnections()
     super(LabelEffectOptions,self).updateGUIFromMRML(caller,event)
     self.paintOver.setChecked( 
                 int(self.parameterNode.GetParameter("LabelEffect,paintOver")) )
@@ -115,14 +115,12 @@ class LabelEffectOptions(Effect.EffectOptions):
     self.thresholdLabel.setHidden( not self.thresholdPaint.checked )
     self.threshold.setHidden( not self.thresholdPaint.checked )
     self.threshold.setEnabled( self.thresholdPaint.checked )
-    self.updatingGUI = False
+    self.connectConnections()
 
   def onThresholdValuesChange(self,min,max):
     self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(LabelEffectOptions,self).updateMRMLFromGUI()

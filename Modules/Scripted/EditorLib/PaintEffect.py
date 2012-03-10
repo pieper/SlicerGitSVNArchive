@@ -70,9 +70,9 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
 
     EditorLib.HelpButton(self.frame, "Use this tool to paint with a round brush of the selected radius")
 
-    self.smudge.connect('clicked()', self.updateMRMLFromGUI)
-    self.radius.connect('valueChanged(double)', self.onRadiusValueChanged)
-    self.radiusSpinBox.connect('valueChanged(double)', self.onRadiusSpinBoxChanged)
+    self.connections.append( (self.smudge, 'clicked()', self.updateMRMLFromGUI) )
+    self.connections.append( (self.radius, 'valueChanged(double)', self.onRadiusValueChanged) )
+    self.connections.append( (self.radiusSpinBox, 'valueChanged(double)', self.onRadiusSpinBoxChanged) )
 
     # Add vertical spacer
     self.frame.layout().addStretch(1)
@@ -107,45 +107,33 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
     self.parameterNode.SetDisableModifiedEvent(disableState)
 
   def updateGUIFromMRML(self,caller,event):
-    if self.updatingGUI:
-      return
     params = ("radius", "smudge")
     for p in params:
       if self.parameterNode.GetParameter("PaintEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
-    self.updatingGUI = True
     super(PaintEffectOptions,self).updateGUIFromMRML(caller,event)
-    smudge = not 0 == int(self.parameterNode.GetParameter("PaintEffect,smudge"))
+    self.disconnectConnections()
+    smudge = not (0 == int(self.parameterNode.GetParameter("PaintEffect,smudge")))
     self.smudge.setChecked( smudge )
-    self.radius.setValue( float(self.parameterNode.GetParameter("PaintEffect,radius")) )
     radius = float(self.parameterNode.GetParameter("PaintEffect,radius"))
+    self.radius.setValue( radius )
     self.radiusSpinBox.setValue( radius )
     for tool in self.tools:
       tool.smudge = smudge
       tool.radius = radius
       tool.createGlyph(tool.brush)
-    self.updatingGUI = False
+    self.connectConnections()
 
   def onRadiusValueChanged(self,value):
-    if self.updatingGUI:
-      return
-    self.updatingGUI = True
     self.radiusSpinBox.setValue(self.radius.value)
-    self.updatingGUI = False
     self.updateMRMLFromGUI()
 
   def onRadiusSpinBoxChanged(self,value):
-    if self.updatingGUI:
-      return
-    self.updatingGUI = True
     self.radius.setValue(self.radiusSpinBox.value)
-    self.updatingGUI = False
     self.updateMRMLFromGUI()
 
   def updateMRMLFromGUI(self):
-    if self.updatingGUI:
-      return
     disableState = self.parameterNode.GetDisableModifiedEvent()
     self.parameterNode.SetDisableModifiedEvent(1)
     super(PaintEffectOptions,self).updateMRMLFromGUI()
