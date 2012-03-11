@@ -15,6 +15,7 @@ from MakeModelEffect import *
 from MorphologyEffect import *
 from ErodeEffect import *
 from DilateEffect import *
+from IslandEffect import *
 from IdentifyIslandsEffect import *
 from ChangeIslandEffect import *
 from RemoveIslandsEffect import *

@@ -17,6 +17,7 @@ set(EditorLib_PYTHON_SCRIPTS
   MorphologyEffect
   ErodeEffect
   DilateEffect
+  IslandEffect
   IdentifyIslandsEffect
   ChangeIslandEffect
   RemoveIslandsEffect

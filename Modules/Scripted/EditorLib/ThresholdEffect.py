@@ -250,6 +250,8 @@ class ThresholdEffectTool(Effect.EffectTool):
       return
     node = self.editUtil.getParameterNode()
 
+    self.undoRedo.saveState()
+
     thresh = vtk.vtkImageThreshold()
     thresh.SetInput( self.editUtil.getBackgroundImage() )
     thresh.ThresholdBetween(self.min, self.max)

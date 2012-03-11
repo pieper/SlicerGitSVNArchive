@@ -51,6 +51,8 @@ class EditBox(object):
     self.editorBuiltins["ErodeEffect"] = EditorLib.ErodeEffect
     self.editorBuiltins["DilateEffect"] = EditorLib.DilateEffect
     self.editorBuiltins["ChangeLabelEffect"] = EditorLib.ChangeLabelEffect
+    self.editorBuiltins["RemoveIslandsEffect"] = EditorLib.RemoveIslandsEffect
+    self.editorBuiltins["IdentifyIslandsEffect"] = EditorLib.IdentifyIslandsEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
