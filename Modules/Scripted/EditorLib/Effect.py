@@ -116,11 +116,11 @@ class EffectOptions(EditOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(EffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     self.scope = self.parameterNode.GetParameter("Effect,scope")
     scopeIndex = self.availableScopeOptions.index(self.scope)
     self.scopeComboBox.currentIndex = scopeIndex 
-    self.connectConnections()
+    self.connectWidgets()
 
   def onScopeChanged(self,index):
     self.updateMRMLFromGUI()

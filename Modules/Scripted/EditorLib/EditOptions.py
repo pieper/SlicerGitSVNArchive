@@ -74,8 +74,8 @@ class EditOptions(object):
     # as needed to prevent triggering mrml updates while
     # updating the state of the gui
     # - each level of the inheritance tree can add entries
-    #   to this list for use by the connectConnections
-    #   and disconnectConnections methods
+    #   to this list for use by the connectWidgets
+    #   and disconnectWidgets methods
     self.connections = []
     self.connectionsConnected = False
 
@@ -97,7 +97,7 @@ class EditOptions(object):
     for tagpair in self.observerTags:
       tagpair[0].RemoveObserver(tagpair[1])
 
-  def connectConnections(self):
+  def connectWidgets(self):
     if self.connectionsConnected: return
     for widget,signal,slot in self.connections:
       success = widget.connect(signal,slot)
@@ -106,7 +106,7 @@ class EditOptions(object):
           signal = signal, slot = slot, widget = widget))
     self.connectionsConnected = True
 
-  def disconnectConnections(self):
+  def disconnectWidgets(self):
     if not self.connectionsConnected: return
     for widget,signal,slot in self.connections:
       success = widget.disconnect(signal,slot)

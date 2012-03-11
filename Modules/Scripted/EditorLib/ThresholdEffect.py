@@ -149,7 +149,7 @@ class ThresholdEffectOptions(Effect.EffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(ThresholdEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     min = float(self.parameterNode.GetParameter("ThresholdEffect,min"))
     max = float(self.parameterNode.GetParameter("ThresholdEffect,max"))
     self.threshold.setMinimumValue( min )
@@ -157,7 +157,7 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     for tool in self.tools:
       tool.min = min
       tool.max = max
-    self.connectConnections()
+    self.connectWidgets()
 
   def updateMRMLFromGUI(self):
     disableState = self.parameterNode.GetDisableModifiedEvent()

@@ -106,10 +106,10 @@ class ChangeLabelEffectOptions(Effect.EffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(ChangeLabelEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     self.inputColor.colorSpin.setValue( int(self.parameterNode.GetParameter("ChangeLabelEffect,inputColor")) )
     self.outputColor.colorSpin.setValue( int(self.parameterNode.GetParameter("ChangeLabelEffect,outputColor")) )
-    self.connectConnections()
+    self.connectWidgets()
 
   def updateMRMLFromGUI(self):
     disableState = self.parameterNode.GetDisableModifiedEvent()

@@ -113,7 +113,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(PaintEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     smudge = not (0 == int(self.parameterNode.GetParameter("PaintEffect,smudge")))
     self.smudge.setChecked( smudge )
     radius = float(self.parameterNode.GetParameter("PaintEffect,radius"))
@@ -123,7 +123,7 @@ class PaintEffectOptions(LabelEffect.LabelEffectOptions):
       tool.smudge = smudge
       tool.radius = radius
       tool.createGlyph(tool.brush)
-    self.connectConnections()
+    self.connectWidgets()
 
   def onRadiusValueChanged(self,value):
     self.radiusSpinBox.setValue(self.radius.value)

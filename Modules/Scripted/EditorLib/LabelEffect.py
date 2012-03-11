@@ -103,7 +103,7 @@ class LabelEffectOptions(Effect.EffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(LabelEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     self.paintOver.setChecked( 
                 int(self.parameterNode.GetParameter("LabelEffect,paintOver")) )
     self.thresholdPaint.setChecked( 
@@ -115,7 +115,7 @@ class LabelEffectOptions(Effect.EffectOptions):
     self.thresholdLabel.setHidden( not self.thresholdPaint.checked )
     self.threshold.setHidden( not self.thresholdPaint.checked )
     self.threshold.setEnabled( self.thresholdPaint.checked )
-    self.connectConnections()
+    self.connectWidgets()
 
   def onThresholdValuesChange(self,min,max):
     self.updateMRMLFromGUI()

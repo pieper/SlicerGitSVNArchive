@@ -95,7 +95,7 @@ class MorphologyEffectOptions(Effect.EffectOptions):
         # don't update if the parameter node has not got all values yet
         return
     super(MorphologyEffectOptions,self).updateGUIFromMRML(caller,event)
-    self.disconnectConnections()
+    self.disconnectWidgets()
     neighborMode = self.parameterNode.GetParameter("MorphologyEffect,neighborMode")
     if neighborMode == '8':
       self.eightNeighbors.checked = True
@@ -103,7 +103,7 @@ class MorphologyEffectOptions(Effect.EffectOptions):
     elif neighborMode == '4':
       self.eightNeighbors.checked = False
       self.fourNeighbors.checked = True
-    self.connectConnections()
+    self.connectWidgets()
     # todo: handle iterations and fill options
 
   def updateMRMLFromGUI(self):
