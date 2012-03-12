@@ -54,6 +54,7 @@ class EditBox(object):
     self.editorBuiltins["RemoveIslandsEffect"] = EditorLib.RemoveIslandsEffect
     self.editorBuiltins["IdentifyIslandsEffect"] = EditorLib.IdentifyIslandsEffect
     self.editorBuiltins["SaveIslandEffect"] = EditorLib.SaveIslandEffect
+    self.editorBuiltins["ChangeIslandEffect"] = EditorLib.ChangeIslandEffect
 
     if parent == 0:
       self.parent = qt.QFrame()
