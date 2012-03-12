@@ -36,7 +36,6 @@ class SaveIslandEffectOptions(IslandEffect.IslandEffectOptions):
     # create a logic instance to do the non-gui work
     # (since this is created from the option gui it has no slice logic)
     self.logic = SaveIslandEffectLogic(None)
-    self.scopeOptions = ('All', 'Visible')
 
   def __del__(self):
     super(SaveIslandEffectOptions,self).__del__()
@@ -44,17 +43,17 @@ class SaveIslandEffectOptions(IslandEffect.IslandEffectOptions):
   def create(self):
     super(SaveIslandEffectOptions,self).create()
     # don't need minimum size or fully connected options for this
-    self.minimumSizeF.hide()
+    self.sizeLabel.hide()
+    self.minimumSize.hide()
     self.fullyConnected.hide()
+
+    self.helpLabel = qt.QLabel("Click on segmented region to remove all\nsegmentation not directly connected to it.", self.frame)
+    self.frame.layout().addWidget(self.helpLabel)
 
     EditorLib.HelpButton(self.frame, "Save the connected region (island) where you click.")
 
     # Add vertical spacer
     self.frame.layout().addStretch(1)
-
-  def onApply(self):
-    self.logic.undoRedo = self.undoRedo
-    self.logic.removeIsland()
 
   def destroy(self):
     super(SaveIslandEffectOptions,self).destroy()
@@ -110,6 +109,7 @@ class SaveIslandEffectTool(IslandEffect.IslandEffectTool):
     """
     # events from the interactory
     if event == "LeftButtonPressEvent":
+      self.logic.undoRedo = self.undoRedo
       xy = self.interactor.GetEventPosition()
       self.logic.saveIsland(xy)
       self.abortEvent(event)
@@ -136,6 +136,7 @@ class SaveIslandEffectLogic(IslandEffect.IslandEffectLogic):
     #
     # change the label values based on the parameter node
     #
+    self.undoRedo.saveState()
     labelLogic = self.sliceLogic.GetLabelLayer()
     xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
     ijk = xyToIJK.MultiplyPoint( xy + (0, 1) )[:3]
