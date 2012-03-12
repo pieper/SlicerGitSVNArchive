@@ -39,7 +39,7 @@ class ThresholdEffectOptions(Effect.EffectOptions):
   def create(self):
     super(ThresholdEffectOptions,self).create()
 
-    self.thresholdLabel = qt.QLabel("Threshold", self.frame)
+    self.thresholdLabel = qt.QLabel("Threshold Range:", self.frame)
     self.thresholdLabel.setToolTip("Set the range of the background values that should be labeled.")
     self.frame.layout().addWidget(self.thresholdLabel)
     self.widgets.append(self.thresholdLabel)
@@ -50,6 +50,7 @@ class ThresholdEffectOptions(Effect.EffectOptions):
     success, lo, hi = self.getBackgroundScalarRange()
     if success:
       self.threshold.minimum, self.threshold.maximum = lo, hi
+      self.threshold.singleStep = (hi - lo) / 1000.
     self.frame.layout().addWidget(self.threshold)
     self.widgets.append(self.threshold)
 
