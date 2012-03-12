@@ -124,16 +124,11 @@ class EditorWidget:
     
   def exit(self):
     self.parameterNode.RemoveObserver(self.parameterNodeTag)
-    self.pauseEffect()
     self.helper.onExit()
 
   def updateGUIFromMRML(self, caller, event):
     if self.toolsBox:
       self.toolsBox.updateUndoRedoButtons()
-
-  def pauseEffect(self):
-    if self.toolsBox:
-      self.toolsBox.pauseEffect()
 
   def activateEffect(self):
     if self.toolsBox:
