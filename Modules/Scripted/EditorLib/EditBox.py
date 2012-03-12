@@ -5,7 +5,6 @@ from EditOptions import *
 import EditUtil
 import EditorLib
 
-
 #########################################################
 #
 # 
@@ -25,7 +24,7 @@ comment = """
 
 class EditBox(object):
 
-  def __init__(self, parent=0, optionsFrame=None):
+  def __init__(self, parent=None, optionsFrame=None):
     self.effects = []
     self.effectButtons = {}
     self.effectMapper = qt.QSignalMapper()
@@ -55,8 +54,9 @@ class EditBox(object):
     self.editorBuiltins["IdentifyIslandsEffect"] = EditorLib.IdentifyIslandsEffect
     self.editorBuiltins["SaveIslandEffect"] = EditorLib.SaveIslandEffect
     self.editorBuiltins["ChangeIslandEffect"] = EditorLib.ChangeIslandEffect
+    self.editorBuiltins["GrowCutEffect"] = EditorLib.GrowCutEffect
 
-    if parent == 0:
+    if not parent:
       self.parent = qt.QFrame()
       self.parent.setLayout( qt.QVBoxLayout() )
       self.create()
@@ -149,17 +149,6 @@ class EditBox(object):
     self.operations = EditBox.availableOperations
     self.nonmodal = EditBox.availableNonmodal
     self.disabled = EditBox.availableDisabled
-
-    '''
-    for key in slicer.modules.editorExtensions.keys():
-      e = slicer.modules.editorExtensions[key]()
-      if 'MouseTool' in e.attributes:
-        self.mouseTools.append(key)
-      if 'Nonmodal' in e.attributes:
-        self.operations.append(key)
-      if 'Disabled' in e.attributes:
-        self.disabled.append(key)
-    '''
 
     # combined list of all effects
     self.effects = self.mouseTools + self.operations
@@ -274,13 +263,8 @@ class EditBox(object):
 
     # create all of the buttons
     # createButtonRow() ensures that only effects in self.effects are exposed,
-    self.createButtonRow( ("DefaultTool", "EraseLabel", "Paint", "Draw", "LevelTracing", "ImplicitRectangle", "IdentifyIslands", "ChangeIsland", "RemoveIslands", "SaveIsland") )
-    self.createButtonRow( ("ErodeLabel", "DilateLabel", "Threshold", "ChangeLabel", "MakeModel", "GrowCutSegment") )
-
-    builtins = []
-    for k in self.editorBuiltins:
-      builtins.append(k)
-    self.createButtonRow( builtins )
+    self.createButtonRow( ("DefaultTool", "EraseLabel", "PaintEffect", "DrawEffect", "LevelTracingEffect", "RectangleEffect", "IdentifyIslandsEffect", "ChangeIslandEffect", "RemoveIslandsEffect", "SaveIslandEffect") )
+    self.createButtonRow( ("ErodeEffect", "DilateEffect", "ThresholdEffect", "ChangeLabelEffect", "MakeModelEffect", "GrowCutEffect") )
 
     extensions = []
     for k in slicer.modules.editorExtensions:
@@ -312,36 +296,6 @@ class EditBox(object):
     if EditBox.displayNames.has_key(name):
       name = EditBox.displayNames[name]
     self.toolsActiveToolName.setText(name)
-
-# needs to be a valid effect name and state of "", Disabled, or Selected
-  TODO = """
-itcl::body EditBox::setButtonState {effect state} {
-  $::slicer3::ApplicationGUI SetIconImage \
-      $_effects($effect,icon) $_effects($effect,imageData$state)
-  $o($effect,button) SetImageToIcon $_effects($effect,icon)
-  switch $state {
-    Selected -
-    "" {
-      $o($effect,button) SetState 1
-    }
-    "Disabled" {
-      $o($effect,button) SetState 0
-    }
-  }
-}
-"""
-
-  #
-  # Pause running the current effect, reverting to the default tool
-  #
-  def pauseEffect(self):
-    self.defaultEffect()
-
-  #
-  # Resume running the effect that was being used before a pause (TODO)
-  #
-  def resumeEffect(self):
-    pass
 
   #
   # switch to the default tool
@@ -439,9 +393,6 @@ itcl::body EditBox::setButtonState {effect state} {
         # Not a special case, so create the effectName
         if effectName == "GrowCutSegment":
           self.editorGestureCheckPoint()
-          #volumesLogic = slicer.modules.volumes.logic()
-          #print ("VolumesLogic is %s " % volumesLogic)
-          #tcl('EditorGestureCheckPoint $%s' % volumesLogic)        
         if mouseTool:
           # TODO: make some nice custom cursor shapes
           # - for now use the built in override cursor

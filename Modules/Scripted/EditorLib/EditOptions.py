@@ -1714,15 +1714,15 @@ class GrowCutSegmentOptions(EditOptions):
       return
     paintparams = ("radius", "smudge")
     for p in paintparams:
-      if self.parameterNode.GetParameter("Paint,"+p) == '':
+      if self.parameterNode.GetParameter("PaintEffect,"+p) == '':
         # don't update if the parameter node has not got all values yet
         return
  
     self.updatingGUI = True
     super(GrowCutSegmentOptions,self).updateGUIFromMRML(caller,event)
-    self.smudge.setChecked( int(self.parameterNode.GetParameter("Paint,smudge")) )
-    self.radius.setValue( float(self.parameterNode.GetParameter("Paint,radius")) )
-    self.radiusSpinBox.setValue( float(self.parameterNode.GetParameter("Paint,radius")) )
+    self.smudge.setChecked( int(self.parameterNode.GetParameter("PaintEffect,smudge")) )
+    self.radius.setValue( float(self.parameterNode.GetParameter("PaintEffect,radius")) )
+    self.radiusSpinBox.setValue( float(self.parameterNode.GetParameter("PaintEffect,radius")) )
     self.updatingGUI = False
 
   def onRadiusValueChanged(self,value):
@@ -1748,10 +1748,10 @@ class GrowCutSegmentOptions(EditOptions):
     self.parameterNode.SetDisableModifiedEvent(1)
     super(GrowCutSegmentOptions,self).updateMRMLFromGUI()
     if self.smudge.checked:
-      self.parameterNode.SetParameter( "Paint,smudge", "1" )
+      self.parameterNode.SetParameter( "PaintEffect,smudge", "1" )
     else:
-      self.parameterNode.SetParameter( "Paint,smudge", "0" )
-    self.parameterNode.SetParameter( "Paint,radius", str(self.radius.value) )
+      self.parameterNode.SetParameter( "PaintEffect,smudge", "0" )
+    self.parameterNode.SetParameter( "PaintEffect,radius", str(self.radius.value) )
     self.parameterNode.SetDisableModifiedEvent(disableState)
     if not disableState:
       self.parameterNode.InvokePendingModifiedEvent()
