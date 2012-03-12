@@ -125,6 +125,8 @@ class EditorWidget:
   def exit(self):
     self.parameterNode.RemoveObserver(self.parameterNodeTag)
     self.helper.onExit()
+    if self.toolsBox:
+      self.toolsBox.defaultEffect()
 
   def updateGUIFromMRML(self, caller, event):
     if self.toolsBox:
@@ -141,8 +143,6 @@ class EditorWidget:
         except KeyError:
           # oh well, no paint effect so let the user pick their own
           pass
-
-  # TODO need similar functionality as exit() to cancel brushes when widget is destroyed
 
   # sets the node for the volume to be segmented
   def setMasterNode(self, newMasterNode):
