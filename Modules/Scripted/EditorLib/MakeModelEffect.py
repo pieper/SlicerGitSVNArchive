@@ -101,12 +101,29 @@ class MakeModelEffectOptions(Effect.EffectOptions):
       self.parameterNode = node
       self.parameterNodeTag = node.AddObserver("ModifiedEvent", self.updateGUIFromMRML)
 
+  def checkForModelMakerModule(self):
+    try:
+      modelMaker = slicer.modules.modelmaker
+      return True
+    except AttributeError:
+      qt.QMessageBox.critical(slicer.util.mainWindow(), 'Editor', 'The ModelMaker module is not available<p>Perhaps it was disabled in the application settings or did not load correctly.')
+      return False
+
   def onGoToModelMaker(self):
-    m = slicer.util.mainWindow()
-    m.moduleSelector().selectModule('ModelMaker')
+    if self.checkForModelMakerModule():
+      m = slicer.util.mainWindow()
+      m.moduleSelector().selectModule('ModelMaker')
 
   def onApply(self):
-    self.logic.makeModel(self.modelName.text,self.smooth.checked)
+    if self.checkForModelMakerModule():
+      # 
+      # run the task (in the background)
+      # - use the GUI to provide progress feedback
+      # - use the GUI's Logic to invoke the task
+      # - model will show up when the processing is finished
+      #
+      self.statusText( "Model Making Started...", 2000 )
+      self.logic.makeModel(self.modelName.text,self.smooth.checked)
 
   def setMRMLDefaults(self):
     super(MakeModelEffectOptions,self).setMRMLDefaults()
