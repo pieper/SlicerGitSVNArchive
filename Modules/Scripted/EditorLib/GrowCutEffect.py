@@ -180,6 +180,19 @@ class GrowCutEffectLogic(Effect.EffectLogic):
     background = self.getScopedBackground()
     gestureInput = self.getScopedLabelInput()
     growCutOutput = self.getScopedLabelOutput()
+
+    # set the make a zero-valued volume for the output
+    # TODO: maybe this should be done in numpy as a one-liner
+    thresh = vtk.vtkImageThreshold()
+    thresh.ReplaceInOn()
+    thresh.ReplaceOutOn()
+    thresh.SetInValue(0)
+    thresh.SetOutValue(0)
+    thresh.SetOutputScalarType( vtk.VTK_SHORT )
+    thresh.SetInput( gestureInput )
+    thresh.SetOutput( growCutOutput )
+    thresh.GetOutput().Update()
+
     growCutOutput.DeepCopy( gestureInput )
     growCutFilter.SetInput( 0, background )
     growCutFilter.SetInput( 1, gestureInput )
@@ -200,7 +213,7 @@ class GrowCutEffectLogic(Effect.EffectLogic):
     oSize = int(round(pow(voxelNumber,cubeRoot)))
 
     growCutFilter.SetObjectSize( oSize )
-    growCutFilter.SetContrastNoiseRatio( oSize )
+    growCutFilter.SetContrastNoiseRatio( contrastNoiseRatio )
     growCutFilter.SetPriorSegmentConfidence( priorStrength )
     growCutFilter.Update()
 
