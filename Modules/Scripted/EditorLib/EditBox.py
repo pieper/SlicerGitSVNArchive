@@ -264,7 +264,7 @@ class EditBox(object):
     # create all of the buttons
     # createButtonRow() ensures that only effects in self.effects are exposed,
     self.createButtonRow( ("DefaultTool", "EraseLabel", "PaintEffect", "DrawEffect", "LevelTracingEffect", "RectangleEffect", "IdentifyIslandsEffect", "ChangeIslandEffect", "RemoveIslandsEffect", "SaveIslandEffect") )
-    self.createButtonRow( ("ErodeEffect", "DilateEffect", "ThresholdEffect", "ChangeLabelEffect", "MakeModelEffect", "GrowCutEffect") )
+    self.createButtonRow( ("ErodeEffect", "DilateEffect", "GrowCutEffect", "ThresholdEffect", "ChangeLabelEffect", "MakeModelEffect") )
 
     extensions = []
     for k in slicer.modules.editorExtensions:
