@@ -479,7 +479,8 @@ class PaintEffectLogic(LabelEffect.LabelEffectLogic):
   """
 
   def __init__(self):
-    # TODO: flesh this out
+    # TODO: flesh this out - might want to move all the paint work into here
+    # for easier re-use
     pass
 
 
