@@ -177,10 +177,13 @@ class GrowCutEffectLogic(Effect.EffectLogic):
 
   def growCut(self):
     growCutFilter = vtkITK.vtkITKGrowCutSegmentationImageFilter()
+    background = self.getScopedBackground()
     gestureInput = self.getScopedLabelInput()
-    growCutFilter.SetInput( 0, self.getScopedBackground() )
+    growCutOutput = self.getScopedLabelOutput()
+    growCutOutput.DeepCopy( gestureInput )
+    growCutFilter.SetInput( 0, background )
     growCutFilter.SetInput( 1, gestureInput )
-    growCutFilter.SetInput( 2, self.getScopedLabelOutput() )
+    growCutFilter.SetInput( 2, growCutOutput )
 
     objectSize = 5. # TODO: this is a magic number
     contrastNoiseRatio = 0.8 # TODO: this is a magic number
@@ -200,6 +203,8 @@ class GrowCutEffectLogic(Effect.EffectLogic):
     growCutFilter.SetContrastNoiseRatio( oSize )
     growCutFilter.SetPriorSegmentConfidence( priorStrength )
     growCutFilter.Update()
+
+    growCutOutput.DeepCopy( growCutFilter.GetOutput() )
 
     self.applyScopedLabel()
 
