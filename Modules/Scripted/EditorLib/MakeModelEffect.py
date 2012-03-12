@@ -122,7 +122,7 @@ class MakeModelEffectOptions(Effect.EffectOptions):
       # - use the GUI's Logic to invoke the task
       # - model will show up when the processing is finished
       #
-      self.statusText( "Model Making Started...", 2000 )
+      slicer.util.showStatusMessage( "Model Making Started...", 2000 )
       self.logic.makeModel(self.modelName.text,self.smooth.checked)
 
   def setMRMLDefaults(self):
