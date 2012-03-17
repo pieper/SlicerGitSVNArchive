@@ -121,6 +121,7 @@ void vtkMRMLScriptedModuleNode::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+#if 0
 void vtkMRMLScriptedModuleNode
 ::SetParameter(const std::string& name, const std::string& value)
 {
@@ -132,6 +133,7 @@ void vtkMRMLScriptedModuleNode
     this->SetModifiedSinceRead(1);
     }
 }
+#endif
 
 //----------------------------------------------------------------------------
 void vtkMRMLScriptedModuleNode::UnsetParameter(const std::string& name)
@@ -157,6 +159,7 @@ void vtkMRMLScriptedModuleNode::UnsetAllParameters()
 }
 
 //----------------------------------------------------------------------------
+#if 0
 std::string vtkMRMLScriptedModuleNode
 ::GetParameter(const std::string& name) const
 {
@@ -166,6 +169,7 @@ std::string vtkMRMLScriptedModuleNode
     }
   return this->Parameters.find(name)->second;
 }
+#endif
 
 //----------------------------------------------------------------------------
 int vtkMRMLScriptedModuleNode::GetParameterCount()

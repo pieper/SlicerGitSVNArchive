@@ -51,7 +51,10 @@ public:
   vtkSetStringMacro (ModuleName);
 
   /// Set module parameter
-  void SetParameter(const std::string& name, const std::string& value);
+  void SetParameter(const std::string& name, const std::string& value)
+    { this->SetParameter(name.c_str(), value.c_str()); };
+  void SetParameter(const char *name, const char *value)
+    { this->SetAttribute(name, value); };
 
   /// Unset the parameter identified by \a name
   void UnsetParameter(const std::string& name);
@@ -61,7 +64,12 @@ public:
   void UnsetAllParameters();
 
   /// Get module parameter identified by \a name
-  std::string GetParameter(const std::string& name) const;
+  std::string GetParameter(const std::string& name)
+    { return std::string(this->GetParameter(name.c_str())); };
+  const char *GetParameter(const char *name)
+    { const char *att = this->GetAttribute(name); 
+      if (att) return att; else return "";
+    };
 
   /// Get number of parameters
   int GetParameterCount();
