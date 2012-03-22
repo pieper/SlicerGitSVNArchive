@@ -84,11 +84,7 @@ def thresholdThreadingTest():
 
   if (postArray - preArray).max() != 0:
     print("!$!$!#!@#!@!@$%! Test Failed!!")
+    return False
   else:
     print("Ahh... test passed.")
-
-
-
-
-
-
+    return True
