@@ -23,14 +23,20 @@ set(Slicer_PYTHON_MODULES_CONFIG "
 'mrmlLogic',
 'remoteio',
 'teem',
-'qMRMLWidgetsPythonQt',
 # slicer base libs
 'logic',
+# slicer module
+'modulelogic',
+'modulemrml'"
+  )
+
+set(Slicer_PYTHON_GUI_MODULES_CONFIG "
+# slicer libs
+'qMRMLWidgetsPythonQt',
+# slicer base libs
 'qSlicerBaseQTCorePythonQt',
 'qSlicerBaseQTGUIPythonQt',
 # slicer module
-'modulelogic',
-'modulemrml',
 'modulewidget'"
   )
 
@@ -41,9 +47,13 @@ if(Slicer_BUILD_CLI_SUPPORT)
     )
   set(Slicer_PYTHON_MODULES_CONFIG "${Slicer_PYTHON_MODULES_CONFIG},
 # slicer libs (Slicer_BUILD_CLI_SUPPORT:ON)
-'mrmlcli',
+'mrmlcli'
+#CLI logic (Slicer_BUILD_CLI_SUPPORT:ON)
+"
+  )
+  set(Slicer_PYTHON_GUI_MODULES_CONFIG "${Slicer_PYTHON_GUI_MODULES_CONFIG},
 # slicer base libs (Slicer_BUILD_CLI_SUPPORT:ON)
-'qSlicerBaseQTCLIPythonQt',
+'qSlicerBaseQTCLIPythonQt'
 #CLI logic (Slicer_BUILD_CLI_SUPPORT:ON)
 "
   )
