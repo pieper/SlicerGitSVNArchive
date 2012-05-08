@@ -546,6 +546,7 @@ include(${VTK_USE_FILE})
 #-----------------------------------------------------------------------------
 find_package(CTK REQUIRED)
 include(${CTK_USE_FILE})
+set(DCMTK_DIR ${CTK_DCMTK_DIR} CACHE PATH "Path to DCMTK build or install tree")
 
 #-----------------------------------------------------------------------------
 # QtTesting
