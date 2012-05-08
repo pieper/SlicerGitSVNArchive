@@ -7,7 +7,14 @@ try:
   from qSlicerBaseQTCLIPython import vtkSlicerCLIModuleLogic
 except: pass
 
-from __main__ import _qSlicerCoreApplicationInstance as app
+try:
+  from __main__ import _qSlicerCoreApplicationInstance as app
+except:
+  class app:
+    majorVersion = 4
+    minorVersion = 1
+    slicerHome = '/home/pieper/slicer4/latest/Slicer-superbuild/Slicer-build'
+
 from slicer.util import importVTKClassesFromDirectory
 from os import path
 
