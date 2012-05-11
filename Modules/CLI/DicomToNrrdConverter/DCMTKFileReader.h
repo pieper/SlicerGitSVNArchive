@@ -667,12 +667,14 @@ public:
                                    << group << " " << std::hex
                                    << element << std::dec);
         }
-      if(isItem->getSint32(target) != EC_Normal)
+      Sint32 sint32target;
+      if(isItem->getSint32(sint32target) != EC_Normal)
         {
         DCMTKException(<< "Can't get DecimalString Value at tag "
                        << std::hex << group << " "
                        << element << std::dec);
         }
+      target = sint32target;
       return EXIT_SUCCESS;
     }
 
