@@ -92,8 +92,8 @@ class ChangeIslandEffectTool(IslandEffect.IslandEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(ChangeIslandEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(ChangeIslandEffectTool,self).__init__(sliceWidget, threeDWidget)
     # create a logic instance to do the non-gui work
     self.logic = ChangeIslandEffectLogic(self.sliceWidget.sliceLogic())
     

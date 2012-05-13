@@ -135,8 +135,8 @@ class ChangeLabelEffectTool(Effect.EffectTool):
   nodes to operate on.
   """
 
-  def __init__(self,sliceWidget):
-    super(ChangeLabelEffectTool,self).__init__(sliceWidget)
+  def __init__(self,sliceWidget, threeDWidget=None):
+    super(ChangeLabelEffectTool,self).__init__(sliceWidget, threeDWidget)
 
   def cleanup(self):
     super(ChangeLabelEffectTool,self).cleanup()

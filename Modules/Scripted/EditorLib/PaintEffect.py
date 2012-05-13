@@ -237,8 +237,8 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(PaintEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(PaintEffectTool,self).__init__(sliceWidget, threeDWidget)
 
     # configuration variables
     self.delayedPaint = True
@@ -275,7 +275,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     """
     for a in self.feedbackActors:
       self.renderer.RemoveActor2D(a)
-    self.sliceView.scheduleRender()
+    self.view.scheduleRender()
     super(PaintEffectTool,self).cleanup()
 
   def getLabelPixel(self,xy):
@@ -325,7 +325,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     """
     if hasattr(self,'actor'):
       self.actor.SetPosition( self.interactor.GetEventPosition() )
-      self.sliceView.scheduleRender()
+      self.view.scheduleRender()
     
 
   def createGlyph(self, polyData):

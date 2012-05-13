@@ -100,8 +100,8 @@ class ErodeEffectTool(MorphologyEffect.MorphologyEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(ErodeEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(ErodeEffectTool,self).__init__(sliceWidget, threeDWidget)
 
   def cleanup(self):
     """

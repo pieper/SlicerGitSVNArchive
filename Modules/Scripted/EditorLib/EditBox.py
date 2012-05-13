@@ -351,6 +351,11 @@ class EditBox(object):
             tool = effectClass.tool(sliceWidget)
             tool.undoRedo = self.undoRedo
             self.currentTools.append(tool)
+        redWidget = self.editUtil.getSliceWidget()
+        for viewIndex in xrange(layoutManager.threeDViewCount):
+          tool = effectClass.tool(redWidget, layoutManager.threeDWidget(viewIndex))
+          tool.undoRedo = self.undoRedo
+          self.currentTools.append(tool)
         self.currentOption.tools = self.currentTools
       else:
         # fallback to internal classes

@@ -162,8 +162,8 @@ class MakeModelEffectTool(Effect.EffectTool):
   nodes to operate on.
   """
 
-  def __init__(self,sliceWidget):
-    super(MakeModelEffectTool,self).__init__(sliceWidget)
+  def __init__(self,sliceWidget, threeDWidget=None):
+    super(MakeModelEffectTool,self).__init__(sliceWidget, threeDWidget)
 
   def cleanup(self):
     super(MakeModelEffectTool,self).cleanup()

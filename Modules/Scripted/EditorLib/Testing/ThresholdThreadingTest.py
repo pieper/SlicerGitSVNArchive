@@ -59,7 +59,7 @@ class EditorLibTesting(unittest.TestCase):
     paintEffect.setMRMLDefaults()
     paintEffect.__del__()
     sliceWidget = lm.sliceWidget('Red')
-    paintTool = EditorLib.PaintEffectTool(sliceWidget)
+    paintTool = EditorLib.PaintEffectTool(sliceWidget, None)
     editUtil.setLabel(1)
     paintTool.paintAddPoint(100,100)
     paintTool.paintApply()

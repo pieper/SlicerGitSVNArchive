@@ -130,8 +130,8 @@ class IslandEffectTool(Effect.EffectTool):
   nodes to operate on.
   """
 
-  def __init__(self,sliceWidget):
-    super(IslandEffectTool,self).__init__(sliceWidget)
+  def __init__(self,sliceWidget, threeDWidget=None):
+    super(IslandEffectTool,self).__init__(sliceWidget, threeDWidget)
 
   def cleanup(self):
     super(IslandEffectTool,self).cleanup()

@@ -97,8 +97,8 @@ class RemoveIslandsEffectTool(IslandEffect.IslandEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(RemoveIslandsEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(RemoveIslandsEffectTool,self).__init__(sliceWidget, threeDWidget)
     
   def cleanup(self):
     """
