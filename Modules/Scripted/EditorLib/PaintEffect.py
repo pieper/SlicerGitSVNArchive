@@ -326,7 +326,6 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     if hasattr(self,'actor'):
       self.actor.SetPosition( self.interactor.GetEventPosition() )
       self.scheduleRender()
-    
 
   def createGlyph(self, polyData):
     """

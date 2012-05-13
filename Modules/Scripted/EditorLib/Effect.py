@@ -215,7 +215,7 @@ class EffectTool(object):
     for a in self.actors:
       self.renderer.RemoveActor2D(a)
     self.renderWindow.RemoveRenderer(self.renderer)
-    self.view.scheduleRender()
+    self.scheduleRender()
     for tag in self.interactorObserverTags:
       self.interactor.RemoveObserver(tag)
 
