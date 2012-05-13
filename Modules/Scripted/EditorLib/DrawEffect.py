@@ -105,7 +105,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
 
     # interaction state variables
     self.activeSlice = None
-    self.lastInsertSLiceNodeMTime = None
+    self.lastInsertSliceNodeMTime = None
     self.actionState = None
 
     # initialization
@@ -154,10 +154,10 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
       self.actionState = ""
     elif event == "RightButtonPressEvent":
       sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
-      self.lastInsertSLiceNodeMTime = sliceNode.GetMTime()
+      self.lastInsertSliceNodeMTime = sliceNode.GetMTime()
     elif event == "RightButtonReleaseEvent":
       sliceNode = self.sliceWidget.sliceLogic().GetSliceNode()
-      if self.lastInsertSLiceNodeMTime == sliceNode.GetMTime():
+      if self.lastInsertSliceNodeMTime == sliceNode.GetMTime():
         self.apply()
         self.actionState = None
     elif event == "MouseMoveEvent":
