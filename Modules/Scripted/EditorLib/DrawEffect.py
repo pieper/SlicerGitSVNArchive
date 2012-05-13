@@ -97,8 +97,8 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(DrawEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(DrawEffectTool,self).__init__(sliceWidget, threeDWidget)
     
     # create a logic instance to do the non-gui work
     self.logic = DrawEffectLogic(self.sliceWidget.sliceLogic())
@@ -205,7 +205,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     self.xyPoints.Reset()
     rasToXY.TransformPoints( self.rasPoints, self.xyPoints )
     self.polyData.Modified()
-    self.sliceView.scheduleRender()
+    self.view.scheduleRender()
 
   def apply(self):
 

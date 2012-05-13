@@ -154,8 +154,8 @@ class LabelEffectTool(Effect.EffectTool):
   nodes to operate on.
   """
 
-  def __init__(self,sliceWidget):
-    super(LabelEffectTool,self).__init__(sliceWidget)
+  def __init__(self,sliceWidget, threeDWidget=None):
+    super(LabelEffectTool,self).__init__(sliceWidget, threeDWidget)
     self.rotateSliceToImage()
 
   def cleanup(self):

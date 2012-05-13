@@ -91,8 +91,8 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(LevelTracingEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(LevelTracingEffectTool,self).__init__(sliceWidget, threeDWidget)
     
     # create a logic instance to do the non-gui work
     self.logic = LevelTracingEffectLogic(self.sliceWidget.sliceLogic())
@@ -177,7 +177,7 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
 
     self.polyData.DeepCopy( polyData )
     self.polyData.GetPoints().DeepCopy( self.xyPoints )
-    self.sliceView.scheduleRender()
+    self.view.scheduleRender()
 
   def apply(self):
     lines = self.polyData.GetLines()

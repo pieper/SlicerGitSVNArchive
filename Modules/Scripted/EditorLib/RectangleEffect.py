@@ -86,8 +86,8 @@ class RectangleEffectTool(LabelEffect.LabelEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(RectangleEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(RectangleEffectTool,self).__init__(sliceWidget, threeDWidget)
     
     # create a logic instance to do the non-gui work
     self.logic = RectangleEffectLogic(self.sliceWidget.sliceLogic())
@@ -172,7 +172,7 @@ class RectangleEffectTool(LabelEffect.LabelEffectTool):
       if self.actionState == "dragging":
         self.currentXYPosition = self.interactor.GetEventPosition()
         self.updateGlyph()
-        self.sliceView.scheduleRender()
+        self.view.scheduleRender()
         self.abortEvent(event)
     elif event == "LeftButtonReleaseEvent":
       self.actionState = ""

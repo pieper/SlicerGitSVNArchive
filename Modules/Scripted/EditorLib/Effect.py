@@ -147,17 +147,29 @@ class EffectTool(object):
   This class observes the editor parameter node to configure itself
   and queries the current view for background and label volume
   nodes to operate on.
+  If a threeDWidget is provided, the tool is associated
+  with that view, but uses the provided sliceWidget to
+  define the bg/label volumes to operate on.
   """
 
-  def __init__(self,sliceWidget):
+  def __init__(self,sliceWidget,threeDWidget=None):
 
     # sliceWidget to operate on and convenience variables
     # to access the internals
+
     self.sliceWidget = sliceWidget
-    self.sliceView = self.sliceWidget.sliceView()
-    self.interactor = self.sliceView.interactorStyle().GetInteractor()
-    self.renderWindow = self.sliceWidget.sliceView().renderWindow()
-    self.renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
+    self.threeDWidget = threeDWidget
+    if self.threeDWidget:
+      self.view = threeDWidget.threeDView()
+    else:
+      self.view = self.sliceWidget.sliceView()
+
+    self.interactor = self.view.interactorStyle().GetInteractor()
+    self.renderWindow = self.view.renderWindow()
+    #self.renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
+    self.renderer = vtk.vtkRenderer()
+    self.renderWindow.AddRenderer(self.renderer)
+    self.renderer.SetLayer(1)
     self.editUtil = EditUtil.EditUtil()
 
     # optionally set by users of the class
@@ -202,7 +214,8 @@ class EffectTool(object):
     # clean up actors and observers
     for a in self.actors:
       self.renderer.RemoveActor2D(a)
-    self.sliceView.scheduleRender()
+    self.renderWindow.RemoveRenderer(self.renderer)
+    self.view.scheduleRender()
     for tag in self.interactorObserverTags:
       self.interactor.RemoveObserver(tag)
 

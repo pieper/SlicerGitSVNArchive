@@ -198,8 +198,8 @@ class ThresholdEffectTool(Effect.EffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(ThresholdEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(ThresholdEffectTool,self).__init__(sliceWidget, threeDWidget)
     
     # create a logic instance to do the non-gui work
     self.logic = ThresholdEffectLogic(self.sliceWidget.sliceLogic())
@@ -311,7 +311,7 @@ class ThresholdEffectTool(Effect.EffectTool):
     self.cursorMapper.SetInput( self.map.GetOutput() )
     self.cursorActor.VisibilityOn()
 
-    self.sliceView.scheduleRender()
+    self.view.scheduleRender()
 
 #
 # ThresholdEffectLogic

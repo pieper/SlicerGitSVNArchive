@@ -97,8 +97,8 @@ class IdentifyIslandsEffectTool(IslandEffect.IslandEffectTool):
   nodes to operate on.
   """
 
-  def __init__(self, sliceWidget):
-    super(IdentifyIslandsEffectTool,self).__init__(sliceWidget)
+  def __init__(self, sliceWidget, threeDWidget=None):
+    super(IdentifyIslandsEffectTool,self).__init__(sliceWidget, threeDWidget)
     
   def cleanup(self):
     """
