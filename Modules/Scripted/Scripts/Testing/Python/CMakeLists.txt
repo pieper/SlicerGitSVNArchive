@@ -2,7 +2,10 @@ set(extensions DataProbe
     DICOM
     LabelStatistics
     PerformanceTests
-    SampleData)
+    SampleData
+    VectorToScalarVolume
+    VolumeMasker
+    )
 
 if(Slicer_USE_PYTHONQT_WITH_TCL)
   list(APPEND extensions

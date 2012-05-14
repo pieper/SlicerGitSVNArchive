@@ -7,6 +7,7 @@ set(KIT_PYTHON_SCRIPTS
     PerformanceTests.py
     SampleData.py
     VectorToScalarVolume.py
+    VolumeMasker.py
   )
 
 if(Slicer_USE_PYTHONQT_WITH_TCL)
