@@ -275,7 +275,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     """
     for a in self.feedbackActors:
       self.renderer.RemoveActor2D(a)
-    self.view.scheduleRender()
+    self.scheduleRender()
     super(PaintEffectTool,self).cleanup()
 
   def getLabelPixel(self,xy):
@@ -325,7 +325,7 @@ class PaintEffectTool(LabelEffect.LabelEffectTool):
     """
     if hasattr(self,'actor'):
       self.actor.SetPosition( self.interactor.GetEventPosition() )
-      self.view.scheduleRender()
+      self.scheduleRender()
     
 
   def createGlyph(self, polyData):

@@ -172,7 +172,7 @@ class RectangleEffectTool(LabelEffect.LabelEffectTool):
       if self.actionState == "dragging":
         self.currentXYPosition = self.interactor.GetEventPosition()
         self.updateGlyph()
-        self.view.scheduleRender()
+        self.scheduleRender()
         self.abortEvent(event)
     elif event == "LeftButtonReleaseEvent":
       self.actionState = ""

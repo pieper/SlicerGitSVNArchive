@@ -205,7 +205,7 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     self.xyPoints.Reset()
     rasToXY.TransformPoints( self.rasPoints, self.xyPoints )
     self.polyData.Modified()
-    self.view.scheduleRender()
+    self.scheduleRender()
 
   def apply(self):
 

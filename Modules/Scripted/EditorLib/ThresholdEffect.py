@@ -311,7 +311,7 @@ class ThresholdEffectTool(Effect.EffectTool):
     self.cursorMapper.SetInput( self.map.GetOutput() )
     self.cursorActor.VisibilityOn()
 
-    self.view.scheduleRender()
+    self.scheduleRender()
 
 #
 # ThresholdEffectLogic
