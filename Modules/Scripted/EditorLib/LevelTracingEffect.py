@@ -177,7 +177,7 @@ class LevelTracingEffectTool(LabelEffect.LabelEffectTool):
 
     self.polyData.DeepCopy( polyData )
     self.polyData.GetPoints().DeepCopy( self.xyPoints )
-    self.view.scheduleRender()
+    self.scheduleRender()
 
   def apply(self):
     lines = self.polyData.GetLines()
