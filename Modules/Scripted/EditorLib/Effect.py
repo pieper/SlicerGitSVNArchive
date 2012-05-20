@@ -219,6 +219,12 @@ class EffectTool(object):
     for tag in self.interactorObserverTags:
       self.interactor.RemoveObserver(tag)
 
+  def scheduleRender(self):
+    """A local override of scheduleRender so that
+    slice and threeD views can be managed differently
+    when needed"""
+    self.view.scheduleRender()
+
 
 #
 # EffectLogic
