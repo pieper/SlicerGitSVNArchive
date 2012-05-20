@@ -215,9 +215,15 @@ class EffectTool(object):
     for a in self.actors:
       self.renderer.RemoveActor2D(a)
     self.renderWindow.RemoveRenderer(self.renderer)
-    self.view.scheduleRender()
+    self.scheduleRender()
     for tag in self.interactorObserverTags:
       self.interactor.RemoveObserver(tag)
+
+  def scheduleRender(self):
+    """A local override of scheduleRender so that
+    slice and threeD views can be managed differently
+    when needed"""
+    self.view.scheduleRender()
 
 
 #
