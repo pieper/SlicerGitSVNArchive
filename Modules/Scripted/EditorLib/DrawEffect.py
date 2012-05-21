@@ -219,7 +219,13 @@ class DrawEffectTool(LabelEffect.LabelEffectTool):
     idArray.SetTuple1(0, idArray.GetNumberOfTuples() - 1)
 
     self.logic.undoRedo = self.undoRedo
-    self.logic.applyPolyMask(self.polyData)
+    if self.threeDWidget:
+      renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
+      camera = renderer.GetActiveCamera()
+      size = (self.threeDWidget.width, self.threeDWidget.height)
+      self.logic.applyThreeDPolyMask(self.polyData, camera, size)
+    else:
+      self.logic.applyPolyMask(self.polyData)
     self.resetPolyData()
 
   def createPolyData(self):
