@@ -278,6 +278,118 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     return [maskIJKToRAS, mask]
 
+  def applyThreeDPolyMask(self,polyData,camera,size):
+    """
+    rasterize a polyData (closed list of points) 
+    into the label map layer by tracing along a path
+    defined by the given camera
+    """
+
+    import numpy
+    import numpy.linalg
+    
+    # get the background and label to operate on
+    backgroundLogic = self.sliceLogic.GetBackgroundLayer()
+    backgroundNode = backgroundLogic.GetVolumeNode()
+    if not backgroundNode: return
+    backgroundImage = backgroundNode.GetImageData()
+    if not backgroundImage: return
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    labelNode = labelLogic.GetVolumeNode()
+    if not labelNode: return
+    labelImage = labelNode.GetImageData()
+    if not labelImage: return
+
+    # get a rasterized mask the size of the view
+    imageData = vtk.vtkImageData()
+    imageData.SetDimensions( size + (1,) )
+    imageData.SetScalarType(labelImage.GetScalarType()) 
+    imageData.AllocateScalars()
+    fill = slicer.vtkImageFillROI()
+    fill.SetInput(imageData)
+    fill.SetValue(1)
+    fill.SetPoints(polyData.GetPoints())
+    fill.GetOutput().Update()
+    mask = vtk.vtkImageData()
+    mask.DeepCopy(fill.GetOutput())
+
+    # get the key camera values as numpy arrays for convenience
+    position = numpy.array(camera.GetPosition())
+    focalPoint = numpy.array(camera.GetFocalPoint())
+    viewDistance = numpy.linalg.norm(focalPoint - position)
+    viewDirection = (focalPoint - position) / viewDistance
+    viewPlaneNormal = numpy.array(camera.GetViewPlaneNormal())
+    viewUp = numpy.array(camera.GetViewUp())
+    viewAngle = camera.GetViewAngle()
+    tanViewAngle = numpy.tan(numpy.radians(viewAngle))
+    viewRight = numpy.cross(viewUp,viewDirection)
+    nearDistance = farDistance = viewDistance
+
+    print("position", position)
+    print("focalPoint", focalPoint)
+    print("viewUp", viewUp)
+    print("viewPlaneNormal", viewPlaneNormal)
+    print("viewDirection", viewDirection)
+    print("viewAngle", viewAngle)
+    print("viewRight", viewRight)
+    print("viewDistance", viewDistance)
+
+    # find the near and far points of the volume
+    bounds = [0,] * 6
+    labelNode.GetRASBounds(bounds)
+    xmin,ymin,zmin,xmax,ymax,zmax = bounds
+    for x in (xmin,xmax):
+      for y in (ymin,ymax):
+        for z in (zmin,zmax):
+          corner = numpy.array((x,y,z))
+          camToCorner = corner - position
+          print("camToCorner is ", camToCorner)
+          toCornerOnVDir = viewDirection * numpy.dot(viewDirection,camToCorner)
+          print("toCornerOnVDir is ", toCornerOnVDir)
+          dist = numpy.linalg.norm(toCornerOnVDir)
+          print("dist to corner", corner, " is ", dist)
+          nearDistance = min(nearDistance,dist)
+          farDistance = max(farDistance,dist)
+
+    maskIJKToRAS = vtk.vtkMatrix4x4()
+    for row in xrange(3):
+      # where to move in RAS while moving along a row of the mask
+      maskIJKToRAS.SetElement(row,0, viewRight[row])
+      # where to move in RAS while moving along a column
+      maskIJKToRAS.SetElement(row,1, -viewUp[row])
+      # where to move in RAS while moving along a slice (not used)
+      maskIJKToRAS.SetElement(row,2, viewDirection[row])
+
+    # march through the volume applying the label mask
+    step = min(labelNode.GetSpacing())
+    if nearDistance > farDistance or step <= 0:
+      print ("Cannot apply")
+      print ("nearDistance %d farDistance %d step %d" % (nearDistance, farDistance, step) )
+      return
+    print ("nearDistance %d farDistance %d step %d" % (nearDistance, farDistance, step) )
+    dist = nearDistance
+    while dist < farDistance:
+      in_ = viewDirection * dist
+      right = viewRight * tanViewAngle * dist
+      up = viewUp * tanViewAngle * dist 
+      print("drawing at distance ", dist, " RAS ", position + in_)
+      print("in, right, up", (in_, right, up))
+      upperLeftRAS = position + in_ - right + up
+      upperRightRAS = position + in_ + right + up
+      bottomLeftRAS = position + in_ - right - up
+      bottomRightRAS = position + in_ + right - up
+      cornersRAS = (upperLeftRAS, upperRightRAS, bottomLeftRAS, bottomRightRAS)
+      for row in xrange(3):
+        # position of the upper left corner of the mask
+        maskIJKToRAS.SetElement(row,3, upperLeftRAS[row])
+
+      #now, apply the mask at this plane
+      print ("apply: ", mask, maskIJKToRAS, cornersRAS )
+      self.paintImageMask( mask, maskIJKToRAS, cornersRAS )
+
+      dist += step
+
+
   def applyPolyMask(self,polyData):
     """
     rasterize a polyData (closed list of points) 
@@ -321,11 +433,6 @@ class LabelEffectLogic(Effect.EffectLogic):
     # image
     #
 
-    # store a backup copy of the label map for undo
-    # (this happens in it's own thread, so it is cheap)
-    if self.undoRedo:
-      self.undoRedo.saveState()
-
     #
     # get the mask bounding box in ijk coordinates
     # - get the xy bounds
@@ -334,39 +441,38 @@ class LabelEffectLogic(Effect.EffectLogic):
     #
 
     xlo, xhi, ylo, yhi, zlo, zhi = bounds
-    labelLogic = self.sliceLogic.GetLabelLayer()
-    xyToIJK = labelLogic.GetXYToIJKTransform().GetMatrix()
-    tlIJK = xyToIJK.MultiplyPoint( (xlo, yhi, 0, 1) )[:3]
-    trIJK = xyToIJK.MultiplyPoint( (xhi, yhi, 0, 1) )[:3]
-    blIJK = xyToIJK.MultiplyPoint( (xlo, ylo, 0, 1) )[:3]
-    brIJK = xyToIJK.MultiplyPoint( (xhi, ylo, 0, 1) )[:3]
+    sliceNode = self.sliceLogic.GetSliceNode()
+    xyToRAS = sliceNode.GetXYToRAS()
+    tlRAS = xyToRAS.MultiplyPoint( (xlo, yhi, 0, 1) )[:3]
+    trRAS = xyToRAS.MultiplyPoint( (xhi, yhi, 0, 1) )[:3]
+    blRAS = xyToRAS.MultiplyPoint( (xlo, ylo, 0, 1) )[:3]
+    brRAS = xyToRAS.MultiplyPoint( (xhi, ylo, 0, 1) )[:3]
+    cornersRAS = (tlRAS,trRAS,blRAS,brRAS)
 
-    # do the clamping of the four corners
-    dims = labelImage.GetDimensions()
-    tl = [0,] * 3
-    tr = [0,] * 3
-    bl = [0,] * 3
-    br = [0,] * 3
-    corners = ((tlIJK, tl),(trIJK, tr),(blIJK, bl),(brIJK, br))
-    for corner,clampedCorner in corners:
-      for d in xrange(3):
-        clamped = int(round(corner[d]))
-        if clamped < 0: clamped = 0
-        if clamped >= dims[d]: clamped = dims[d]-1
-        clampedCorner[d] = clamped
+    self.paintImageMask( mask, maskIJKToRAS, cornersRAS )
+
+  def paintImageMask(self,mask,maskIJKToRAS,rasCorners):
+
+    labelLogic = self.sliceLogic.GetLabelLayer()
+    labelNode = labelLogic.GetVolumeNode()
+    labelImage = labelNode.GetImageData()
+    backgroundLogic = self.sliceLogic.GetLabelLayer()
+    backgroundNode = backgroundLogic.GetVolumeNode()
+    backgroundImage = backgroundNode.GetImageData()
+
+    # store a backup copy of the label map for undo
+    # (this happens in it's own thread, so it is cheap)
+    if self.undoRedo:
+      self.undoRedo.saveState()
 
     #
     # get the ijk to ras matrices including transforms
     # (use the maskToRAS calculated above)
     #
 
-    labelLogic = self.sliceLogic.GetLabelLayer()
-    labelNode = labelLogic.GetVolumeNode()
-    backgroundLogic = self.sliceLogic.GetLabelLayer()
-    backgroundNode = backgroundLogic.GetVolumeNode()
-
     backgroundIJKToRAS = vtk.vtkMatrix4x4()
     labelIJKToRAS = vtk.vtkMatrix4x4()
+    labelRASToIJK = vtk.vtkMatrix4x4()
 
     sets = ( (backgroundNode, backgroundIJKToRAS), (labelNode, labelIJKToRAS) )
     for node,ijkToRAS in sets:
@@ -380,9 +486,30 @@ class LabelEffectLogic(Effect.EffectLogic):
         else:
           print ("Cannot handle non-linear transforms")
           return
+    labelRASToIJK.DeepCopy(labelIJKToRAS)
+    labelRASToIJK.Invert()
+
+    #
+    # do the clamping of the four corners in IJK space of label
+    #
+    tlRAS,trRAS,blRAS,brRAS = rasCorners
+    dims = labelImage.GetDimensions()
+    tl = [0,] * 3
+    tr = [0,] * 3
+    bl = [0,] * 3
+    br = [0,] * 3
+    corners = ((tlRAS, tl),(trRAS, tr),(blRAS, bl),(brRAS, br))
+    for cornerRAS,clampedCorner in corners:
+      cornerIJK = labelRASToIJK.MultiplyPoint( list(cornerRAS) + [1,] )[:3]
+      for d in xrange(3):
+        clamped = int(round(cornerIJK[d]))
+        if clamped < 0: clamped = 0
+        if clamped >= dims[d]: clamped = dims[d]-1
+        clampedCorner[d] = clamped
 
     #
     # create an exract image for undo if it doesn't exist yet.
+    # and extract parameters
     #
 
     if not self.extractImage:
