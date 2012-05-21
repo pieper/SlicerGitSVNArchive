@@ -166,7 +166,6 @@ class EffectTool(object):
 
     self.interactor = self.view.interactorStyle().GetInteractor()
     self.renderWindow = self.view.renderWindow()
-    #self.renderer = self.renderWindow.GetRenderers().GetItemAsObject(0)
     self.renderer = vtk.vtkRenderer()
     self.renderWindow.AddRenderer(self.renderer)
     self.renderer.SetLayer(1)
