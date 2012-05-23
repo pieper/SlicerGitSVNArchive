@@ -314,6 +314,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     mask.DeepCopy(fill.GetOutput())
 
     # get the key camera values as numpy arrays for convenience
+    # TODO: make a python helper class for cameras
     position = numpy.array(camera.GetPosition())
     focalPoint = numpy.array(camera.GetFocalPoint())
     viewDistance = numpy.linalg.norm(focalPoint - position)
