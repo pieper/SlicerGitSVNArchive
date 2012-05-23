@@ -278,7 +278,7 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     return [maskIJKToRAS, mask]
 
-  def applyThreeDPolyMask(self,polyData,camera,size):
+  def applyThreeDPolyMask(self,polyData,camera,size,debugGeometry=True):
     """
     rasterize a polyData (closed list of points) 
     into the label map layer by tracing along a path
@@ -322,27 +322,27 @@ class LabelEffectLogic(Effect.EffectLogic):
     viewPlaneNormal = numpy.array(camera.GetViewPlaneNormal())
     viewUp = numpy.array(camera.GetViewUp())
     viewAngle = camera.GetViewAngle()
-    tanViewAngle = numpy.tan(numpy.radians(viewAngle))
+    tanHalfViewAngle = numpy.tan(numpy.radians(viewAngle/2.))
     viewRight = numpy.cross(viewUp,viewDirection)
     nearDistance = farDistance = viewDistance
 
-    print("position", position)
-    print("focalPoint", focalPoint)
-    print("viewUp", viewUp)
-    print("viewPlaneNormal", viewPlaneNormal)
-    print("viewDirection", viewDirection)
-    print("viewAngle", viewAngle)
-    print("viewRight", viewRight)
-    print("viewDistance", viewDistance)
-
     # find the near and far points of the volume
-    bounds = [0,] * 6
-    labelNode.GetRASBounds(bounds)
-    xmin,ymin,zmin,xmax,ymax,zmax = bounds
-    for x in (xmin,xmax):
-      for y in (ymin,ymax):
-        for z in (zmin,zmax):
-          corner = numpy.array((x,y,z))
+    ijkToRAS = vtk.vtkMatrix4x4()
+    labelNode.GetIJKToRASMatrix(ijkToRAS)
+    transformNode = labelNode.GetParentTransformNode()
+    if transformNode:
+      if transformNode.IsTransformToWorldLinear():
+        rasToRAS = vtk.vtkMatrix4x4()
+        transformNode.GetMatrixTransformToWorld(rasToRAS)
+        rasToRAS.Multiply4x4(rasToRAS, ijkToRAS, ijkToRAS)
+      else:
+        print ("Cannot handle non-linear transforms")
+        return
+    dimensions = labelImage.GetDimensions()
+    for column in (0,dimensions[0]):
+      for row in (0,dimensions[1]):
+        for slice_ in (0,dimensions[2]):
+          corner = ijkToRAS.MultiplyPoint( (column, row, slice_, 1) )[:3]
           camToCorner = corner - position
           print("camToCorner is ", camToCorner)
           toCornerOnVDir = viewDirection * numpy.dot(viewDirection,camToCorner)
@@ -351,6 +351,12 @@ class LabelEffectLogic(Effect.EffectLogic):
           print("dist to corner", corner, " is ", dist)
           nearDistance = min(nearDistance,dist)
           farDistance = max(farDistance,dist)
+          if debugGeometry:
+            fidNode = slicer.vtkMRMLAnnotationFiducialNode()
+            fidNode.SetFiducialCoordinates(corner)
+            fidNode.Initialize(slicer.mrmlScene)
+            fidNode.SetName("vol corner")
+            fidNode.SetLocked(1)
 
     maskIJKToRAS = vtk.vtkMatrix4x4()
     for row in xrange(3):
@@ -369,24 +375,44 @@ class LabelEffectLogic(Effect.EffectLogic):
       return
     print ("nearDistance %d farDistance %d step %d" % (nearDistance, farDistance, step) )
     dist = nearDistance
-    while dist < farDistance:
+    #while dist < farDistance:
+    halfDist = (nearDistance + farDistance)/2.
+    for dist in (nearDistance, halfDist, farDistance):
       in_ = viewDirection * dist
-      right = viewRight * tanViewAngle * dist
-      up = viewUp * tanViewAngle * dist 
+      right = viewRight * tanHalfViewAngle * dist
+      up = viewUp * tanHalfViewAngle * dist 
       print("drawing at distance ", dist, " RAS ", position + in_)
       print("in, right, up", (in_, right, up))
-      upperLeftRAS = position + in_ - right + up
-      upperRightRAS = position + in_ + right + up
+      topLeftRAS = position + in_ - right + up
+      topRightRAS = position + in_ + right + up
       bottomLeftRAS = position + in_ - right - up
       bottomRightRAS = position + in_ + right - up
-      cornersRAS = (upperLeftRAS, upperRightRAS, bottomLeftRAS, bottomRightRAS)
+      cornersRAS = (topLeftRAS, topRightRAS, bottomLeftRAS, bottomRightRAS)
       for row in xrange(3):
-        # position of the upper left corner of the mask
-        maskIJKToRAS.SetElement(row,3, upperLeftRAS[row])
+        # position of the top left corner of the mask
+        maskIJKToRAS.SetElement(row,3, topLeftRAS[row])
 
       #now, apply the mask at this plane
       print ("apply: ", mask, maskIJKToRAS, cornersRAS )
       self.paintImageMask( mask, maskIJKToRAS, cornersRAS )
+
+      if debugGeometry:
+        points = ( ("topLeftRAS", topLeftRAS), ("topRightRAS", topRightRAS), 
+            ("bottomRightRAS", bottomRightRAS), ("bottomLeftRAS", bottomLeftRAS))
+        pointIndex = 0
+        for name,point in points:
+          fidNode = slicer.vtkMRMLAnnotationFiducialNode()
+          fidNode.SetFiducialCoordinates(point)
+          fidNode.Initialize(slicer.mrmlScene)
+          fidNode.SetName(name)
+          fidNode.SetLocked(1)
+          rulerNode = slicer.vtkMRMLAnnotationRulerNode()
+          rulerNode.SetPosition1(point)
+          rulerNode.SetPosition2(points[(pointIndex+1) % len(points)][1])
+          rulerNode.Initialize(slicer.mrmlScene)
+          rulerNode.SetName("edge")
+          rulerNode.SetLocked(1)
+          pointIndex += 1
 
       dist += step
 
@@ -452,7 +478,17 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     self.paintImageMask( mask, maskIJKToRAS, cornersRAS )
 
-  def paintImageMask(self,mask,maskIJKToRAS,rasCorners):
+  def paintImageMask(self,mask,maskIJKToRAS,cornersRAS):
+    """
+    apply the given mask image using a painter to the current
+    label volume in the context of the current background volume.
+
+    mask : a vtkImageData containing the mask to apply
+    maskIJKToRAS : a vtkMatrix4x4 defining the transform from
+     pixel coordinates of the mask to world space
+    cornersRAS : the world space corners of the mask to apply
+      (in order of (tl, tr, bl, br))
+    """
 
     labelLogic = self.sliceLogic.GetLabelLayer()
     labelNode = labelLogic.GetVolumeNode()
@@ -493,7 +529,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     #
     # do the clamping of the four corners in IJK space of label
     #
-    tlRAS,trRAS,blRAS,brRAS = rasCorners
+    tlRAS,trRAS,blRAS,brRAS = cornersRAS
     dims = labelImage.GetDimensions()
     tl = [0,] * 3
     tr = [0,] * 3
@@ -508,13 +544,15 @@ class LabelEffectLogic(Effect.EffectLogic):
         if clamped >= dims[d]: clamped = dims[d]-1
         clampedCorner[d] = clamped
 
+    print("tl", tl)
+    print("tr", tr)
+    print("bl", bl)
+    print("br", br)
+
     #
     # create an exract image for undo if it doesn't exist yet.
     # and extract parameters
     #
-
-    if not self.extractImage:
-      self.extractImage = vtk.vtkImageData()
 
     parameterNode = self.editUtil.getParameterNode()
     paintLabel = int(parameterNode.GetParameter("label"))
@@ -533,7 +571,6 @@ class LabelEffectLogic(Effect.EffectLogic):
     self.painter.SetWorkingImage( labelImage )
     self.painter.SetWorkingIJKToWorld( labelIJKToRAS )
     self.painter.SetMaskImage( mask )
-    self.painter.SetExtractImage( self.extractImage )
     self.painter.SetReplaceImage(None)
     self.painter.SetMaskIJKToWorld( maskIJKToRAS )
     self.painter.SetTopLeft(tl)
@@ -569,25 +606,6 @@ class LabelEffectLogic(Effect.EffectLogic):
     if k0 == k1:
       return 'IJ'
     return None
-
-  def undoLastApply(self):
-    #TODO: optimized path for undo/redo - not currently available
-    pass
-    """
-    # use the 'save under' information from last paint apply
-    # to restore the original value of the working volume
-    # - be careful can only call this after when the painter class
-    #   is valid (e.g. after an apply but before changing any of the volumes)
-    #   it should be crash-proof in any case, but may generated warnings
-    # - if extract image doesn't exist, failes silently
-    itcl::body Labeler::undoLastApply { } {
-      if { [info exists o(extractImage)] } {
-        $o(painter) SetReplaceImage $o(extractImage)
-        $o(painter) Paint
-      }
-    }
-    """
-
 
 #
 # The LabelEffect class definition 
