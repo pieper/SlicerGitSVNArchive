@@ -59,14 +59,14 @@ public:
 
   /// 
   /// Sets/Gets the PaintRegion in IJK (pixel) coordinates of the Working image
-  vtkSetVector3Macro(TopLeft, int);
-  vtkGetVector3Macro(TopLeft, int);
-  vtkSetVector3Macro(TopRight, int);
-  vtkGetVector3Macro(TopRight, int);
-  vtkSetVector3Macro(BottomLeft, int);
-  vtkGetVector3Macro(BottomLeft, int);
-  vtkSetVector3Macro(BottomRight, int);
-  vtkGetVector3Macro(BottomRight, int);
+  vtkSetVector3Macro(TopLeft, double);
+  vtkGetVector3Macro(TopLeft, double);
+  vtkSetVector3Macro(TopRight, double);
+  vtkGetVector3Macro(TopRight, double);
+  vtkSetVector3Macro(BottomLeft, double);
+  vtkGetVector3Macro(BottomLeft, double);
+  vtkSetVector3Macro(BottomRight, double);
+  vtkGetVector3Macro(BottomRight, double);
 
   /// 
   /// The center and radius of the brush are in world space 
@@ -144,10 +144,10 @@ protected:
   vtkImageSlicePaint();
   ~vtkImageSlicePaint();
 
-  int TopLeft[3];
-  int TopRight[3];
-  int BottomLeft[3];
-  int BottomRight[3];
+  double TopLeft[3];
+  double TopRight[3];
+  double BottomLeft[3];
+  double BottomRight[3];
 
   vtkImageData *MaskImage;
   vtkImageData *BackgroundImage;
