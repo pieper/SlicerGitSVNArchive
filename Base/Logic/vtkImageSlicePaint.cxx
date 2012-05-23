@@ -26,7 +26,7 @@ vtkImageSlicePaint::vtkImageSlicePaint()
 {
   for (int i = 0; i < 3; i++)
     {
-    this->TopLeft[i] = this->TopLeft[i] = this->BottomLeft[i] = this->BottomRight[i] = 0;
+    this->TopLeft[i] = this->TopRight[i] = this->BottomLeft[i] = this->BottomRight[i] = 0;
     }
   
   this->MaskImage = NULL;
@@ -100,11 +100,11 @@ int paintRound (double in)
 template <class T>
 void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *vtkNotUsed(ptr))
 {
-  int deltaTopRow[3];
-  int deltaBottomRow[3];
-  int deltaRightColumn[3];
-  int deltaLeftColumn[3];
-  int maxRowDelta = 0, maxColumnDelta = 0;
+  double deltaTopRow[3];
+  double deltaBottomRow[3];
+  double deltaRightColumn[3];
+  double deltaLeftColumn[3];
+  double maxRowDelta = 0, maxColumnDelta = 0;
 
   // first get the width and height of the extracted region
   // as the maximum distance along any of the edges
@@ -112,24 +112,24 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *vtkNotUsed(ptr))
   for (int i = 0; i < 3; i++)
     {
     deltaTopRow[i] = self->GetTopRight()[i] - self->GetTopLeft()[i];
-    if ( abs(deltaTopRow[i]) > maxColumnDelta )
+    if ( fabs(deltaTopRow[i]) > maxColumnDelta )
       {
-      maxColumnDelta = abs(deltaTopRow[i]);
+      maxColumnDelta = fabs(deltaTopRow[i]);
       }
     deltaBottomRow[i] = self->GetBottomRight()[i] - self->GetBottomLeft()[i];
-    if ( abs(deltaBottomRow[i]) > maxColumnDelta )
+    if ( fabs(deltaBottomRow[i]) > maxColumnDelta )
       {
-      maxColumnDelta = abs(deltaBottomRow[i]);
+      maxColumnDelta = fabs(deltaBottomRow[i]);
       }
     deltaLeftColumn[i] = self->GetBottomLeft()[i] - self->GetTopLeft()[i];
-    if ( abs(deltaLeftColumn[i]) > maxRowDelta )
+    if ( fabs(deltaLeftColumn[i]) > maxRowDelta )
       {
-      maxRowDelta = abs(deltaLeftColumn[i]);
+      maxRowDelta = fabs(deltaLeftColumn[i]);
       }
     deltaRightColumn[i] = self->GetBottomRight()[i] - self->GetTopRight()[i];
-    if ( abs(deltaRightColumn[i]) > maxRowDelta )
+    if ( fabs(deltaRightColumn[i]) > maxRowDelta )
       {
-      maxRowDelta = abs(deltaRightColumn[i]);
+      maxRowDelta = fabs(deltaRightColumn[i]);
       }
     }
 
@@ -146,7 +146,7 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *vtkNotUsed(ptr))
   int extracting = 0;
   if ( extractImage != NULL )
     {
-    extractImage->SetDimensions(maxColumnDelta+1, maxRowDelta+1, 1);
+    extractImage->SetDimensions(paintRound(maxColumnDelta+1), paintRound(maxRowDelta+1), 1);
     extractImage->SetScalarType( self->GetWorkingImage()->GetScalarType() );
     extractImage->AllocateScalars();
     extracting = 1;
