@@ -278,7 +278,7 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     return [maskIJKToRAS, mask]
 
-  def applyThreeDPolyMask(self,polyData,camera,size,debugGeometry=True):
+  def applyThreeDPolyMask(self,polyData,camera,size,debugGeometry=False):
     """
     rasterize a polyData (closed list of points) 
     into the label map layer by tracing along a path
@@ -302,7 +302,7 @@ class LabelEffectLogic(Effect.EffectLogic):
 
     # get a rasterized mask the size of the view
     imageData = vtk.vtkImageData()
-    imageData.SetDimensions( size + (1,) )
+    imageData.SetDimensions( size[0]+1, size[1]+1, 1 )
     imageData.SetScalarType(labelImage.GetScalarType()) 
     imageData.AllocateScalars()
     polyData.GetPoints().Modified()
@@ -317,7 +317,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     mask.DeepCopy(fill.GetOutput())
 
     # get the key camera values as numpy arrays for convenience
-    # TODO: make a python helper class for cameras
+    # TODO: make a python helper class for cameras (and other vtk classes?)
     position = numpy.array(camera.GetPosition())
     focalPoint = numpy.array(camera.GetFocalPoint())
     viewDistance = numpy.linalg.norm(focalPoint - position)
@@ -328,6 +328,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     tanHalfViewAngle = numpy.tan(numpy.radians(viewAngle/2.))
     viewRight = numpy.cross(viewUp,viewDirection)
     nearDistance = farDistance = viewDistance
+    viewAspectRatio = size[0]/float(size[1])
 
     # find the near and far points of the volume
     ijkToRAS = vtk.vtkMatrix4x4()
@@ -361,7 +362,7 @@ class LabelEffectLogic(Effect.EffectLogic):
     farDistance = max(0,farDistance)
 
     # march through the volume applying the label mask
-    step = min(labelNode.GetSpacing())
+    step = min(labelNode.GetSpacing()) / 2.
     if debugGeometry:
       step = (farDistance-nearDistance) / 3.
     if nearDistance >= farDistance or step <= 0:
@@ -374,12 +375,12 @@ class LabelEffectLogic(Effect.EffectLogic):
     dist = nearDistance
     while dist < farDistance:
       in_ = viewDirection * dist
-      viewWidth = tanHalfViewAngle * dist # TODO aspectRatio
-      viewHeight = tanHalfViewAngle * dist
-      right = viewRight * viewWidth
-      up = viewUp * viewHeight
-      widthScale = 2. * viewWidth / size[0]
-      heightScale = 2. * viewHeight / size[1]
+      viewHalfWidth = tanHalfViewAngle * dist * viewAspectRatio
+      viewHalfHeight = tanHalfViewAngle * dist
+      right = viewRight * viewHalfWidth
+      up = viewUp * viewHalfHeight
+      widthScale = 2. * viewHalfWidth / size[0]
+      heightScale = 2. * viewHalfHeight / size[1]
       print("drawing at distance ", dist, " RAS ", position + in_)
       print("in, right, up", (in_, right, up))
       topLeftRAS = position + in_ - right + up
