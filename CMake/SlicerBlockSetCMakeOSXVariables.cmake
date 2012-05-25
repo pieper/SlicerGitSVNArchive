@@ -50,7 +50,7 @@ if(APPLE)
   set(OSX_SDK_106_NAME "Snow Leopard")
   set(OSX_SDK_107_NAME "Lion")
 
-  set (OSX_SDK_ROOTS /Applications/Xcode.app/Contents//Developer/Platforms/MacOSX.platform/Developer/SDKs /Developer/SDKs)
+  set (OSX_SDK_ROOTS /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs /Developer/SDKs)
   set(SDK_VERSIONS_TO_CHECK 10.7 10.6 10.5)
   foreach(SDK_VERSION ${SDK_VERSIONS_TO_CHECK})
     if(NOT CMAKE_OSX_DEPLOYMENT_TARGET OR "${CMAKE_OSX_DEPLOYMENT_TARGET}" STREQUAL "")
