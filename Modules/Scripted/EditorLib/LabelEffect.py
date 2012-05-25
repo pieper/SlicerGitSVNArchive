@@ -285,6 +285,14 @@ class LabelEffectLogic(Effect.EffectLogic):
     defined by the given camera
     """
 
+    # store only a single backup copy of the label map
+    # (otherwise paintImageMask would save one for each 
+    # slice)
+    if self.undoRedo:
+      self.undoRedo.saveState()
+    savedUndoRedo = self.undoRedo
+    self.undoRedo = None
+
     import numpy
     import numpy.linalg
     
@@ -420,6 +428,9 @@ class LabelEffectLogic(Effect.EffectLogic):
           pointIndex += 1
 
       dist += step
+
+    # restore the undo/redo class
+    self.undoRedo = savedUndoRedo
 
 
   def applyPolyMask(self,polyData):
