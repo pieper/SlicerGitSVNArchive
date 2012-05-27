@@ -1,4 +1,5 @@
 from __main__ import vtk, qt, ctk, slicer
+import EditorLib
 
 #
 # VolumeMasker
@@ -81,6 +82,9 @@ class VolumeMaskerWidget:
     self.labelSelector.setToolTip( "Pick the label map to edit" )
     self.labelSelectorFrame.layout().addWidget( self.labelSelector )
 
+    # create and add EditColor directly to "edit label map" section
+    self.editColor = EditorLib.EditColor(self.parent)
+
     #
     # the output volume label
     #
@@ -159,6 +163,7 @@ class VolumeMaskerLogic:
     self.labelNode = None
     self.outputVolumeNode = None
     self.observerTags = {}
+    self.lastMaskLabel = None
 
   def removeObservers(self):
     if self.observerTags != {}:
@@ -178,18 +183,37 @@ class VolumeMaskerLogic:
 
   def autoApply(self):
     self.removeObservers()
-    for n in (self.inputVolumeNode, self.labelNode):
+    parameterNode = EditorLib.EditUtil.EditUtil().getParameterNode()
+    self.observerTags[parameterNode] = parameterNode.AddObserver(
+        vtk.vtkCommand.ModifiedEvent, self.conditionalPerformMasking)
+    nodes = (self.inputVolumeNode, self.labelNode)
+    for n in nodes:
       self.observerTags[n] = n.AddObserver(n.ImageDataModifiedEvent, self.performMasking)
+
+  def conditionalPerformMasking(self,object=None,event=None):
+    """Since we cannot observe for just the label value
+    changing on the parameter node, we check the label value
+    or else we would be re-masking for every small edit
+    parameter change.
+    """
+    label = EditorLib.EditUtil.EditUtil().getLabel()
+    if label != self.lastMaskLabel:
+      self.performMasking()
 
   def performMasking(self,object=None,event=None):
     import numpy
+    label = EditorLib.EditUtil.EditUtil().getLabel()
     a = slicer.util.array(self.inputVolumeNode.GetID())
     la = slicer.util.array(self.labelNode.GetID())
     ma = slicer.util.array(self.outputVolumeNode.GetID())
     mask = numpy.ndarray.copy(la)
-    mask[mask != 0] = 1
+    # TODO: can there be one vector operation that sets
+    # everything to 0 or 1?
+    mask[mask != label] = 0
+    mask[mask == label] = 1
     ma[:] = a * mask
     self.outputVolumeNode.GetImageData().Modified()
+    self.lastMaskLabel = label
 
 
 
