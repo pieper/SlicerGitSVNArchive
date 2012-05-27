@@ -9,7 +9,7 @@ from EditorLib import LabelEffect
 #
 # The Editor Extension itself.
 #
-# This needs to define the hooks to be come an editor effect.
+# This needs to define the hooks to become an editor effect.
 #
 
 #
@@ -153,19 +153,12 @@ class EditorExtensionTemplateExtension(LabelEffect.LabelEffect):
     # name is used to define the name of the icon image resource (e.g. EditorExtensionTemplate.png)
     self.name = "EditorExtensionTemplate"
     # tool tip is displayed on mouse hover
-    self.toolTip = "Paint: circular paint brush for label map editing"
+    self.toolTip = "Default tooltip for an extension"
 
     self.options = EditorExtensionTemplateOptions
     self.tool = EditorExtensionTemplateTool
     self.logic = EditorExtensionTemplateLogic
 
-""" Test:
-
-sw = slicer.app.layoutManager().sliceWidget('Red')
-import EditorLib
-pet = EditorLib.EditorExtensionTemplateTool(sw)
-
-"""
 
 #
 # EditorExtensionTemplate
