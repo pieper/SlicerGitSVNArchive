@@ -399,3 +399,27 @@ class EditBox(object):
   def updateUndoRedoButtons(self):
     self.effectButtons["PreviousCheckPoint"].enabled = self.undoRedo.undoEnabled()
     self.effectButtons["NextCheckPoint"].enabled = self.undoRedo.redoEnabled()
+
+  def reloadExtensions(self):
+    """Support run-time update of extension code
+    by reloading the code and updating the editorExtensions map
+    """
+    import imp, sys, os
+
+    for extension in slicer.modules.editorExtensions.keys():
+      try:
+        filePath = eval('slicer.modules.%s.path' % extension.lower())
+      except TypeError:
+        print("Can't get file for %s" % extension)
+        continue
+      p = os.path.dirname(filePath)
+      if not sys.path.__contains__(p):
+        sys.path.insert(0,p)
+
+      fp = open(filePath, "r")
+      mod = imp.load_module(extension, fp, filePath, ('.py', 'r', imp.PY_SOURCE))
+      fp.close()
+
+      globals()[extension] = mod
+      extensionClass = eval('%s.%sExtension' % (extension,extension), globals())
+      slicer.modules.editorExtensions[extension] = extensionClass
