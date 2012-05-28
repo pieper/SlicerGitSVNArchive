@@ -252,6 +252,13 @@ void qSlicerCoreApplicationPrivate::init()
   q->setExtensionManagerModel(model);
   model->updateModel();
 
+  QStringList uninstalledExtensions;
+  model->uninstallScheduledExtensions(uninstalledExtensions);
+  foreach(const QString& extensionName, uninstalledExtensions)
+    {
+    qDebug() << "Successfully uninstalled extension" << extensionName;
+    }
+
 # ifdef Q_OS_MAC
   q->addLibraryPath(this->defaultExtensionsInstallPathForMacOSX());
   q->setExtensionsInstallPath(this->defaultExtensionsInstallPathForMacOSX());
@@ -994,12 +1001,12 @@ QString qSlicerCoreApplication::launcherSettingsFilePath()const
 #ifdef Q_OS_MAC
     return QString();
 #else
-    return this->slicerHome() + "/" Slicer_BIN_DIR "/SlicerLauncherSettings.ini";
+    return this->slicerHome() + "/" Slicer_BIN_DIR "/" Slicer_APPLICATION_NAME "LauncherSettings.ini";
 #endif
     }
   else
     {
-    return this->slicerHome() + "/SlicerLauncherSettings.ini";
+    return this->slicerHome() + "/" Slicer_APPLICATION_NAME "LauncherSettings.ini";
     }
 }
 

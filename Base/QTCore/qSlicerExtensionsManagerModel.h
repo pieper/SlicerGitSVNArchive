@@ -106,6 +106,14 @@ public:
   /// \sa setExtensionEnabled, extensionEnabledChanged, enabledExtensions
   Q_INVOKABLE bool isExtensionEnabled(const QString& extensionName)const;
 
+  /// \brief Return names of all extensions scheduled for uninstall
+  /// \sa scheduleExtensionForUninstall, isExtensionScheduledForUninstall, extensionScheduledForUninstall
+  QStringList scheduledForUninstallExtensions() const;
+
+  /// \brief Return True if the \a extensionName is scheduled to be uninstalled
+  /// \sa uninstallScheduledExtensions();
+  Q_INVOKABLE bool isExtensionScheduledForUninstall(const QString& extensionName)const;
+
   /// \brief Return names of all enabled extensions
   /// \sa setExtensionEnabled, extensionEnabledChanged, isExtensionEnabled
   QStringList enabledExtensions()const;
@@ -127,20 +135,26 @@ public:
   QString slicerVersion()const;
   void setSlicerVersion(const QString& version);
 
-  Q_INVOKABLE void imcompatibleExtensions() const;
-
-  /// \brief Check if \a extensionName is compatibile with the system identified
+  /// \brief Check if \a extensionName is compatible with the system identified
   /// by \a slicerRevision, \a slicerOs and \a slicerArch.
-  /// @return Return the reason justifying the incompatibility or an empty string if the extension
+  /// @return Return the reasons justifying the incompatibility or an empty list if the extension
   /// is compatibile.
-  Q_INVOKABLE QString isExtensionCompatible(const QString& extensionName, const QString& slicerRevision,
-                                            const QString& slicerOs, const QString& slicerArch) const;
+  Q_INVOKABLE QStringList isExtensionCompatible(const QString& extensionName, const QString& slicerRevision,
+                                                const QString& slicerOs, const QString& slicerArch) const;
+
+  /// \brief Check if \a extensionName is compatible.
+  /// An extension is considered incompatible when the version of Slicer used
+  /// to build the extension is different from the version of Slicer attempting
+  /// to load the extension.
+  /// \sa isExtensionCompatible(const QString&, const QString&, const QString&)
+  /// \sa setSlicerRevision, setSlicerOs, setSlicerArch, setSlicerRequirements
+  Q_INVOKABLE QStringList isExtensionCompatible(const QString& extensionName) const;
 
   /// \brief Query the extension server and retrieve the metadata associated with \a extensionId
   /// \sa setServerUrl
   Q_INVOKABLE ExtensionMetadataType retrieveExtensionMetadata(const QString& extensionId);
 
-  /// \sa downloadExtension, uninstallExtension
+  /// \sa downloadExtension, isExtensionScheduledForUninstall, extensionScheduledForUninstall
   Q_INVOKABLE bool installExtension(const QString& extensionName,
                                     const ExtensionMetadataType &extensionMetadata,
                                     const QString &archiveFile);
@@ -176,13 +190,24 @@ public slots:
 
   /// \brief Download and install \a extensionId
   /// The \a extensionId correponds to the identifier used on the extension server itself.
-  /// \sa installExtension, uninstallExtension
+  /// \sa installExtension, scheduleExtensionForUninstall, uninstallScheduledExtensions
   void downloadAndInstallExtension(const QString& extensionId);
 
-  /// \brief Uninstall \a extensionName
-  /// \note The directory containing the extension will be deleted.
-  /// \sa downloadExtension, installExtension
-  bool uninstallExtension(const QString& extensionName);
+  /// \brief Schedule \a extensionName of uninstall
+  /// An extension scheduled for uninstall can be effectively uninstalled by calling
+  /// uninstallScheduledExtensions()
+  /// \sa isExtensionScheduledForUninstall, uninstallScheduledExtensions
+  bool scheduleExtensionForUninstall(const QString& extensionName);
+
+  /// \brief Cancel the uninstallation of \a extensionName
+  /// \sa scheduleExtensionForUninstall
+  bool cancelExtensionScheduledForUninstall(const QString& extensionName);
+
+  /// \sa scheduleExtensionForUninstall, isExtensionScheduledForUninstall
+  bool uninstallScheduledExtensions();
+  bool uninstallScheduledExtensions(QStringList &uninstalledExtensions);
+
+  void identifyIncompatibleExtensions();
 
   bool exportExtensionList(QString& exportFilePath);
 
@@ -198,9 +223,15 @@ signals:
 
   void extensionInstalled(const QString& extensionName);
 
+  void extensionScheduledForUninstall(const QString& extensionName);
+
+  void extensionCancelledScheduleForUninstall(const QString& extensionName);
+
   void extensionUninstalled(const QString& extensionName);
 
   void extensionEnabledChanged(const QString& extensionName, bool value);
+
+  void extensionIdentifedAsIncompatible(const QString& extensionName);
 
   void slicerRequirementsChanged(const QString& revision, const QString& os, const QString& arch);
 

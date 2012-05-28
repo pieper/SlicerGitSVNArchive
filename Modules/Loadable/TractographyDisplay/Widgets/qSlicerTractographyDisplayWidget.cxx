@@ -74,6 +74,8 @@ void qSlicerTractographyDisplayWidgetPrivate::init()
   QObject::connect( this->ColorByScalarComboBox, SIGNAL(currentIndexChanged(int)), q,
                     SLOT(onColorByScalarChanged(int)) );  
 
+  QObject::connect( this->ColorByMeanFiberOrientationRadioButton, SIGNAL(clicked()), q, SLOT(setColorByMeanFiberOrientation()) );
+  QObject::connect( this->ColorByPointFiberOrientationRadioButton, SIGNAL(clicked()), q, SLOT(setColorByPointFiberOrientation()) );
 
   QObject::connect( this->OpacitySlider, SIGNAL(valueChanged(double)), q, SLOT(setOpacity(double)) );
 }
@@ -125,13 +127,13 @@ void qSlicerTractographyDisplayWidget::setFiberBundleNode(vtkMRMLNode* node)
 }
 
 //------------------------------------------------------------------------------
-void qSlicerTractographyDisplayWidget::setFiberBundleNode(vtkMRMLFiberBundleNode* FiberBundleNode)
+void qSlicerTractographyDisplayWidget::setFiberBundleNode(vtkMRMLFiberBundleNode* fiberBundleNode)
 {
   Q_D(qSlicerTractographyDisplayWidget);
   vtkMRMLFiberBundleNode *oldNode = 
     this->FiberBundleNode();
   
-  d->FiberBundleNode = FiberBundleNode;
+  d->FiberBundleNode = fiberBundleNode;
   
   qvtkReconnect( oldNode, this->FiberBundleNode(),
                 vtkCommand::ModifiedEvent, this, SLOT(updateWidgetFromMRML()) );
@@ -264,6 +266,30 @@ void qSlicerTractographyDisplayWidget::onColorByScalarChanged(int scalarIndex)
 }
 
 //------------------------------------------------------------------------------
+void qSlicerTractographyDisplayWidget::setColorByMeanFiberOrientation()
+{
+  Q_D(qSlicerTractographyDisplayWidget);
+  
+  if (!d->FiberBundleDisplayNode)
+    {
+    return;
+    }
+  d->FiberBundleDisplayNode->SetColorModeToMeanFiberOrientation(); 
+}
+
+//------------------------------------------------------------------------------
+void qSlicerTractographyDisplayWidget::setColorByPointFiberOrientation()
+{
+  Q_D(qSlicerTractographyDisplayWidget);
+  
+  if (!d->FiberBundleDisplayNode)
+    {
+    return;
+    }
+  d->FiberBundleDisplayNode->SetColorModeToPointFiberOrientation();
+}
+
+//------------------------------------------------------------------------------
 void qSlicerTractographyDisplayWidget::setColorByScalarInvariant()
 {
   Q_D(qSlicerTractographyDisplayWidget);
@@ -359,7 +385,13 @@ void qSlicerTractographyDisplayWidget::updateWidgetFromMRML()
     (d->FiberBundleDisplayNode->GetColorNodeID());
   d->ColorByScalarComboBox->setDataSet(vtkDataSet::SafeDownCast(d->FiberBundleNode->GetPolyData()));
 
-  const bool hasTensors = d->FiberBundleNode->GetPolyData()->GetPointData()->GetTensors();
+  bool hasTensors = false;
+  if (d->FiberBundleNode && d->FiberBundleNode->GetPolyData() && 
+      d->FiberBundleNode->GetPolyData()->GetPointData() &&
+      d->FiberBundleNode->GetPolyData()->GetPointData()->GetTensors() )
+    {
+    hasTensors = true;
+    }
 //  const bool colorSolid = d->FiberBundleDisplayNode->GetColorMode() == vtkMRMLFiberBundleDisplayNode::colorModeSolid;
 
   d->ColorByScalarInvariantRadioButton->setEnabled(hasTensors);// && !colorSolid);

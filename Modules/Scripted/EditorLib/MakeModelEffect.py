@@ -111,8 +111,8 @@ class MakeModelEffectOptions(Effect.EffectOptions):
 
   def onGoToModelMaker(self):
     if self.checkForModelMakerModule():
-      m = slicer.util.mainWindow()
-      m.moduleSelector().selectModule('ModelMaker')
+      mainWindow = slicer.util.mainWindow()
+      mainWindow.moduleSelector().selectModule('ModelMaker')
 
   def onApply(self):
     if self.checkForModelMakerModule():

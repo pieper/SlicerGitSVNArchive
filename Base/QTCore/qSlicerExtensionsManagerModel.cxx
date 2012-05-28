@@ -141,7 +141,17 @@ public:
   void addExtensionPathToLauncherSettings(const QString& extensionName);
   void removeExtensionPathFromLauncherSettings(const QString& extensionName);
 
+  void addExtensionSettings(const QString& extensionName);
+  void removeExtensionSettings(const QString& extensionName);
+
+  void removeExtensionFromScheduledForUninstallList(const QString& extensionName);
+
   QString extractArchive(const QDir& extensionsDir, const QString &archiveFile);
+
+  /// \brief Uninstall \a extensionName
+  /// \note The directory containing the extension will be deleted.
+  /// \sa downloadExtension, installExtension
+  bool uninstallExtension(const QString& extensionName);
 
   QStringList extensionLibraryPaths(const QString& extensionName)const;
   QStringList extensionPaths(const QString& extensionName)const;
@@ -220,6 +230,12 @@ void qSlicerExtensionsManagerModelPrivate::init()
 
   QObject::connect(&this->NetworkManager, SIGNAL(finished(QNetworkReply*)),
                    q, SLOT(onDownloadFinished(QNetworkReply*)));
+
+  QObject::connect(q, SIGNAL(slicerRequirementsChanged(QString,QString,QString)),
+                   q, SLOT(identifyIncompatibleExtensions()));
+
+  QObject::connect(q, SIGNAL(modelUpdated()),
+                   q, SLOT(identifyIncompatibleExtensions()));
 }
 
 // --------------------------------------------------------------------------
@@ -470,6 +486,28 @@ void qSlicerExtensionsManagerModelPrivate::removeExtensionPathFromLauncherSettin
   launcherSettings.setValue("EnvironmentVariables/PYTHONPATH",
                        removeFromPathList(pythonPaths, this->extensionPythonPaths(extensionName)).join(sep));
 #endif
+}
+
+// --------------------------------------------------------------------------
+void qSlicerExtensionsManagerModelPrivate::addExtensionSettings(const QString& extensionName)
+{
+  this->addExtensionPathToApplicationSettings(extensionName);
+  this->addExtensionPathToLauncherSettings(extensionName);
+}
+
+// --------------------------------------------------------------------------
+void qSlicerExtensionsManagerModelPrivate::removeExtensionSettings(const QString& extensionName)
+{
+  this->removeExtensionPathFromApplicationSettings(extensionName);
+  this->removeExtensionPathFromLauncherSettings(extensionName);
+}
+
+// --------------------------------------------------------------------------
+void qSlicerExtensionsManagerModelPrivate::removeExtensionFromScheduledForUninstallList(const QString& extensionName)
+{
+  QStringList extensionsScheduledForUninstall = QSettings().value("Extensions/ScheduledForUninstall").toStringList();
+  extensionsScheduledForUninstall.removeAll(extensionName);
+  QSettings().setValue("Extensions/ScheduledForUninstall", extensionsScheduledForUninstall);
 }
 
 // --------------------------------------------------------------------------
@@ -746,6 +784,21 @@ QStringList qSlicerExtensionsManagerModel::installedExtensions()const
 void qSlicerExtensionsManagerModel::setExtensionEnabled(const QString& extensionName, bool value)
 {
   Q_D(qSlicerExtensionsManagerModel);
+
+  if(value && !this->isExtensionCompatible(extensionName).isEmpty())
+    {
+    return;
+    }
+
+  if (value)
+    {
+    d->addExtensionSettings(extensionName);
+    }
+  else
+    {
+    d->removeExtensionSettings(extensionName);
+    }
+
   if (value == this->isExtensionEnabled(extensionName))
     {
     return;
@@ -775,6 +828,18 @@ bool qSlicerExtensionsManagerModel::isExtensionEnabled(const QString& extensionN
     return false;
     }
   return item->data(qSlicerExtensionsManagerModelPrivate::EnabledRole).toBool() == true;
+}
+
+// --------------------------------------------------------------------------
+QStringList qSlicerExtensionsManagerModel::scheduledForUninstallExtensions() const
+{
+  return QSettings().value("Extensions/ScheduledForUninstall").toStringList();
+}
+
+// --------------------------------------------------------------------------
+bool qSlicerExtensionsManagerModel::isExtensionScheduledForUninstall(const QString& extensionName)const
+{
+  return QSettings().value("Extensions/ScheduledForUninstall").toStringList().contains(extensionName);
 }
 
 // --------------------------------------------------------------------------
@@ -930,10 +995,7 @@ bool qSlicerExtensionsManagerModel::installExtension(const QString& extensionNam
     }
 
   d->saveExtensionDescription(extensionDescriptionFile, extensionMetadata);
-
-  d->addExtensionPathToApplicationSettings(extensionName);
-  d->addExtensionPathToLauncherSettings(extensionName);
-
+  d->addExtensionSettings(extensionName);
   d->addExtensionModelRow(Self::parseExtensionDescriptionFile(extensionDescriptionFile));
 
   emit this->extensionInstalled(extensionName);
@@ -942,27 +1004,102 @@ bool qSlicerExtensionsManagerModel::installExtension(const QString& extensionNam
 }
 
 // --------------------------------------------------------------------------
-bool qSlicerExtensionsManagerModel::uninstallExtension(const QString& extensionName)
+bool qSlicerExtensionsManagerModel::scheduleExtensionForUninstall(const QString& extensionName)
 {
   Q_D(qSlicerExtensionsManagerModel);
 
-  QStandardItem * item = d->extensionItem(extensionName);
+  if (!this->isExtensionInstalled(extensionName))
+    {
+    return false;
+    }
+
+  if (this->isExtensionScheduledForUninstall(extensionName))
+    {
+    return true;
+    }
+  QSettings().setValue(
+        "Extensions/ScheduledForUninstall",
+        QSettings().value("Extensions/ScheduledForUninstall").toStringList() << extensionName);
+
+  d->removeExtensionSettings(extensionName);
+
+  emit this->extensionScheduledForUninstall(extensionName);
+
+  return true;
+}
+
+// --------------------------------------------------------------------------
+bool qSlicerExtensionsManagerModel::cancelExtensionScheduledForUninstall(const QString& extensionName)
+{
+  Q_D(qSlicerExtensionsManagerModel);
+
+  if (!this->isExtensionScheduledForUninstall(extensionName))
+    {
+    return false;
+    }
+  d->removeExtensionFromScheduledForUninstallList(extensionName);
+  d->addExtensionSettings(extensionName);
+
+  emit this->extensionCancelledScheduleForUninstall(extensionName);
+
+  return true;
+}
+
+// --------------------------------------------------------------------------
+bool qSlicerExtensionsManagerModelPrivate::uninstallExtension(const QString& extensionName)
+{
+  Q_Q(qSlicerExtensionsManagerModel);
+
+  QStandardItem * item = this->extensionItem(extensionName);
   if (!item)
     {
     qCritical() << "Failed to uninstall extension" << extensionName;
     return false;
     }
 
-  d->removeExtensionPathFromApplicationSettings(extensionName);
-  d->removeExtensionPathFromLauncherSettings(extensionName);
+  if (!q->isExtensionScheduledForUninstall(extensionName))
+    {
+    qCritical() << "Failed to uninstall extension" << extensionName
+                << " - Extension is NOT 'scheduled for uninstall'";
+    return false;
+    }
 
   bool success = true;
-  success = success && ctk::removeDirRecursively(this->extensionInstallPath(extensionName));
-  success = success && QFile::remove(this->extensionDescriptionFile(extensionName));
-  success = success && d->Model.removeRow(item->row());
+  success = success && ctk::removeDirRecursively(q->extensionInstallPath(extensionName));
+  success = success && QFile::remove(q->extensionDescriptionFile(extensionName));
+  success = success && this->Model.removeRow(item->row());
 
-  emit this->extensionUninstalled(extensionName);
+  if (success)
+    {
+    this->removeExtensionSettings(extensionName);
+    this->removeExtensionFromScheduledForUninstallList(extensionName);
+    }
 
+  emit q->extensionUninstalled(extensionName);
+
+  return success;
+}
+
+// --------------------------------------------------------------------------
+bool qSlicerExtensionsManagerModel::uninstallScheduledExtensions()
+{
+  QStringList uninstalledExtensions;
+  return this->uninstallScheduledExtensions(uninstalledExtensions);
+}
+
+// --------------------------------------------------------------------------
+bool qSlicerExtensionsManagerModel::uninstallScheduledExtensions(QStringList& uninstalledExtensions)
+{
+  Q_D(qSlicerExtensionsManagerModel);
+  bool success = true;
+  foreach(const QString& extensionName, this->scheduledForUninstallExtensions())
+    {
+    success = success && d->uninstallExtension(extensionName);
+    if(success)
+      {
+      uninstalledExtensions << extensionName;
+      }
+    }
   return success;
 }
 
@@ -1052,15 +1189,18 @@ void qSlicerExtensionsManagerModel::setSlicerRequirements(const QString& revisio
 }
 
 // --------------------------------------------------------------------------
-void qSlicerExtensionsManagerModel::imcompatibleExtensions() const
+void qSlicerExtensionsManagerModel::identifyIncompatibleExtensions()
 {
   Q_D(const qSlicerExtensionsManagerModel);
   foreach(const QString& extensionName, this->installedExtensions())
     {
-    QString reasons = this->isExtensionCompatible(extensionName, d->SlicerRevision, d->SlicerOs, d->SlicerArch);
+    QStringList reasons = this->isExtensionCompatible(extensionName, d->SlicerRevision, d->SlicerOs, d->SlicerArch);
     if (!reasons.isEmpty())
       {
-      qCritical() << "Extension" << extensionName << "is not compatibile." << reasons;
+      reasons.prepend(QString("Extension %1 is incompatible").arg(extensionName));
+      qCritical() << reasons.join("\n  ");
+      this->setExtensionEnabled(extensionName, false);
+      emit this->extensionIdentifedAsIncompatible(extensionName);
       }
     }
 }
@@ -1070,32 +1210,32 @@ CTK_GET_CPP(qSlicerExtensionsManagerModel, QString, slicerVersion, SlicerVersion
 CTK_SET_CPP(qSlicerExtensionsManagerModel, const QString& , setSlicerVersion, SlicerVersion)
 
 // --------------------------------------------------------------------------
-QString qSlicerExtensionsManagerModel::isExtensionCompatible(
+QStringList qSlicerExtensionsManagerModel::isExtensionCompatible(
     const QString& extensionName, const QString& slicerRevision,
     const QString& slicerOs, const QString& slicerArch) const
 {
   if (extensionName.isEmpty())
     {
-    return tr("extensionName is not specified");
+    return QStringList() << tr("extensionName is not specified");
     }
   if (slicerRevision.isEmpty())
     {
-    return tr("slicerRevision is not specified");
+    return QStringList() << tr("slicerRevision is not specified");
     }
   if (slicerOs.isEmpty())
     {
-    return tr("slicerOs is not specified");
+    return QStringList() << tr("slicerOs is not specified");
     }
   if (slicerArch.isEmpty())
     {
-    return tr("slicerArch is not specified");
+    return QStringList() << tr("slicerArch is not specified");
     }
   QStringList reasons;
   ExtensionMetadataType metadata = this->extensionMetadata(extensionName);
-  QString extensionRevision = metadata.value("revision").toString();
-  if (slicerRevision != extensionRevision)
+  QString extensionSlicerRevision = metadata.value("slicer_revision").toString();
+  if (slicerRevision != extensionSlicerRevision)
     {
-    reasons << tr("extensionRevision [%1] is different from slicerRevision [%2]").arg(extensionRevision).arg(slicerRevision);
+    reasons << tr("extensionSlicerRevision [%1] is different from slicerRevision [%2]").arg(extensionSlicerRevision).arg(slicerRevision);
     }
   QString extensionArch = metadata.value("arch").toString();
   if (slicerArch != extensionArch)
@@ -1107,7 +1247,14 @@ QString qSlicerExtensionsManagerModel::isExtensionCompatible(
     {
     reasons << tr("extensionOs [%1] is different from slicerOs [%2]").arg(extensionOs).arg(slicerOs);
     }
-  return reasons.join(", ");
+  return reasons;
+}
+
+// --------------------------------------------------------------------------
+QStringList qSlicerExtensionsManagerModel::isExtensionCompatible(const QString& extensionName) const
+{
+  return this->isExtensionCompatible(
+        extensionName, this->slicerRevision(), this->slicerOs(), this->slicerArch());
 }
 
 // --------------------------------------------------------------------------
