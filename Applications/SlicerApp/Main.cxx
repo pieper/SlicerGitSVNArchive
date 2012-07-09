@@ -66,7 +66,7 @@
 # include <PythonQtObjectPtr.h>
 # include "qSlicerPythonManager.h"
 # include "qSlicerSettingsPythonPanel.h"
-# include <dPython.h>
+//# include <dPython.h>
 #endif
 
 #if defined (_WIN32) && !defined (Slicer_BUILD_WIN32_CONSOLE)
