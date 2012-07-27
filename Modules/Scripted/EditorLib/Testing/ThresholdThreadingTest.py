@@ -7,6 +7,9 @@ class EditorLibTesting(unittest.TestCase):
   def setUp(self):
     pass
 
+  def runTest(self):
+    self.test_ThresholdThreading()
+
   def test_ThresholdThreading(self):
     """
     Replicate the issue reported in bug 1822 where spliting

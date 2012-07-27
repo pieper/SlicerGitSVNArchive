@@ -7,11 +7,13 @@ class EditorLibTesting(unittest.TestCase):
   def setUp(self):
     pass
 
+  def runTest(self):
+    self.test_ThresholdThreading()
+
   def test_ThresholdThreading(self):
     """
-    Replicate the issue reported in bug 1822 where spliting
-    a grow-cut produced volume causes a multi-threading related
-    issue on mac release builds
+    Test for issue 2329, using the slicer EditorLib components
+    in outside of the editor.
     """
 
     #
