@@ -66,7 +66,11 @@ if(NOT DEFINED CTK_DIR)
 
   ExternalProject_Add(${proj}
     GIT_REPOSITORY "${git_protocol}://github.com/commontk/CTK.git"
+<<<<<<< HEAD
     GIT_TAG "52eb334d493190fe07a577e19e762453864b9c7b"
+=======
+    GIT_TAG "b028cfacabc909204600a15ac32d299894fa90ba"
+>>>>>>> COMP: update CTK to get database schema update
     "${slicer_external_update}"
     SOURCE_DIR ${CMAKE_BINARY_DIR}/${proj}
     BINARY_DIR ${proj}-build
