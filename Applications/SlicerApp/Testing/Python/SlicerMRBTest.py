@@ -71,7 +71,7 @@ execfile('/Users/pieper/slicer4/latest/Slicer/Applications/SlicerApp/Testing/Pyt
     print("Saving mrb to: %s" % mrbFilePath)
     applicationLogic.SaveSceneToSlicerDataBundleDirectory(sceneSaveDirectory, None)
     print("Finished saving scene")
-    applicationLogic.Zip(sceneSaveDirectory,mrbFilePath)
+    applicationLogic.Zip(mrbFilePath,sceneSaveDirectory)
     print("Finished saving MRB")
     
     #
