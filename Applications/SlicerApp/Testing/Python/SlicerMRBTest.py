@@ -57,27 +57,79 @@ execfile('/Users/pieper/slicer4/latest/Slicer/Applications/SlicerApp/Testing/Pyt
       tubeDisplay.SetColorModeToSolid()
 
     # turn on one at a time and save scene view
-    for tractName tracts:
-      for tractOffName tracts:
-        fiberNode = slicer.util.getNode(tractOffName)
-        tubeDisplay = fiberNode.GetTubeDisplayNode()
-        tubeDisplay.SetVisibility(0)
-        tubeDisplay.SetSliceIntersectionVisibility(0) 
+    for tractName in tracts:
+      self.showOneTract(tracts,tractName)
+      self.storeSceneView('%s-view' % tractName, "Only show tubes for %s" % tractName)
+
+    #
+    # save the mrml scene to a temp directory, then zip it
+    #
+    sceneSaveDirectory = self.tempDirectory('__scene__')
+    mrbSaveFilePath= self.tempDirectory('__mrb__') + '/test.mrb'
+    print("Saving scene to: %s" % sceneSaveDirectory)
+    print("Saving mrb to: %s" % mrbSaveFilePath)
+    self.saveSceneToDirectory(sceneSaveDirectory)
+    self.zipToMRB(sceneSaveDirectory, mrbSaveFilePath)
+
+
+  def showOneTract(self,tracts,whichTract): 
+    """display the named tract's tubes but turn the others off"""
+    for tractName in tracts:
       fiberNode = slicer.util.getNode(tractName)
       tubeDisplay = fiberNode.GetTubeDisplayNode()
-      tubeDisplay.SetVisibility(1)
-      tubeDisplay.SetSliceIntersectionVisibility(1) 
+      if tractName == whichTract:
+        tubeDisplay.SetVisibility(1)
+        tubeDisplay.SetSliceIntersectionVisibility(1) 
+      else:
+        tubeDisplay.SetVisibility(0)
+        tubeDisplay.SetSliceIntersectionVisibility(0) 
 
+  def storeSceneView(self,name,description=""):
+    """  Store a scene view into the current scene.
+    TODO: this might move to slicer.util
+    """
+    layoutManager = slicer.app.layoutManager()
+    
+    sceneViewNode = slicer.vtkMRMLSceneViewNode()
+    view1 = layoutManager.threeDWidget(0).threeDView()
+    
+    w2i1 = vtk.vtkWindowToImageFilter()
+    w2i1.SetInput(view1.renderWindow())
+    
+    w2i1.Update()
+    image1 = w2i1.GetOutput()
+    sceneViewNode.SetScreenShot(image1)
+    sceneViewNode.UpdateSnapshotScene(slicer.mrmlScene)
+    slicer.mrmlScene.AddNode(sceneViewNode)
 
+    sceneViewNode.SetName(name)
+    sceneViewNode.SetSceneViewDescription(description)
+    sceneViewNode.StoreScene()
 
+    return sceneViewNode
 
-    #
-    # set up the scene views
-    #
+  def tempDirectory(self,key='__SlicerTestTemp__'):
+    """Come up with a unique directory name in the temp dir and make it and return it
+    # TODO: switch to QTemporaryDir in Qt5.
+    # For now, create a named directory
+    """
+    tempDir = qt.QDir(slicer.app.temporaryPath)
+    tempDirName = key + qt.QDateTime().currentDateTime().toString("yyyy-MM-dd_hh+mm+ss.zzz")
+    packFileInfo = qt.QFileInfo(qt.QDir(tempDir), tempDirName)
+    dirPath = packFileInfo.absoluteFilePath()
+    qt.QDir().mkpath(dirPath)
+    return dirPath
 
+  def saveSceneToDirectory(self,directoryPath):
+    """Save the current mrml scene to the given directory"""
 
+    applicationLogic = slicer.app.applicationLogic()
+    applicationLogic.SaveSceneToSlicerDataBundleDirectory(directoryPath, None)
 
-
+  def zipToMRB(self,directoryPath,mrbPath):
+    """Convert the scene directory to an mrb file"""
+    applicationLogic = slicer.app.applicationLogic()
+    applicationLogic.Zip(mrbPath,directoryPath)
 
 #
 # SlicerMRBTest
