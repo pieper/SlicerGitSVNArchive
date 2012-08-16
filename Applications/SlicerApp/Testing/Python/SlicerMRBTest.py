@@ -64,13 +64,34 @@ execfile('/Users/pieper/slicer4/latest/Slicer/Applications/SlicerApp/Testing/Pyt
     #
     # save the mrml scene to a temp directory, then zip it
     #
+    applicationLogic = slicer.app.applicationLogic()
     sceneSaveDirectory = self.tempDirectory('__scene__')
-    mrbSaveFilePath= self.tempDirectory('__mrb__') + '/test.mrb'
+    mrbFilePath= self.tempDirectory('__mrb__') + '/test.mrb'
     print("Saving scene to: %s" % sceneSaveDirectory)
-    print("Saving mrb to: %s" % mrbSaveFilePath)
-    self.saveSceneToDirectory(sceneSaveDirectory)
-    self.zipToMRB(sceneSaveDirectory, mrbSaveFilePath)
+    print("Saving mrb to: %s" % mrbFilePath)
+    applicationLogic.SaveSceneToSlicerDataBundleDirectory(sceneSaveDirectory, None)
+    print("Finished saving scene")
+    applicationLogic.Zip(sceneSaveDirectory,mrbFilePath)
+    print("Finished saving MRB")
+    
+    #
+    # save image, reload the scene and save image
+    # then load mrb and save image
+    # - all images should be the same
+    #
+    beforeImage = qt.QPixmap.grabWidget(slicer.util.mainWindow())
+    slicer.mrmlScene.Clear(0)
+    slicer.mrmlScene.SetURL(sceneSaveDirectory + '/' + os.path.basename(sceneSaveDirectory) + '.mrml')
+    slicer.mrmlScene.Import()
+    slicer.app.processEvents()
+    sceneLoadedImage = qt.QPixmap.grabWidget(slicer.util.mainWindow())
+    slicer.mrmlScene.Clear(0)
+    mrbExractPath= self.tempDirectory('__mrb_extract__')
+    applicationLogic.OpenSlicerDataBundle(mrbSaveFilePath, mrbExractPath)
+    slicer.app.processEvents()
+    mrbLoadedImage = qt.QPixmap.grabWidget(slicer.util.mainWindow())
 
+    print("Scene and MRB loaded and compared")
 
   def showOneTract(self,tracts,whichTract): 
     """display the named tract's tubes but turn the others off"""
@@ -120,16 +141,6 @@ execfile('/Users/pieper/slicer4/latest/Slicer/Applications/SlicerApp/Testing/Pyt
     qt.QDir().mkpath(dirPath)
     return dirPath
 
-  def saveSceneToDirectory(self,directoryPath):
-    """Save the current mrml scene to the given directory"""
-
-    applicationLogic = slicer.app.applicationLogic()
-    applicationLogic.SaveSceneToSlicerDataBundleDirectory(directoryPath, None)
-
-  def zipToMRB(self,directoryPath,mrbPath):
-    """Convert the scene directory to an mrb file"""
-    applicationLogic = slicer.app.applicationLogic()
-    applicationLogic.Zip(mrbPath,directoryPath)
 
 #
 # SlicerMRBTest
