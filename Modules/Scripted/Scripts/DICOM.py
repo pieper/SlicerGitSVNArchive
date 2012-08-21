@@ -181,6 +181,10 @@ class DICOMWidget:
     self.dicomFrame.setText("DICOM Database and Networking")
     self.layout.addWidget(self.dicomFrame)
 
+    # initialize the dicomDatabase
+    if not slicer.dicomDatabase:
+      self.promptForDatabaseDirectory()
+
     #
     # create and configure the app widget - this involves
     # reaching inside and manipulating the widget hierarchy
@@ -188,7 +192,6 @@ class DICOMWidget:
     #   in the CTK code to avoid the findChildren calls
     #
     self.dicomApp = ctk.ctkDICOMAppWidget()
-    self.setDatabasePrecacheTags()
     self.dicomFrame.layout().addWidget(self.dicomApp)
     if self.hideSearch:
       # hide the search options - doesn't work yet and doesn't fit 
@@ -228,12 +231,6 @@ class DICOMWidget:
 
     # make the tree view a bit bigger
     self.tree.setMinimumHeight(250)
-
-    # initialize the dicomDatabase
-    if not slicer.dicomDatabase:
-      self.promptForDatabaseDirectory()
-    else:
-      self.onDatabaseDirectoryChanged(self.dicomApp.databaseDirectory)
 
     if hasattr(slicer, 'dicomListener'):
       slicer.dicomListener.fileToBeAddedCallback = self.onListenerToAddFile
@@ -276,8 +273,12 @@ class DICOMWidget:
     slicer.dicomDatabase.openDatabase(databaseDirectory + "/ctkDICOM.sql", "SLICER")
     if not slicer.dicomDatabase.isOpen:
       self.messageBox('The database file path "%s" cannot be opened.' % databaseFilepath)
-    if self.dicomApp.databaseDirectory != databaseDirectory:
-      self.dicomApp.databaseDirectory = databaseDirectory
+    if self.dicomApp:
+      if self.dicomApp.databaseDirectory != databaseDirectory:
+        self.dicomApp.databaseDirectory = databaseDirectory
+    else:
+      settings = qt.QSettings()
+      settings.setValue('DatabaseDirectory', databaseDirectory)
 
   def setDatabasePrecacheTags(self):
     """query each plugin for tags that should be cached on import
