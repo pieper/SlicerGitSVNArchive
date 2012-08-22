@@ -79,7 +79,7 @@ class DICOMDiffusionVolumePluginClass(DICOMPlugin):
     """
 
     # get the series description to use as base for volume name
-    name = slicer.dicomDatabase.fileValue(files[0], self.tags['seriesDescription'])
+    name = slicer.app.dicomDatabase().fileValue(files[0], self.tags['seriesDescription'])
     if name == "":
       name = "Unknown"
 
@@ -88,7 +88,7 @@ class DICOMDiffusionVolumePluginClass(DICOMPlugin):
     for vendor in self.diffusionTags:
       matchesVendor = True
       for tag in self.diffusionTags[vendor]:
-        value = slicer.dicomDatabase.fileValue(files[0], tag)
+        value = slicer.app.dicomDatabase().fileValue(files[0], tag)
         hasTag = value != ""
         matchesVendor &= hasTag
       if matchesVendor:

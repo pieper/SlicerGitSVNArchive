@@ -15,7 +15,7 @@ DICOMWidgets are helper classes to build an interface
 to manage DICOM data in the context of slicer.
 
 This code is slicer-specific and relies on the slicer python module
-for elements like slicer.dicomDatabase and slicer.mrmlScene
+for elements like slicer.app.dicomDatabase() and slicer.mrmlScene
 
 # TODO : 
 """
@@ -186,7 +186,7 @@ class DICOMDetailsPopup(object):
     loadablesBySeries = {}
     for plugin in self.loadablesByPlugin:
       for loadable in self.loadablesByPlugin[plugin]:
-        seriesUID = slicer.dicomDatabase.fileValue(loadable.files[0],seriesUIDTag)
+        seriesUID = slicer.app.dicomDatabase().fileValue(loadable.files[0],seriesUIDTag)
         if not loadablesBySeries.has_key(seriesUID):
           loadablesBySeries[seriesUID] = [loadable]
         else:
@@ -208,17 +208,17 @@ class DICOMDetailsPopup(object):
     and present them in the loadable table"""
     fileLists = []
     if role == "Series":
-      fileLists.append(slicer.dicomDatabase.filesForSeries(uid))
+      fileLists.append(slicer.app.dicomDatabase().filesForSeries(uid))
     if role == "Study":
-      series = slicer.dicomDatabase.seriesForStudy(uid)
+      series = slicer.app.dicomDatabase().seriesForStudy(uid)
       for serie in series:
-        fileLists.append(slicer.dicomDatabase.filesForSeries(serie))
+        fileLists.append(slicer.app.dicomDatabase().filesForSeries(serie))
     if role == "Patient":
-      studies = slicer.dicomDatabase.studiesForPatient(uid)
+      studies = slicer.app.dicomDatabase().studiesForPatient(uid)
       for study in studies:
-        series = slicer.dicomDatabase.seriesForStudy(study)
+        series = slicer.app.dicomDatabase().seriesForStudy(study)
         for serie in series:
-          fileList = slicer.dicomDatabase.filesForSeries(serie)
+          fileList = slicer.app.dicomDatabase().filesForSeries(serie)
           fileLists.append(fileList)
 
 
@@ -408,15 +408,15 @@ class DICOMHeaderWidget(object):
     if not file:
       return
 
-    slicer.dicomDatabase.loadFileHeader(file)
-    keys = slicer.dicomDatabase.headerKeys()
+    slicer.app.dicomDatabase().loadFileHeader(file)
+    keys = slicer.app.dicomDatabase().headerKeys()
     self.widget.setRowCount(len(keys))
     row = 0
     for key in keys:
       item = qt.QTableWidgetItem(key)
       self.widget.setItem(row,0,item)
       self.items.append(item)
-      dump = slicer.dicomDatabase.headerValue(key)
+      dump = slicer.app.dicomDatabase().headerValue(key)
       try:
         value = dump[dump.index('[')+1:dump.index(']')]
       except ValueError:

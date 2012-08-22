@@ -34,17 +34,16 @@ This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. Se
       slicer.mrmlScene.RegisterNodeClass(vtkMRMLScriptedModuleNode())
 
     # initialize the dicom infrastructure
-    slicer.dicomDatabase = None
     settings = qt.QSettings()
     # the dicom database is a global object for slicer
     if settings.contains('DatabaseDirectory'):
       databaseDirectory = settings.value('DatabaseDirectory')
       if databaseDirectory: 
-        slicer.dicomDatabase = ctk.ctkDICOMDatabase()
-        slicer.dicomDatabase.openDatabase(databaseDirectory + "/ctkDICOM.sql", "SLICER")
-        if not slicer.dicomDatabase.isOpen:
+        slicer.app.setDICOMDatabase(ctk.ctkDICOMDatabase())
+        slicer.app.dicomDatabase().openDatabase(databaseDirectory + "/ctkDICOM.sql", "SLICER")
+        if not slicer.app.dicomDatabase().isOpen:
           # can't open the database, so prompt the user later if they enter module
-          slicer.dicomDatabase = None
+          slicer.app.setDICOMDatabase(None)
         else:
           # the dicom listener is also global, but only started on app start if 
           # the user so chooses
@@ -52,7 +51,7 @@ This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. Se
             if bool(settings.value('DICOM/RunListenerAtStart')):
               if not hasattr(slicer, 'dicomListener'):
                 try:
-                  slicer.dicomListener = DICOMLib.DICOMListener(slicer.dicomDatabase)
+                  slicer.dicomListener = DICOMLib.DICOMListener(slicer.app.dicomDatabase())
                   slicer.dicomListener.start()
                 except (UserWarning,OSError) as message:
                   # TODO: how to put this into the error log?
@@ -188,7 +187,7 @@ class DICOMWidget:
     # initialize the dicomDatabase
     # - don't let the user escape without
     #   picking a valid database directory
-    while not slicer.dicomDatabase:
+    while not slicer.app.dicomDatabase():
       self.promptForDatabaseDirectory()
 
     #
@@ -269,17 +268,17 @@ class DICOMWidget:
     self.layout.addStretch(1)
 
   def onDatabaseDirectoryChanged(self,databaseDirectory):
-    if not hasattr(slicer, 'dicomDatabase') or not slicer.dicomDatabase:
-      slicer.dicomDatabase = ctk.ctkDICOMDatabase()
+    if not hasattr(slicer, 'dicomDatabase') or not slicer.app.dicomDatabase():
+      slicer.app.setDICOMDatabase(ctk.ctkDICOMDatabase())
       self.setDatabasePrecacheTags()
     databaseFilepath = databaseDirectory + "/ctkDICOM.sql"
     if not (os.access(databaseDirectory, os.W_OK) and os.access(databaseDirectory, os.R_OK)):
       self.messageBox('The database file path "%s" cannot be opened.' % databaseFilepath)
       return
-    slicer.dicomDatabase.openDatabase(databaseDirectory + "/ctkDICOM.sql", "SLICER")
-    if not slicer.dicomDatabase.isOpen:
+    slicer.app.dicomDatabase().openDatabase(databaseDirectory + "/ctkDICOM.sql", "SLICER")
+    if not slicer.app.dicomDatabase().isOpen:
       self.messageBox('The database file path "%s" cannot be opened.' % databaseFilepath)
-      self.dicomDatabase = None
+      slicer.app.setDICOMDatabase(None)
       return
     if self.dicomApp:
       if self.dicomApp.databaseDirectory != databaseDirectory:
@@ -292,14 +291,14 @@ class DICOMWidget:
   def setDatabasePrecacheTags(self):
     """query each plugin for tags that should be cached on import
        and set them for the dicom app widget and slicer"""
-    tagsToPrecache = list(slicer.dicomDatabase.tagsToPrecache)
+    tagsToPrecache = list(slicer.app.dicomDatabase().tagsToPrecache)
     for pluginClass in slicer.modules.dicomPlugins:
       plugin = slicer.modules.dicomPlugins[pluginClass]()
       tagsToPrecache += plugin.tags.values()
     tagsToPrecache = list(set(tagsToPrecache))  # remove duplicates
     tagsToPrecache.sort()
     if hasattr(slicer, 'dicomDatabase'):
-      slicer.dicomDatabase.tagsToPrecache = tagsToPrecache
+      slicer.app.dicomDatabase().tagsToPrecache = tagsToPrecache
     if self.dicomApp:
       self.dicomApp.tagsToPrecache = tagsToPrecache
 
@@ -351,11 +350,11 @@ class DICOMWidget:
         # TODO: add delete option to ctkDICOMDatabase
         self.dicomApp.suspendModel()
         if role == "Patient":
-          removeWorked = slicer.dicomDatabase.removePatient(uid)
+          removeWorked = slicer.app.dicomDatabase().removePatient(uid)
         elif role == "Study":
-          removeWorked = slicer.dicomDatabase.removeStudy(uid)
+          removeWorked = slicer.app.dicomDatabase().removeStudy(uid)
         elif role == "Series":
-          removeWorked = slicer.dicomDatabase.removeSeries(uid)
+          removeWorked = slicer.app.dicomDatabase().removeSeries(uid)
         if not removeWorked:
           self.messageBox(self,"Could not remove %s" % role,title='DICOM')
         self.dicomApp.resumeModel()
@@ -404,7 +403,7 @@ class DICOMWidget:
     role = self.dicomModelTypes[self.selection.data(self.dicomModelTypeRole)]
     studies = []
     if role == "Patient":
-      studies = slicer.dicomDatabase.studiesForPatient(uid)
+      studies = slicer.app.dicomDatabase().studiesForPatient(uid)
     if role == "Study":
       studies = [uid]
     series = []
@@ -412,15 +411,15 @@ class DICOMWidget:
       series = [uid]
     else:
       for study in studies:
-        series += slicer.dicomDatabase.seriesForStudy(study)
+        series += slicer.app.dicomDatabase().seriesForStudy(study)
     files = []
     for serie in series:
-      files += slicer.dicomDatabase.filesForSeries(serie)
+      files += slicer.app.dicomDatabase().filesForSeries(serie)
     sendDialog = DICOMLib.DICOMSendDialog(files)
     sendDialog.open()
 
   def loadPatient(self,patientUID):
-    studies = slicer.dicomDatabase.studiesForPatient(patientUID)
+    studies = slicer.app.dicomDatabase().studiesForPatient(patientUID)
     s = 1
     self.progress.setLabelText("Loading Studies")
     self.progress.setValue(1)
@@ -434,7 +433,7 @@ class DICOMWidget:
         break
 
   def loadStudy(self,studyUID):
-    series = slicer.dicomDatabase.seriesForStudy(studyUID)
+    series = slicer.app.dicomDatabase().seriesForStudy(studyUID)
     s = 1
     origText = self.progress.labelText
     for serie in series:
@@ -447,17 +446,17 @@ class DICOMWidget:
         break
 
   def loadSeries(self,seriesUID):
-    files = slicer.dicomDatabase.filesForSeries(seriesUID)
-    slicer.dicomDatabase.loadFileHeader(files[0])
+    files = slicer.app.dicomDatabase().filesForSeries(seriesUID)
+    slicer.app.dicomDatabase().loadFileHeader(files[0])
     seriesDescription = "0008,103e"
-    d = slicer.dicomDatabase.headerValue(seriesDescription)
+    d = slicer.app.dicomDatabase().headerValue(seriesDescription)
     try:
       name = d[d.index('[')+1:d.index(']')]
     except ValueError:
       name = "Unknown"
     self.progress.labelText += '\nLoading %s' % name
     slicer.app.processEvents()
-    self.loadFiles(slicer.dicomDatabase.filesForSeries(seriesUID), name)
+    self.loadFiles(slicer.app.dicomDatabase().filesForSeries(seriesUID), name)
 
   def loadFiles(self, files, name):
     loader = DICOMLib.DICOMLoader(files,name)
@@ -477,7 +476,7 @@ class DICOMWidget:
       self.toggleListener.text = "Start Listener"
     else:
       try:
-        slicer.dicomListener = DICOMLib.DICOMListener(database=slicer.dicomDatabase)
+        slicer.dicomListener = DICOMLib.DICOMListener(database=slicer.app.dicomDatabase())
         slicer.dicomListener.start()
         self.onListenerStateChanged(slicer.dicomListener.process.state())
         slicer.dicomListener.process.connect('stateChanged(QProcess::ProcessState)',self.onListenerStateChanged)

@@ -52,10 +52,10 @@ class DICOMSlicerDataBundlePluginClass(DICOMPlugin):
     if len(files) == 1:
       f = files[0]
       # get the series description to use as base for volume name
-      name = slicer.dicomDatabase.fileValue(f, self.tags['seriesDescription'])
+      name = slicer.app.dicomDatabase().fileValue(f, self.tags['seriesDescription'])
       if name == "":
         name = "Unknown"
-      candygramValue = slicer.dicomDatabase.fileValue(f, self.tags['candygram'])
+      candygramValue = slicer.app.dicomDatabase().fileValue(f, self.tags['candygram'])
       if candygramValue:
         # default loadable includes all files for series
         loadable = DICOMLib.DICOMLoadable()
@@ -73,7 +73,7 @@ class DICOMSlicerDataBundlePluginClass(DICOMPlugin):
 
     f = loadable.files[0]
     try:
-      zipSize = int(slicer.dicomDatabase.fileValue(f, self.tags['zipSize']))
+      zipSize = int(slicer.app.dicomDatabase().fileValue(f, self.tags['zipSize']))
     except ValueError:
       return False
 

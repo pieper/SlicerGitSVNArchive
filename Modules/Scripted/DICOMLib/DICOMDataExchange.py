@@ -52,8 +52,8 @@ class DICOMLoader(object):
     instanceUIDs = ""
     instanceUIDTag = "0008,0018"
     for file in self.files:
-      slicer.dicomDatabase.loadFileHeader(file)
-      d = slicer.dicomDatabase.headerValue(instanceUIDTag)
+      slicer.app.dicomDatabase().loadFileHeader(file)
+      d = slicer.app.dicomDatabase().headerValue(instanceUIDTag)
       print('header for %s is %s' % (instanceUIDTag, d))
       try:
         uid = d[d.index('[')+1:d.index(']')]
@@ -117,9 +117,9 @@ class DICOMVolumeOrganizer(object):
       files = self.files
 
     # get the series description to use as base for volume name
-    slicer.dicomDatabase.loadFileHeader(files[0])
+    slicer.app.dicomDatabase().loadFileHeader(files[0])
     seriesDescription = "0008,103e"
-    d = slicer.dicomDatabase.headerValue(seriesDescription)
+    d = slicer.app.dicomDatabase().headerValue(seriesDescription)
     try:
       name = d[d.index('[')+1:d.index(']')]
     except ValueError:
@@ -157,21 +157,21 @@ class DICOMVolumeOrganizer(object):
     subseriesFiles = {}
     subseriesValues = {}
     for file in volume.files:
-      slicer.dicomDatabase.loadFileHeader(file)
+      slicer.app.dicomDatabase().loadFileHeader(file)
       # save position and orientation
-      v = slicer.dicomDatabase.headerValue(POSITION)
+      v = slicer.app.dicomDatabase().headerValue(POSITION)
       try:
         positions[file] = v[v.index('[')+1:v.index(']')]
       except ValueError:
         positions[file] = None
-      v = slicer.dicomDatabase.headerValue(ORIENTATION)
+      v = slicer.app.dicomDatabase().headerValue(ORIENTATION)
       try:
         orientations[file] = v[v.index('[')+1:v.index(']')]
       except ValueError:
         orientations[file] = None
       # check for subseries values
       for spec in subseriesSpecs.keys():
-        v = slicer.dicomDatabase.headerValue(subseriesSpecs[spec])
+        v = slicer.app.dicomDatabase().headerValue(subseriesSpecs[spec])
         try:
           value = v[v.index('[')+1:v.index(']')]
         except ValueError:
@@ -215,8 +215,8 @@ class DICOMVolumeOrganizer(object):
       # series and calculate the scan direction (assumed to be perpendicular
       # to the acquisition plane)
       #
-      slicer.dicomDatabase.loadFileHeader(volume.files[0])
-      v = slicer.dicomDatabase.headerValue(NUMBER_OF_FRAMES)
+      slicer.app.dicomDatabase().loadFileHeader(volume.files[0])
+      v = slicer.app.dicomDatabase().headerValue(NUMBER_OF_FRAMES)
       try:
         value = v[v.index('[')+1:v.index(']')]
       except ValueError:
@@ -227,7 +227,7 @@ class DICOMVolumeOrganizer(object):
       validGeometry = True
       ref = {}
       for tag in [POSITION, ORIENTATION]:
-        v = slicer.dicomDatabase.headerValue(tag)
+        v = slicer.app.dicomDatabase().headerValue(tag)
         try:
           value = v[v.index('[')+1:v.index(']')]
         except ValueError:
@@ -346,13 +346,13 @@ class DICOMExporter(object):
     seriesNumbers = []
     p = {}
     if studyUID:
-      series = slicer.dicomDatabase.seriesForStudy(studyUID)
+      series = slicer.app.dicomDatabase().seriesForStudy(studyUID)
       # first find a unique series number
       for serie in series:
-        files = slicer.dicomDatabase.filesForSeries(serie)
+        files = slicer.app.dicomDatabase().filesForSeries(serie)
         if len(files):
-          slicer.dicomDatabase.loadFileHeader(files[0])
-          dump = slicer.dicomDatabase.headerValue('0020,0011')
+          slicer.app.dicomDatabase().loadFileHeader(files[0])
+          dump = slicer.app.dicomDatabase().headerValue('0020,0011')
           try:
             value = dump[dump.index('[')+1:dump.index(']')]
             seriesNumbers.append(int(value))
@@ -366,12 +366,12 @@ class DICOMExporter(object):
       # now find the other values from any file (use first file in first series)
       if len(series):
         p['Series Number'] = str(len(series)+1) # doesn't need to be unique, but we try
-        files = slicer.dicomDatabase.filesForSeries(series[0])
+        files = slicer.app.dicomDatabase().filesForSeries(series[0])
         if len(files):
           self.referenceFile = files[0]
-          slicer.dicomDatabase.loadFileHeader(self.referenceFile)
+          slicer.app.dicomDatabase().loadFileHeader(self.referenceFile)
           for tag in tags.keys():
-            dump = slicer.dicomDatabase.headerValue(tag)
+            dump = slicer.app.dicomDatabase().headerValue(tag)
             try:
               value = dump[dump.index('[')+1:dump.index(']')]
             except ValueError:
@@ -524,20 +524,20 @@ class DICOMExporter(object):
 
   def addFilesToDatabase(self):
     indexer = ctk.ctkDICOMIndexer()
-    destinationDir = os.path.dirname(slicer.dicomDatabase.databaseFilename)
+    destinationDir = os.path.dirname(slicer.app.dicomDatabase().databaseFilename)
     if self.sdbFile:
       files = [self.sdbFile]
     else:
       files = glob.glob('%s/*' % self.dicomDirectory)
     for file in files: 
-      indexer.addFile( slicer.dicomDatabase, file, destinationDir )
+      indexer.addFile( slicer.app.dicomDatabase(), file, destinationDir )
       slicer.util.showStatusMessage("Loaded: %s" % file, 1000)
 
 # TODO: turn these into unit tests
 tests = """
   dump = DICOMLib.DICOMCommand('dcmdump', ['/media/extra650/data/CTC/JANCT000/series_2/instance_706.dcm']).start()
   
-  id = slicer.dicomDatabase.studiesForPatient('2')[0]
+  id = slicer.app.dicomDatabase().studiesForPatient('2')[0]
   e = DICOMLib.DICOMExporter(id)
   e.export()
 """

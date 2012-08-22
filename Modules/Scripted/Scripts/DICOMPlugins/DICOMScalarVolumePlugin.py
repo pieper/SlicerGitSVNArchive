@@ -59,10 +59,10 @@ class DICOMScalarVolumePluginClass(DICOMPlugin):
     """
 
     # get the series description to use as base for volume name
-    name = slicer.dicomDatabase.fileValue(files[0],self.tags['seriesDescription'])
+    name = slicer.app.dicomDatabase().fileValue(files[0],self.tags['seriesDescription'])
     if name == "":
       name = "Unknown"
-    num = slicer.dicomDatabase.fileValue(files[0],self.tags['seriesNumber'])
+    num = slicer.app.dicomDatabase().fileValue(files[0],self.tags['seriesNumber'])
     if num != "":
       name = num + ": " + name
 
@@ -101,20 +101,20 @@ class DICOMScalarVolumePluginClass(DICOMPlugin):
     subseriesValues = {}
     for file in loadable.files:
       # check if the image contains pixel data
-      if slicer.dicomDatabase.fileValue(file,self.tags['pixelData'])!='':
+      if slicer.app.dicomDatabase().fileValue(file,self.tags['pixelData'])!='':
         pixelDataAvailable = True
       
       # save position and orientation
-      positions[file] = slicer.dicomDatabase.fileValue(file,self.tags['position'])
+      positions[file] = slicer.app.dicomDatabase().fileValue(file,self.tags['position'])
       if positions[file] == "":
         positions[file] = None
-      orientations[file] = slicer.dicomDatabase.fileValue(file,self.tags['orientation'])
+      orientations[file] = slicer.app.dicomDatabase().fileValue(file,self.tags['orientation'])
       if orientations[file] == "":
         orientations[file] = None
 
       # check for subseries values
       for tag in subseriesTags:
-        value = slicer.dicomDatabase.fileValue(file,self.tags[tag])
+        value = slicer.app.dicomDatabase().fileValue(file,self.tags[tag])
         if not subseriesValues.has_key(tag):
           subseriesValues[tag] = []
         if not subseriesValues[tag].__contains__(value):
@@ -162,14 +162,14 @@ class DICOMScalarVolumePluginClass(DICOMPlugin):
       # series and calculate the scan direction (assumed to be perpendicular
       # to the acquisition plane)
       #
-      value = slicer.dicomDatabase.fileValue(loadable.files[0], self.tags['numberOfFrames'])
+      value = slicer.app.dicomDatabase().fileValue(loadable.files[0], self.tags['numberOfFrames'])
       if value != "":
         loadable.warning = "Multi-frame image. If slice orientation or spacing is non-uniform then the image may be displayed incorrectly. Use with caution."
 
       validGeometry = True
       ref = {}
       for tag in [self.tags['position'], self.tags['orientation']]:
-        value = slicer.dicomDatabase.fileValue(loadable.files[0], tag)
+        value = slicer.app.dicomDatabase().fileValue(loadable.files[0], tag)
         if not value or value == "":
           loadable.warning = "Reference image in series does not contain geometry information.  Please use caution."
           validGeometry = False
@@ -307,7 +307,7 @@ class DICOMScalarVolumePluginClass(DICOMPlugin):
       #
       instanceUIDs = ""
       for file in loadable.files:
-        uid = slicer.dicomDatabase.fileValue(file,self.tags['instanceUID'])
+        uid = slicer.app.dicomDatabase().fileValue(file,self.tags['instanceUID'])
         if uid == "":
           uid = "Unknown"
         instanceUIDs += uid + " "
