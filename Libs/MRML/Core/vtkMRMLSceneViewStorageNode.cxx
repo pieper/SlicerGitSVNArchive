@@ -64,6 +64,14 @@ int vtkMRMLSceneViewStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
 {
   vtkMRMLSceneViewNode *sceneViewNode = dynamic_cast <vtkMRMLSceneViewNode *> (refNode);
 
+  if (sceneViewNode->GetScreenShot() != NULL)
+    {
+    // Since the scene views are 'meta' objects, they should not update their image
+    // data when the scene gets updated.  The only case where they actually need to
+    // read is when they are first instantiated with NULL image data.
+    return 1;
+    }
+
   std::string fullName = this->GetFullNameFromFileName();
   if (fullName == std::string("")) 
     {
