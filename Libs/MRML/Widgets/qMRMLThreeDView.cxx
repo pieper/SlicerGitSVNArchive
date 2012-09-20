@@ -323,3 +323,23 @@ void qMRMLThreeDView::resetFocalPoint()
     d->MRMLViewNode->InvokeEvent(vtkMRMLViewNode::ResetFocalPointRequestedEvent);
     }
 }
+
+// --------------------------------------------------------------------------
+void qMRMLThreeDView::forceRender()
+{
+  Q_D(qMRMLThreeDView);
+
+  if (!d->MRMLScene)
+    {
+    return;
+    }
+
+  if (d->MRMLScene->IsBatchProcessing())
+    {
+    this->scheduleRender();
+    }
+  else
+    {
+    this->Superclass::forceRender();
+    }
+}

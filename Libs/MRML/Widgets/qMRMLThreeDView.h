@@ -74,6 +74,10 @@ public slots:
   /// account when computing the boundaries
   virtual void resetFocalPoint();
 
+  /// Reimplemented to avoid rendering when the scene is 
+  /// in batch processing state
+  virtual void forceRender();
+
 protected:
   QScopedPointer<qMRMLThreeDViewPrivate> d_ptr;
 
