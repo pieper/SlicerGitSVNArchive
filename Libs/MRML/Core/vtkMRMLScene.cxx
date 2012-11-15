@@ -91,30 +91,6 @@ vtkCxxSetObjectMacro(vtkMRMLScene, DataIOManager, vtkDataIOManager)
 vtkCxxSetObjectMacro(vtkMRMLScene, UserTagTable, vtkTagTable)
 vtkCxxSetObjectMacro(vtkMRMLScene, URIHandlerCollection, vtkCollection)
 
-// helper routines to make sure that the ReferencingNodes
-// vector does not contain invalid pointers
-static void RegisterNodeList(std::vector<vtkMRMLNode *> nodes)
-{
-  size_t nnodes = nodes.size();
-  size_t i=0;
-  for( i=0; i<nnodes; ++i)
-    {
-    vtkMRMLNode *node = nodes[i];
-    node->Register(NULL);
-    }
-}
-
-static void UnRegisterNodeList(std::vector<vtkMRMLNode *> nodes)
-{
-  size_t nnodes = nodes.size();
-  size_t i=0;
-  for( i=0; i<nnodes; ++i)
-    {
-    vtkMRMLNode *node = nodes[i];
-    node->UnRegister(NULL);
-    }
-}
-
 //------------------------------------------------------------------------------
 vtkMRMLScene::vtkMRMLScene()
 {
@@ -480,6 +456,7 @@ void vtkMRMLScene::Clear(int removeSingletons)
   if (!removeSingletons)
     {
     this->RemoveAllNodesExceptSingletons();
+    this->UnRegisterNodeList(this->ReferencingNodes);
     this->ClearReferencedNodeID();
     this->ResetNodes();
     // See comment below
@@ -559,8 +536,8 @@ void vtkMRMLScene::RemoveAllNodesExceptSingletons()
     //node->UnRegister(this);
     }
 
-  RegisterNodeList(referencingNodes);
-  UnRegisterNodeList(this->ReferencingNodes);
+  this->RegisterNodeList(referencingNodes);
+  this->UnRegisterNodeList(this->ReferencingNodes);
   this->ReferencingNodes = referencingNodes;
 }
 
@@ -876,6 +853,7 @@ int vtkMRMLScene::Import()
 
   this->SetUndoOff();
   this->StartState(vtkMRMLScene::ImportState);
+  this->UnRegisterNodeList(this->ReferencingNodes);
   this->ClearReferencedNodeID();
 
   // read nodes into a temp scene
@@ -958,6 +936,7 @@ int vtkMRMLScene::Import()
     } //if (res)
   else
     {
+    this->UnRegisterNodeList(this->ReferencingNodes);
     this->ClearReferencedNodeID();
     }
 
@@ -3347,3 +3326,30 @@ bool vtkMRMLScene
     }
   return found;
 }
+
+//-----------------------------------------------------------------------------
+// helper routines to make sure that the ReferencingNodes
+// vector does not contain invalid pointers
+void vtkMRMLScene::RegisterNodeList(std::vector<vtkMRMLNode *> nodes)
+{
+  size_t nnodes = nodes.size();
+  size_t i=0;
+  for( i=0; i<nnodes; ++i)
+    {
+    vtkMRMLNode *node = nodes[i];
+    node->Register(this);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void vtkMRMLScene::UnRegisterNodeList(std::vector<vtkMRMLNode *> nodes)
+{
+  size_t nnodes = nodes.size();
+  size_t i=0;
+  for( i=0; i<nnodes; ++i)
+    {
+    vtkMRMLNode *node = nodes[i];
+    node->UnRegister(this);
+    }
+}
+
