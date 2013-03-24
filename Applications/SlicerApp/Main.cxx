@@ -136,20 +136,8 @@ int SlicerAppMain(int argc, char* argv[])
     splashScreen->show();
     }
 
-  qSlicerModuleManager * moduleManager = qSlicerApplication::application()->moduleManager();
-  qSlicerModuleFactoryManager * moduleFactoryManager = moduleManager->factoryManager();
-  moduleFactoryManager->addSearchPaths(app.commandOptions()->additonalModulePaths());
-  qSlicerApplicationHelper::setupModuleFactoryManager(moduleFactoryManager);
+  splashMessage(splashScreen, QString());
 
-  // Register and instantiate modules
-  splashMessage(splashScreen, "Registering modules...");
-  moduleFactoryManager->registerModules();
-  qDebug() << "Number of registered modules:"
-           << moduleFactoryManager->registeredModuleNames().count();
-  splashMessage(splashScreen, "Instantiating modules...");
-  moduleFactoryManager->instantiateModules();
-  qDebug() << "Number of instantiated modules:"
-           << moduleFactoryManager->instantiatedModuleNames().count();
   // Create main window
   splashMessage(splashScreen, "Initializing user interface...");
   QScopedPointer<qSlicerAppMainWindow> window;
@@ -158,17 +146,6 @@ int SlicerAppMain(int argc, char* argv[])
     window.reset(new qSlicerAppMainWindow);
     window->setWindowTitle(window->windowTitle()+ " " + Slicer_VERSION_FULL);
     }
-
-  // Load all available modules
-  foreach(const QString& name, moduleFactoryManager->instantiatedModuleNames())
-    {
-    Q_ASSERT(!name.isNull());
-    splashMessage(splashScreen, "Loading module \"" + name + "\"...");
-    moduleFactoryManager->loadModule(name);
-    }
-  qDebug() << "Number of loaded modules:" << moduleManager->modulesNames().count();
-
-  splashMessage(splashScreen, QString());
 
   if (window)
     {
@@ -180,6 +157,10 @@ int SlicerAppMain(int argc, char* argv[])
     {
     splashScreen->finish(window.data());
     }
+
+  // load modules after the event loop is started
+  QStringList additonalModulePaths = app.commandOptions()->additonalModulePaths();
+  QTimer::singleShot(0, &app, SLOT(loadModules(additonalModulePaths)));
 
   // Process command line argument after the event loop is started
   QTimer::singleShot(0, &app, SLOT(handleCommandLineArguments()));

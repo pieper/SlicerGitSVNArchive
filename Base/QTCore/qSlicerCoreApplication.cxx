@@ -785,6 +785,34 @@ void qSlicerCoreApplication::handlePreApplicationCommandLineArguments()
 }
 
 //-----------------------------------------------------------------------------
+void qSlicerCoreApplication::loadModules(QStringList additonalModulePaths)
+{
+  Q_D(const qSlicerCoreApplication);
+
+  // Register and instantiate modules
+  //splashMessage(splashScreen, "Registering modules...");
+  moduleFactoryManager->registerModules();
+  qDebug() << "Number of registered modules:"
+           << moduleFactoryManager->registeredModuleNames().count();
+  //splashMessage(splashScreen, "Instantiating modules...");
+  moduleFactoryManager->instantiateModules();
+  qDebug() << "Number of instantiated modules:"
+           << moduleFactoryManager->instantiatedModuleNames().count();
+
+
+  // Load all available modules
+  foreach(const QString& name, moduleFactoryManager->instantiatedModuleNames())
+    {
+    Q_ASSERT(!name.isNull());
+    //splashMessage(splashScreen, "Loading module \"" + name + "\"...");
+    qDebug() << "Loading module \"" + name + "\"...";
+    moduleFactoryManager->loadModule(name);
+    }
+  qDebug() << "Number of loaded modules:" << d->ModuleManager->modulesNames().count();
+
+}
+
+//-----------------------------------------------------------------------------
 void qSlicerCoreApplication::handleCommandLineArguments()
 {
   qSlicerCoreCommandOptions* options = this->coreCommandOptions();
