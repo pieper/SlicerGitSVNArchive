@@ -785,9 +785,11 @@ void qSlicerCoreApplication::handlePreApplicationCommandLineArguments()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerCoreApplication::loadModules(QStringList additonalModulePaths)
+void qSlicerCoreApplication::loadModules()
 {
   Q_D(const qSlicerCoreApplication);
+  qSlicerModuleFactoryManager * moduleFactoryManager = 
+                                    d->ModuleManager->factoryManager();
 
   // Register and instantiate modules
   //splashMessage(splashScreen, "Registering modules...");

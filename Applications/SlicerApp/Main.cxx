@@ -158,9 +158,13 @@ int SlicerAppMain(int argc, char* argv[])
     splashScreen->finish(window.data());
     }
 
+  qSlicerModuleManager * moduleManager = qSlicerApplication::application()->moduleManager();
+  qSlicerModuleFactoryManager * moduleFactoryManager = moduleManager->factoryManager();
+  moduleFactoryManager->addSearchPaths(app.commandOptions()->additonalModulePaths());
+  qSlicerApplicationHelper::setupModuleFactoryManager(moduleFactoryManager);
+
   // load modules after the event loop is started
-  QStringList additonalModulePaths = app.commandOptions()->additonalModulePaths();
-  QTimer::singleShot(0, &app, SLOT(loadModules(additonalModulePaths)));
+  QTimer::singleShot(0, &app, SLOT(loadModules()));
 
   // Process command line argument after the event loop is started
   QTimer::singleShot(0, &app, SLOT(handleCommandLineArguments()));

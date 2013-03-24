@@ -305,7 +305,7 @@ protected:
 protected slots:
 
   ///
-  virtual void loadModules(QStringList);
+  virtual void loadModules();
   virtual void handleCommandLineArguments();
   virtual void onSlicerApplicationLogicModified();
   void onSlicerApplicationLogicRequest(vtkObject*, void* , unsigned long);
