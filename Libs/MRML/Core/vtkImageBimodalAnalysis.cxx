@@ -85,7 +85,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 
   // Find min (first non-zero value in histogram)
   min = x = min0;
-  while (!inPtr[x] && x <= max0)
+  while (!inPtr[x] && x < max0)
     {
     x++;
     }
@@ -96,7 +96,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 
   // Find max (last non-zero value in histogram)
   max = x = max0;
-  while (!inPtr[x] && x >= min0)
+  while (!inPtr[x] && x > min0)
     {
     x--;
     }
@@ -110,7 +110,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
     {
     for (k=0; k < width; k++) 
       {
-      outPtr[x] += (float)inPtr[x+k];
+      outPtr[x] += (float)inPtr[(x+k) % (max-min)];
       }
     outPtr[x] *= fwidth;
     }
