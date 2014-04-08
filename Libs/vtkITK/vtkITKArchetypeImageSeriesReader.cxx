@@ -345,7 +345,7 @@ int vtkITKArchetypeImageSeriesReader::RequestInformation(
     if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
       {
       itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: Archetype file " << fileNameCollapsed.c_str() << " does not exist.");
-      return 1;
+      return 0;
       }
     }
 
@@ -615,7 +615,7 @@ int vtkITKArchetypeImageSeriesReader::RequestInformation(
       if (imageIO.GetPointer() == NULL)
         {
           itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
-          return 1;
+          return 0;
         }
       }
     else
@@ -677,7 +677,7 @@ int vtkITKArchetypeImageSeriesReader::RequestInformation(
     {
     IjkToLpsMatrix->Delete();
     itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: Cannot open " << fileNameCollapsed.c_str() << ".");
-    return 1;
+    return 0;
     }
   // Transform from LPS to RAS
   vtkMatrix4x4* LpsToRasMatrix = vtkMatrix4x4::New();
