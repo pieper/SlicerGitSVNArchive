@@ -36,7 +36,6 @@
 #include "gdcmGlobal.h"         /// access to dictionary
 
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesVectorReaderSeries);
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesVectorReaderSeries, "$Revision: 4068 $");
 
 //----------------------------------------------------------------------------
 vtkITKArchetypeImageSeriesVectorReaderSeries::vtkITKArchetypeImageSeriesVectorReaderSeries()
@@ -99,6 +98,7 @@ void vtkITKExecuteDataFromSeriesVector(
 //----------------------------------------------------------------------------
 // This function reads a data from a file.  The datas extent/axes
 // are assumed to be the same as the file extent/order.
+#if (VTK_MAJOR_VERSION <= 5)
 void vtkITKArchetypeImageSeriesVectorReaderSeries::ExecuteData(vtkDataObject *output)
 {
   if (!this->Superclass::Archetype)
@@ -112,6 +112,16 @@ void vtkITKArchetypeImageSeriesVectorReaderSeries::ExecuteData(vtkDataObject *ou
   data->SetExtent(0,0,0,0,0,0);
   data->AllocateScalars();
   data->SetExtent(data->GetWholeExtent());
+#else
+void vtkITKArchetypeImageSeriesVectorReaderSeries::ExecuteDataWithInformation(vtkDataObject *output, vtkInformation* outInfo)
+{
+  if (!this->Superclass::Archetype)
+    {
+      vtkErrorMacro("An Archetype must be specified.");
+      return;
+    }
+  vtkImageData *data = this->AllocateOutputData(output, outInfo);
+#endif
 
     // If there is only one file in the series, just use an image file reader
   if (this->FileNames.size() == 1)

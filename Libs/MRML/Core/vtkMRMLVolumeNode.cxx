@@ -19,19 +19,20 @@ Version:   $Revision: 1.14 $
 #include "vtkMRMLTransformNode.h"
 
 // VTK includes
+#include <vtkAppendPolyData.h>
 #include <vtkCallbackCommand.h>
+#include <vtkGeneralTransform.h>
+#include <vtkHomogeneousTransform.h>
 #include <vtkImageData.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkImageResliceMask.h>
 #include <vtkMathUtilities.h>
 #include <vtkMatrix4x4.h>
-#include <vtkHomogeneousTransform.h>
-#include <vtkGeneralTransform.h>
-#include <vtkImageDataGeometryFilter.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkAppendPolyData.h>
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkTrivialProducer.h>
 
-#include <vtkImageResliceMask.h>
 //----------------------------------------------------------------------------
 vtkCxxSetObjectMacro(vtkMRMLVolumeNode, ImageData, vtkImageData);
 
@@ -707,7 +708,13 @@ void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *imageData)
       this->GetNthDisplayNode(i));
     if (dnode)
       {
+#if (VTK_MAJOR_VERSION <= 5)
       dnode->SetInputImageData(imageData);
+#else
+      vtkNew<vtkTrivialProducer> tp;
+      tp->SetOutput(imageData);
+      dnode->SetInputImageDataPort(tp->GetOutputPort());
+#endif
       }
     }
 
@@ -741,7 +748,13 @@ void vtkMRMLVolumeNode::UpdateDisplayNodeImageData(vtkMRMLDisplayNode* dNode)
   vtkMRMLVolumeDisplayNode* vNode = vtkMRMLVolumeDisplayNode::SafeDownCast(dNode);
   if (vNode)
     {
+#if (VTK_MAJOR_VERSION <= 5)
     vNode->SetInputImageData(this->ImageData);
+#else
+    vtkNew<vtkTrivialProducer> tp;
+    tp->SetOutput(this->ImageData);
+    vNode->SetInputImageDataPort(tp->GetOutputPort());
+#endif
     }
 }
 
@@ -1020,7 +1033,13 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
 
   reslice->SetResliceTransform(resampleXform.GetPointer());
 
-  reslice->SetInput(this->GetImageData());
+#if (VTK_MAJOR_VERSION <= 5)
+  reslice->SetInput(this->ImageData);
+#else
+  vtkNew<vtkTrivialProducer> tp;
+  tp->SetOutput(this->ImageData);
+  reslice->SetInputConnection(tp->GetOutputPort());
+#endif
   reslice->SetInterpolationModeToNearestNeighbor();
   reslice->SetBackgroundColor(0, 0, 0, 0);
   reslice->AutoCropOutputOff();
@@ -1054,8 +1073,10 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
 
   reslice->SetOutputExtent( extent);
 
+#if (VTK_MAJOR_VERSION <= 5)
   reslice->GetBackgroundMask()->SetUpdateExtentToWholeExtent();
-
+#else
+#endif
   reslice->Update();
 
   vtkNew<vtkImageData> resampleImage;

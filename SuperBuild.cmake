@@ -85,7 +85,9 @@ mark_as_superbuild(
 
 set(ITK_EXTERNAL_NAME ITKv${ITK_VERSION_MAJOR})
 
-set(Slicer_DEPENDENCIES curl teem VTK ${ITK_EXTERNAL_NAME} CTK LibArchive)
+set(VTK_EXTERNAL_NAME VTKv${VTK_VERSION_MAJOR})
+
+set(Slicer_DEPENDENCIES curl teem ${VTK_EXTERNAL_NAME} ${ITK_EXTERNAL_NAME} CTK LibArchive)
 
 set(CURL_ENABLE_SSL ${Slicer_USE_PYTHONQT_WITH_OPENSSL})
 
@@ -160,8 +162,8 @@ Slicer_Remote_Add(jqPlot
 list(APPEND Slicer_REMOTE_DEPENDENCIES jqPlot)
 
 Slicer_Remote_Add(OpenIGTLinkIF
-  GIT_REPOSITORY ${git_protocol}://github.com/openigtlink/OpenIGTLinkIF.git
-  GIT_TAG 38491441f112df5a6fb6062f2cdf0a3cfcb1450b
+  GIT_REPOSITORY ${git_protocol}://github.com/yuzhengZ/OpenIGTLinkIF.git
+  GIT_TAG a7d4b7c3c5e0d99c2dcec444e39c7648bd09bc35
   OPTION_NAME Slicer_BUILD_OpenIGTLinkIF
   OPTION_DEPENDS "Slicer_BUILD_QTLOADABLEMODULES;Slicer_USE_OpenIGTLink"
   LABELS REMOTE_MODULE
@@ -172,8 +174,8 @@ option(Slicer_BUILD_MULTIVOLUME_SUPPORT "Build MultiVolume support." ON)
 mark_as_advanced(Slicer_BUILD_MULTIVOLUME_SUPPORT)
 
 Slicer_Remote_Add(MultiVolumeExplorer
-  GIT_REPOSITORY ${git_protocol}://github.com/fedorov/MultiVolumeExplorer.git
-  GIT_TAG 1f297b515366e67608d908c80b28c481f7994fc4
+  GIT_REPOSITORY ${git_protocol}://github.com/yuzhengZ/MultiVolumeExplorer.git
+  GIT_TAG 134df48672acd204a98c091ff15aa19098a916e9
   OPTION_NAME Slicer_BUILD_MultiVolumeExplorer
   OPTION_DEPENDS "Slicer_BUILD_QTLOADABLEMODULES;Slicer_BUILD_MULTIVOLUME_SUPPORT;Slicer_USE_PYTHONQT"
   LABELS REMOTE_MODULE
@@ -254,15 +256,6 @@ Slicer_Remote_Add(BRAINSTools
   VARS ${BRAINSTools_options}
   )
 list_conditional_append(Slicer_BUILD_BRAINSTOOLS Slicer_REMOTE_DEPENDENCIES BRAINSTools)
-
-Slicer_Remote_Add(EMSegment
-  SVN_REPOSITORY "http://svn.slicer.org/Slicer3/branches/Slicer4-EMSegment"
-  SVN_REVISION -r "17043"
-  OPTION_NAME Slicer_BUILD_EMSegment
-  OPTION_DEPENDS "Slicer_BUILD_BRAINSTOOLS;Slicer_BUILD_QTLOADABLEMODULES;Slicer_USE_PYTHONQT_WITH_TCL"
-  LABELS REMOTE_MODULE
-  )
-list_conditional_append(Slicer_BUILD_EMSegment Slicer_REMOTE_DEPENDENCIES EMSegment)
 
 Slicer_Remote_Add(DataStore
   GIT_REPOSITORY "${git_protocol}://github.com/Slicer/Slicer-DataStore"

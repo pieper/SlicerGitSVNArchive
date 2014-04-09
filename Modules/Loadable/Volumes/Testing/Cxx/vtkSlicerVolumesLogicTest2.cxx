@@ -31,6 +31,8 @@
 #include <vtkNew.h>
 #include <vtkStringArray.h>
 #include <vtkSmartPointer.h>
+#include <vtkTrivialProducer.h>
+#include <vtkStreamingDemandDrivenPipeline.h>
 
 // ITK includes
 #include "itkImage.h"
@@ -55,8 +57,14 @@ bool isImageDataValid(vtkImageData* imageData)
     {
     return false;
     }
+#if (VTK_MAJOR_VERSION <= 5)
   imageData->GetProducerPort();
   vtkInformation* info = imageData->GetPipelineInformation();
+#else
+  vtkNew<vtkTrivialProducer> tp;
+  tp->SetOutput(imageData);
+  vtkInformation* info = tp->GetExecutive()->GetOutputInformation(0);
+#endif
   if (!info)
     {
     return false;
