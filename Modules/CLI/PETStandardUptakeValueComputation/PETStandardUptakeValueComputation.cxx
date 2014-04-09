@@ -148,12 +148,10 @@ double ConvertTimeToSeconds(const char *time )
   // --- convert to a double count of seconds.
   // ---
   std::string timeStr = time;
-  size_t      i = timeStr.find_first_of(":");
   h = timeStr.substr( 0, 2 );
   hours = atof( h.c_str() );
 
   minAndsecStr = timeStr.substr( 3 );
-  i = minAndsecStr.find_first_of( ":" );
   m = minAndsecStr.substr(0, 2 );
   minutes = atof( m.c_str() );
 
