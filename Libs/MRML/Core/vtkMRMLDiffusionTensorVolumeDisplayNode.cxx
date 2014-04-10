@@ -352,10 +352,19 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::SetInputToImageDataPipeline(vtkAlg
 #endif
 
 //----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLDiffusionTensorVolumeDisplayNode::GetInputImageData()
 {
   return vtkImageData::SafeDownCast(this->DTIMathematics->GetInput());
 }
+#else
+vtkAlgorithmOutput* vtkMRMLDiffusionTensorVolumeDisplayNode
+::GetInputImageDataPort()
+{
+  return this->DTIMathematics->GetNumberOfInputConnections(0) ?
+    this->DTIMathematics->GetInputConnection(0, 0) : 0;
+}
+#endif
 
 //----------------------------------------------------------------------------
 #if (VTK_MAJOR_VERSION <= 5)

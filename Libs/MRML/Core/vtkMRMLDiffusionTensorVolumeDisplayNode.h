@@ -145,7 +145,11 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLGl
     };
 
   /// Get the input of the pipeline
+#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetInputImageData();
+#else
+  virtual vtkAlgorithmOutput* GetInputImageDataPort();
+#endif
 
   /// Get the output of the pipeline
 #if (VTK_MAJOR_VERSION <= 5)

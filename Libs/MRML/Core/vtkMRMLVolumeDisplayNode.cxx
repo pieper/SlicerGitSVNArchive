@@ -17,9 +17,11 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLVolumeNode.h"
 
 // VTK includes
+#include <vtkAlgorithm.h>
 #include <vtkAlgorithmOutput.h>
 #include <vtkCommand.h>
 #include <vtkImageData.h>
+#include <vtkTrivialProducer.h>
 
 // Initialize static member that controls resampling --
 // old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer
@@ -118,6 +120,10 @@ vtkAlgorithmOutput* vtkMRMLVolumeDisplayNode::GetImageDataPort()
 void vtkMRMLVolumeDisplayNode
 ::SetInputImageData(vtkImageData *imageData)
 {
+  if (this->GetInputImageData() == imageData)
+    {
+    return;
+    }
   this->SetInputToImageDataPipeline(imageData);
   this->Modified();
 }
@@ -125,8 +131,18 @@ void vtkMRMLVolumeDisplayNode
 void vtkMRMLVolumeDisplayNode
 ::SetInputImageDataPort(vtkAlgorithmOutput *imageDataPort)
 {
+  if (this->GetInputImageDataPort() == imageDataPort)
+    {
+    return;
+    }
   this->SetInputToImageDataPipeline(imageDataPort);
   this->Modified();
+}
+//----------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkMRMLVolumeDisplayNode
+::GetInputImageDataPort()
+{
+  return 0;
 }
 #endif
 
@@ -144,7 +160,14 @@ void vtkMRMLVolumeDisplayNode::SetInputToImageDataPipeline(vtkAlgorithmOutput *v
 //----------------------------------------------------------------------------
 vtkImageData* vtkMRMLVolumeDisplayNode::GetInputImageData()
 {
+#if (VTK_MAJOR_VERSION <= 5)
   return NULL;
+#else
+  vtkAlgorithmOutput* imageConnection = this->GetInputImageDataPort();
+  vtkAlgorithm* producer = imageConnection ? imageConnection->GetProducer() : 0;
+  return vtkImageData::SafeDownCast(
+    producer ? producer->GetOutputDataObject(0) : 0);
+#endif
 }
 
 //----------------------------------------------------------------------------

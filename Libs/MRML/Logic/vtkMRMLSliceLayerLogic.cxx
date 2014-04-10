@@ -25,6 +25,8 @@
 #include "vtkMRMLScene.h"
 
 // VTK includes
+#include <vtkAlgorithm.h>
+#include <vtkAlgorithmOutput.h>
 #include <vtkAssignAttribute.h>
 #include <vtkDiffusionTensorMathematics.h>
 #include <vtkFloatArray.h>
@@ -656,8 +658,10 @@ void vtkMRMLSliceLayerLogic::UpdateImageDisplay()
   // for tensors reassign scalar data
   if ( volumeNode && volumeNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
     {
-      vtkImageData* image = volumeNode->GetImageData();
-      vtkDataArray* tensors = image ? image->GetPointData()->GetTensors() : 0;
+    vtkImageData* image = 0;
+#if (VTK_MAJOR_VERSION <= 5)
+    image = volumeNode->GetImageData();
+    vtkDataArray* tensors = image ? image->GetPointData()->GetTensors() : 0;
       /*
       vtkImageData* image = vtkImageData::New();
       image->SetDimensions(2,1,1);
@@ -671,7 +675,6 @@ void vtkMRMLSliceLayerLogic::UpdateImageDisplay()
 
       image->GetPointData()->SetTensors(tensors.GetPointer());
       */
-#if (VTK_MAJOR_VERSION <= 5)
       /// HACK !
       /// vtkAssignAttribute is not able to set these values automatically,
       /// we do it manually instead.
@@ -740,25 +743,36 @@ void vtkMRMLSliceLayerLogic::UpdateImageDisplay()
           this->AssignAttributeScalarsToTensorsUVW->SetInput(0);
         }
 #else
-
-      if (image)
+      vtkAlgorithmOutput* imageDataConnection = volumeNode->GetImageDataConnection();
+      if (imageDataConnection)
         {
-          vtkNew<vtkTrivialProducer> tp;
-          tp->SetOutput(image);
-          vtkDataObject::SetPointDataActiveScalarInfo(
-            tp->GetOutputInformation(0),
-            tensors ? tensors->GetDataType() : VTK_FLOAT,
-            tensors ? tensors->GetNumberOfComponents() : 1);
+        imageDataConnection->GetProducer()->UpdateInformation();
+        image = vtkImageData::SafeDownCast(
+          imageDataConnection->GetProducer()->GetOutputDataObject(imageDataConnection->GetIndex()));
+        vtkDataArray* tensors = image ? image->GetPointData()->GetTensors() : 0;
 
-          this->AssignAttributeTensorsToScalars->SetInputConnection(tp->GetOutputPort());
-          vtkDataObject::SetActiveAttributeInfo(
-            tp->GetOutputInformation(0),
-            vtkDataObject::FIELD_ASSOCIATION_POINTS, vtkDataSetAttributes::TENSORS,
-            tensors->GetName(), tensors->GetDataType(),
-            tensors->GetNumberOfComponents(), tensors->GetNumberOfTuples());
+        // HACK: vtkAssignAttribute fails to propagate the tensor array scalar to its
+        // output image data scalar type. It reuses what scalar type was
+        // previously set on the SCALARS array. See VTK#14692
+        vtkDataObject::SetPointDataActiveScalarInfo(
+          imageDataConnection->GetProducer()->GetOutputInformation(0),
+          tensors ? tensors->GetDataType() : VTK_FLOAT,
+          tensors ? tensors->GetNumberOfComponents() : 9);
+        // HACK: vtkAssignAttribute needs the tensor array to "have a name"/"be active".
+        // It seems it is already the case, no need for the hack. See VTK#14693
+        // vtkDataObject::SetActiveAttributeInfo(imageDataConnection->GetProducer()->GetOutputInformation(0),
+        //                                       vtkDataObject::FIELD_ASSOCIATION_POINTS,
+        //                                       vtkDataSetAttributes::TENSORS,
+        //                                       "tensors",-1,9,-1);
+        this->AssignAttributeTensorsToScalars->SetInputConnection(imageDataConnection);
+        }
+      else
+        {
+        this->AssignAttributeTensorsToScalars->SetInputConnection(imageDataConnection);
         }
       this->Reslice->SetInputConnection( this->AssignAttributeTensorsToScalars->GetOutputPort() );
       this->ResliceUVW->SetInputConnection( this->AssignAttributeTensorsToScalars->GetOutputPort() );
+
       this->AssignAttributeScalarsToTensors->SetInputConnection(this->Reslice->GetOutputPort() );
       // don't activate 3D UVW reslice pipeline if we use single 2D reslice pipeline
       if (this->SliceNode && this->SliceNode->GetSliceResolutionMode() != vtkMRMLSliceNode::SliceResolutionMatch2DView)
@@ -773,7 +787,7 @@ void vtkMRMLSliceLayerLogic::UpdateImageDisplay()
     bool verbose = false;
     if (image && verbose)
       {
-      this->AssignAttributeScalarsToTensors->Update();
+      this->AssignAttributeScalarsToTensors->UpdateInformation();
       std::cerr << "Image\n";
       std::cerr << " typ: " << image->GetScalarType() << std::endl;
       image->GetPointData()->Print(std::cerr);

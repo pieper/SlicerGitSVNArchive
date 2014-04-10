@@ -98,6 +98,7 @@ public:
   virtual void SetInputImageData(vtkImageData *imageData);
 #else
   virtual void SetInputImageDataPort(vtkAlgorithmOutput *imageDataPort);
+  virtual vtkAlgorithmOutput* GetInputImageDataPort();
 #endif
 
   /// Gets the pipeline input. To be reimplemented in subclasses.

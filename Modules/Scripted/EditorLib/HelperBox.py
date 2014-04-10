@@ -348,8 +348,12 @@ class HelperBox(object):
         merge.GetImageData().DeepCopy( structureVolume.GetImageData() )
         continue
 
-      combiner.SetInput1( merge.GetImageData() )
-      combiner.SetInput2( structureVolume.GetImageData() )
+      if vtk.VTK_MAJOR_VERSION <= 5:
+        combiner.SetInput1( merge.GetImageData() )
+        combiner.SetInput2( structureVolume.GetImageData() )
+      else:
+        combiner.SetInputConnection(0, merge.GetImageDataConnection() )
+        combiner.SetInputConnection(1, structureVolume.GetImageDataConnection() )
       self.statusText( "Merging %s" % structureName )
       combiner.Update()
       merge.GetImageData().DeepCopy( combiner.GetOutput() )
@@ -378,7 +382,10 @@ class HelperBox(object):
     colorNode = merge.GetDisplayNode().GetColorNode()
 
     accum = vtk.vtkImageAccumulate()
-    accum.SetInput(merge.GetImageData())
+    if vtk.VTK_MAJOR_VERSION <= 5:
+      accum.SetInput(merge.GetImageData())
+    else:
+      accum.SetInputConnection(merge.GetImageDataConnection())
     accum.Update()
     lo = int(accum.GetMin()[0])
     hi = int(accum.GetMax()[0])
@@ -390,7 +397,10 @@ class HelperBox(object):
     thresholder.SetNumberOfThreads(1)
     for i in xrange(lo,hi+1):
       self.statusText( "Splitting label %d..."%i )
-      thresholder.SetInput( merge.GetImageData() )
+      if vtk.VTK_MAJOR_VERSION <= 5:
+        thresholder.SetInput( merge.GetImageData() )
+      else:
+        thresholder.SetInputConnection( merge.GetImageDataConnection() )
       thresholder.SetInValue( i )
       thresholder.SetOutValue( 0 )
       thresholder.ReplaceInOn()

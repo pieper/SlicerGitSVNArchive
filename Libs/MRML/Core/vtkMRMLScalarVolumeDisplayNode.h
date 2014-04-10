@@ -144,7 +144,11 @@ class VTK_MRML_EXPORT vtkMRMLScalarVolumeDisplayNode : public vtkMRMLVolumeDispl
 #endif
 
   /// Gets the pipeline input
+#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetInputImageData();
+#else
+  virtual vtkAlgorithmOutput* GetInputImageDataPort();
+#endif
 
   /// Gets the pipeline output
 #if (VTK_MAJOR_VERSION <= 5)
@@ -206,9 +210,6 @@ protected:
   /// Return the image data with scalar type, it can be in the middle of the
   /// pipeline, it's typically the input of the threshold/windowlevel filters
   virtual vtkImageData* GetScalarImageData();
-#if (VTK_MAJOR_VERSION > 5)
-  virtual vtkImageAlgorithm* GetInputImageFilter();
-#endif
 
 #if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInputToImageDataPipeline(vtkImageData* input);

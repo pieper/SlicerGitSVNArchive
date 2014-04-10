@@ -1679,7 +1679,7 @@ const char* vtkMRMLModelDisplayableManager
 #if (VTK_MAJOR_VERSION <= 5)
       modelDisplayNode->GetOutputPolyData()->Update();
 #else
-      modelDisplayNode->GetOutputFilter()->Update();
+      modelDisplayNode->GetOutputPolyDataConnection()->GetProducer()->Update();
 #endif
       }
     activeScalarName = displayNode->GetActiveScalarName();
@@ -1695,10 +1695,10 @@ const char* vtkMRMLModelDisplayableManager
 #if (VTK_MAJOR_VERSION <= 5)
       modelNode->GetPolyData()->Update();
 #else
-     vtkAlgorithm *polyDataFilter = modelNode->GetPolyDataFilter();
-     if (polyDataFilter != NULL)
+     vtkAlgorithmOutput *polyDataConnection = modelNode->GetPolyDataConnection();
+     if (polyDataConnection != NULL)
        {
-       polyDataFilter->Update();
+       polyDataConnection->GetProducer()->Update();
        }
 #endif
 
