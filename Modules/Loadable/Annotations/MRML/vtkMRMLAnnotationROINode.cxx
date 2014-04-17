@@ -70,7 +70,11 @@ void vtkMRMLAnnotationROINode::Initialize(vtkMRMLScene* mrmlScene)
 vtkMRMLAnnotationROINode::~vtkMRMLAnnotationROINode()
 {
   vtkDebugMacro("Destructing...." << (this->GetID() != NULL ? this->GetID() : "null id"));
-
+  if (this->LabelText)
+    {
+    delete [] this->LabelText;
+    this->LabelText = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
