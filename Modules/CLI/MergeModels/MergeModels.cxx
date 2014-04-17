@@ -18,14 +18,16 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "vtkDebugLeaks.h"
-#include "vtkXMLPolyDataReader.h"
-#include "vtkXMLPolyDataWriter.h"
-#include "vtkPolyDataReader.h"
-#include "vtkPolyDataWriter.h"
-#include "vtkAppendPolyData.h"
-#include <vtkVersion.h>
 #include "MergeModelsCLP.h"
+
+// VTK includes
+#include <vtkAppendPolyData.h>
+#include <vtkDebugLeaks.h>
+#include <vtkPolyDataReader.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkVersion.h>
 #include <vtksys/SystemTools.hxx>
 
 int main( int argc, char * argv[] )

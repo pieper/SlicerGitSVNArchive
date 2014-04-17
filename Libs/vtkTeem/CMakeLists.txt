@@ -123,6 +123,7 @@ if(${VTK_VERSION_MAJOR} GREATER 5)
     vtkIOImage
     vtkIOLegacy
     vtkImagingCore
+    vtksys
   )
 else()
   set(VTK_LIBRARIES
