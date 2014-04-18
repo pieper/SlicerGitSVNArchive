@@ -149,7 +149,7 @@ public:
   /// \sa GetImageData(), SetImageDataConnection()
   void SetAndObserveImageData(vtkImageData *ImageData);
 #if (VTK_MAJOR_VERSION <= 5)
-  vtkGetObjectMacro(PolyData, vtkPolyData);
+  vtkGetObjectMacro(ImageData, vtkImageData);
 #else
   virtual vtkImageData* GetImageData();
   /// Set and observe image data pipeline.
@@ -167,10 +167,10 @@ public:
                                    void * /*callData*/ );
 
   /// DisplayModifiedEvent is generated when display node parameters is changed
-  /// PolyDataModifiedEvent is generated when PloyData is changed
+  /// ImageDataModifiedEvent is generated when image data is changed
   enum
     {
-      ImageDataModifiedEvent = 18001
+    ImageDataModifiedEvent = 18001
     };
 
   ///

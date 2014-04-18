@@ -34,6 +34,8 @@ Version:   $Revision: 1.14 $
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkTrivialProducer.h>
 
+#include <cassert>
+
 //----------------------------------------------------------------------------
 #if (VTK_MAJOR_VERSION <= 5)
 vtkCxxSetObjectMacro(vtkMRMLVolumeNode, ImageData, vtkImageData);

@@ -70,9 +70,13 @@ bool testDTIPipeline()
   vtkNew<vtkTrivialProducer> tp;
   tp->SetOutput(imageData.GetPointer());
   // \fixme Set scalar type to Float should not be needed VTK#14692
+#if VTK_MAJOR_VERSION <= 5
+  imageData->SetScalarType(VTK_FLOAT);
+#else
   tp->UpdateInformation();
   vtkDataObject::SetPointDataActiveScalarInfo(
     tp->GetOutputInformation(0), VTK_FLOAT, 9);
+#endif
 
   vtkNew<vtkAssignAttribute> tensorsToScalars;
   tensorsToScalars->Assign(vtkDataSetAttributes::TENSORS,
@@ -105,7 +109,6 @@ bool testDTIPipeline()
   scalarsToTensors->SetInputConnection(reslicer->GetOutputPort());
 
   scalarsToTensors->Update();
-  scalarsToTensors->SetUpdateExtentToWholeExtent();
   return true;
 }
 
