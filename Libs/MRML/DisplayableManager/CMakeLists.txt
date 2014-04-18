@@ -166,19 +166,17 @@ else()
     vtkWidgets
     )
 endif()
-if(${VTK_VERSION_MAJOR} GREATER 5)
-  set(libs
-    ${VTK_LIBRARIES}
+
+set(libs
+  ${VTK_LIBRARIES}
+  MRMLCore
+  MRMLLogic
+  )
+
+if ((${VTK_VERSION_MAJOR} GREATER 5) AND NOT WIN32)
+  list(APPEND libs
     vtkRenderingFreeTypeFontConfig
-    MRMLCore
-    MRMLLogic
-   )
-else()
-  set(libs
-    ${VTK_LIBRARIES}
-    MRMLCore
-    MRMLLogic
-   )
+    )
 endif()
 
 if(MRMLDisplayableManager_USE_PYTHON)

@@ -119,24 +119,21 @@ else()
     # the variable to an empty string to avoid complaints from vtkMacroKitPythonWraps.cmake.
   )
 endif()
-if(${VTK_VERSION_MAJOR} GREATER 5)
-  set(libs
-    MRMLCore
-    vtkTeem
+
+set(libs
+  MRMLCore
+  vtkTeem
+  RemoteIO
+  ${VTK_LIBRARIES}
+  ${LibArchive_LIBRARY}
+  )
+
+if((${VTK_VERSION_MAJOR} GREATER 5) AND NOT WIN32)
+  list(APPEND libs
     vtkRenderingFreeTypeFontConfig
-    RemoteIO
-    ${VTK_LIBRARIES}
-    ${LibArchive_LIBRARY}
-    )
-else()
-  set(libs
-    MRMLCore
-    vtkTeem
-    RemoteIO
-    ${VTK_LIBRARIES}
-    ${LibArchive_LIBRARY}
     )
 endif()
+
 target_link_libraries(${lib_name} ${libs})
 
 # Apply user-defined properties to the library target.

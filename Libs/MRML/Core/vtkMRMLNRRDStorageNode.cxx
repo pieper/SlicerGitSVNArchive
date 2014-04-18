@@ -296,7 +296,11 @@ int vtkMRMLNRRDStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
   ici->SetOutputOrigin( 0, 0, 0 );
   ici->Update();
 
+#if (VTK_MAJOR_VERSION <= 5)
   volNode->SetAndObserveImageData (ici->GetOutput());
+#else
+  volNode->SetImageDataConnection(ici->GetOutputPort());
+#endif
   return 1;
 }
 
@@ -372,7 +376,7 @@ int vtkMRMLNRRDStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
 #if (VTK_MAJOR_VERSION <= 5)
   writer->SetInput(volNode->GetImageData() );
 #else
-  writer->SetInputData(volNode->GetImageData() );
+  writer->SetInputConnection(volNode->GetImageDataConnection());
 #endif
   writer->SetUseCompression(this->GetUseCompression());
 
