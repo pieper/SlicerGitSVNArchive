@@ -60,10 +60,11 @@ macro(vtkMacroKitPythonWrap)
     # Not all the vtk libraries have their python wrapping
     if(${VTK_VERSION_MAJOR} GREATER 5)
        set(VTK_NO_PYTHON_WRAP_LIBRARIES
-         vtksys
          vtkexpat
-         vtkjsoncpp
          vtkexoIIc
+         vtkjsoncpp
+         vtkpng
+         vtksys
          vtkNetCDF
          vtkNetCDF_cxx
          vtkhdf5_hl
