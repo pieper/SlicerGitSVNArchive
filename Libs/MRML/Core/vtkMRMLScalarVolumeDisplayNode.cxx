@@ -709,8 +709,21 @@ void vtkMRMLScalarVolumeDisplayNode::ResetWindowLevelPresets()
 //---------------------------------------------------------------------------
 vtkImageData* vtkMRMLScalarVolumeDisplayNode::GetScalarImageData()
 {
+#if VTK_MAJOR_VERSION <= 5
   return this->GetInputImageData();
 }
+#else
+  vtkAlgorithm* producer = this->GetScalarImageDataPort() ?
+    this->GetScalarImageDataPort()->GetProducer() : 0;
+  return vtkImageData::SafeDownCast(producer ? producer->GetOutputDataObject(0) : 0);
+}
+
+//---------------------------------------------------------------------------
+vtkAlgorithmOutput* vtkMRMLScalarVolumeDisplayNode::GetScalarImageDataPort()
+{
+  return this->GetInputImageDataPort();
+}
+#endif
 
 //---------------------------------------------------------------------------
 void vtkMRMLScalarVolumeDisplayNode::GetDisplayScalarRange(double range[2])
@@ -733,7 +746,7 @@ void vtkMRMLScalarVolumeDisplayNode::GetDisplayScalarRange(double range[2])
 #if (VTK_MAJOR_VERSION <= 5)
   imageData->Update();
 #else
-  this->GetInputImageDataPort()->GetProducer()->Update();
+  this->GetScalarImageDataPort()->GetProducer()->Update();
 #endif
   imageData->GetScalarRange(range);
   if (imageData->GetNumberOfScalarComponents() >=3 &&

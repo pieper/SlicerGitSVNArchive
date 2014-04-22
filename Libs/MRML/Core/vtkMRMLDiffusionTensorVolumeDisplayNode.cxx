@@ -397,24 +397,34 @@ vtkImageData* vtkMRMLDiffusionTensorVolumeDisplayNode::GetBackgroundImageData()
 }
 
 //---------------------------------------------------------------------------
+#if VTK_MAJOR_VERSION <= 5
 vtkImageData* vtkMRMLDiffusionTensorVolumeDisplayNode::GetScalarImageData()
 {
   return vtkImageData::SafeDownCast(this->DTIMathematics->GetOutput());
 }
+#else
+vtkAlgorithmOutput* vtkMRMLDiffusionTensorVolumeDisplayNode::GetScalarImageDataPort()
+{
+  return this->DTIMathematics->GetOutputPort();
+}
+#endif
 
 //---------------------------------------------------------------------------
 void vtkMRMLDiffusionTensorVolumeDisplayNode
 ::GetDisplayScalarRange(double range[2])
 {
   const int ScalarInvariant = this->GetScalarInvariant();
-  if (vtkMRMLDiffusionTensorDisplayPropertiesNode::ScalarInvariantHasKnownScalarRange(ScalarInvariant))
-  {
-    vtkMRMLDiffusionTensorDisplayPropertiesNode::ScalarInvariantKnownScalarRange(ScalarInvariant, range);
-  } else {
+  if (vtkMRMLDiffusionTensorDisplayPropertiesNode::
+      ScalarInvariantHasKnownScalarRange(ScalarInvariant))
+    {
+    vtkMRMLDiffusionTensorDisplayPropertiesNode
+      ::ScalarInvariantKnownScalarRange(ScalarInvariant, range);
+    }
+  else
+    {
     this->DTIMathematics->Update();
-    return this->GetScalarImageData()->GetScalarRange(range);
-  }
-
+    this->GetScalarImageData()->GetScalarRange(range);
+    }
 }
 
 //----------------------------------------------------------------------------

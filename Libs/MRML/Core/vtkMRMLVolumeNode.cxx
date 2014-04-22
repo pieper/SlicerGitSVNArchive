@@ -31,7 +31,6 @@ Version:   $Revision: 1.14 $
 #include <vtkMatrix4x4.h>
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
-#include <vtkTransformPolyDataFilter.h>
 #include <vtkTrivialProducer.h>
 
 #include <cassert>

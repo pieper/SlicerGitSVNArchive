@@ -198,7 +198,11 @@ protected:
   virtual void SetInputToImageDataPipeline(vtkAlgorithmOutput *imageDataPort);
 #endif
 
+#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetScalarImageData();
+#else
+  virtual vtkAlgorithmOutput* GetScalarImageDataPort();
+#endif
 
   static std::vector<int> GetSupportedColorModes();
 

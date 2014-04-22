@@ -101,17 +101,15 @@ public:
 
   ///
   /// Get the output of the pipeline for this layer
-#if (VTK_MAJOR_VERSION <= 5)
   vtkImageData *GetImageData();
-#else
+#if (VTK_MAJOR_VERSION > 5)
   vtkAlgorithmOutput *GetImageDataPort();
 #endif
 
   ///
   /// Get the output of the texture UVW pipeline for this layer
-#if (VTK_MAJOR_VERSION <= 5)
   vtkImageData *GetImageDataUVW();
-#else
+#if (VTK_MAJOR_VERSION > 5)
   vtkAlgorithmOutput *GetImageDataPortUVW();
 #endif
 

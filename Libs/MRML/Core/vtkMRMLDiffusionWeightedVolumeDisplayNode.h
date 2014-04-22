@@ -94,13 +94,15 @@ protected:
   virtual void SetInputToImageDataPipeline(vtkAlgorithmOutput *imageDataPort);
 #endif
 
+#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetScalarImageData();
+#else
+  virtual vtkAlgorithmOutput* GetScalarImageDataPort();
+#endif
 
+  /// This property holds the current diffusion component used for display.
   int DiffusionComponent;
-
   vtkImageExtractComponents *ExtractComponent;
-
-
 };
 
 #endif

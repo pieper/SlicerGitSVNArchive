@@ -106,11 +106,13 @@ vtkImageData* vtkMRMLVolumeDisplayNode::GetImageData()
 #else
 vtkAlgorithmOutput* vtkMRMLVolumeDisplayNode::GetImageDataPort()
 {
+/*
   if (!this->GetInputImageData())
     {
     return 0;
     }
   this->UpdateImageDataPipeline();
+*/
   return this->GetOutputImageDataPort();
 }
 #endif
@@ -188,12 +190,19 @@ vtkImageData* vtkMRMLVolumeDisplayNode::GetBackgroundImageData()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLVolumeDisplayNode::GetOutputImageData()
 {
+#if (VTK_MAJOR_VERSION <= 5)
   return NULL;
 }
 #else
+  vtkAlgorithmOutput* imageConnection = this->GetOutputImageDataPort();
+  vtkAlgorithm* producer = imageConnection ? imageConnection->GetProducer() : 0;
+  return vtkImageData::SafeDownCast(
+    producer ? producer->GetOutputDataObject(0) : 0);
+}
+
+//----------------------------------------------------------------------------
 vtkAlgorithmOutput* vtkMRMLVolumeDisplayNode::GetOutputImageDataPort()
 {
   return NULL;

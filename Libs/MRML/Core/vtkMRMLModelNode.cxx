@@ -577,6 +577,10 @@ bool vtkMRMLModelNode::CanApplyNonLinearTransforms()const
 //---------------------------------------------------------------------------
 void vtkMRMLModelNode::ApplyTransform(vtkAbstractTransform* transform)
 {
+  if (this->GetPolyData() == 0)
+    {
+    return;
+    }
   vtkTransformPolyDataFilter* transformFilter = vtkTransformPolyDataFilter::New();
 #if (VTK_MAJOR_VERSION <= 5)
   transformFilter->SetInput(this->GetPolyData());

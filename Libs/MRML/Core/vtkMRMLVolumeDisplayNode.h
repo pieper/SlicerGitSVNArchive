@@ -105,9 +105,8 @@ public:
   virtual vtkImageData* GetInputImageData();
 
   /// Gets the pipeline output. To be reimplemented in subclasses.
-#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetOutputImageData();
-#else
+#if (VTK_MAJOR_VERSION > 5)
   virtual vtkAlgorithmOutput* GetOutputImageDataPort();
 #endif
 

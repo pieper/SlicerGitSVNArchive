@@ -119,6 +119,9 @@ class HelperBox(object):
         return "Missing image data"
       if master.GetImageData().GetDimensions() != merge.GetImageData().GetDimensions():
         warnings += "Volume dimensions do not match\n"
+        warnings += str(master.GetImageData().GetDimensions())
+        warnings += " vs "
+        warnings += str(merge.GetImageData().GetDimensions())
       if master.GetImageData().GetSpacing() != merge.GetImageData().GetSpacing():
         warnings += "Volume spacings do not match\n"
       if master.GetImageData().GetOrigin() != merge.GetImageData().GetOrigin():

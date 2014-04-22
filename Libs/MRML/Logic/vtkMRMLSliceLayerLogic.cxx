@@ -582,44 +582,52 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
 }
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLSliceLayerLogic::GetImageData()
 {
   if ( this->GetVolumeNode() == NULL || this->GetVolumeDisplayNode() == NULL)
     {
     return NULL;
     }
+#if (VTK_MAJOR_VERSION <= 5)
   return this->GetVolumeDisplayNode()->GetImageData();
 }
 #else
+  return this->GetVolumeDisplayNode()->GetOutputImageData();
+}
+
+//----------------------------------------------------------------------------
 vtkAlgorithmOutput* vtkMRMLSliceLayerLogic::GetImageDataPort()
 {
   if ( this->GetVolumeNode() == NULL || this->GetVolumeDisplayNode() == NULL)
     {
     return NULL;
     }
-  return this->GetVolumeDisplayNode()->GetImageDataPort();
+  return this->GetVolumeDisplayNode()->GetOutputImageDataPort();
 }
 #endif
 
 //----------------------------------------------------------------------------
-#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLSliceLayerLogic::GetImageDataUVW()
 {
   if ( this->GetVolumeNode() == NULL || this->GetVolumeDisplayNodeUVW() == NULL)
     {
     return NULL;
     }
+#if (VTK_MAJOR_VERSION <= 5)
   return this->GetVolumeDisplayNodeUVW()->GetImageData();
 }
 #else
+  return this->GetVolumeDisplayNodeUVW()->GetOutputImageData();
+}
+
+//----------------------------------------------------------------------------
 vtkAlgorithmOutput* vtkMRMLSliceLayerLogic::GetImageDataPortUVW()
 {
   if ( this->GetVolumeNode() == NULL || this->GetVolumeDisplayNodeUVW() == NULL)
     {
     return NULL;
     }
-  return this->GetVolumeDisplayNodeUVW()->GetImageDataPort();
+  return this->GetVolumeDisplayNodeUVW()->GetOutputImageDataPort();
 }
 #endif
 

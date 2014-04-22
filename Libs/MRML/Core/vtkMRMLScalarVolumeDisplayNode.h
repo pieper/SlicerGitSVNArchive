@@ -209,7 +209,12 @@ protected:
 
   /// Return the image data with scalar type, it can be in the middle of the
   /// pipeline, it's typically the input of the threshold/windowlevel filters
+#if (VTK_MAJOR_VERSION <= 5)
   virtual vtkImageData* GetScalarImageData();
+#else
+  vtkImageData* GetScalarImageData();
+  virtual vtkAlgorithmOutput* GetScalarImageDataPort();
+#endif
 
 #if (VTK_MAJOR_VERSION <= 5)
   virtual void SetInputToImageDataPipeline(vtkImageData* input);

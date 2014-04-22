@@ -141,10 +141,17 @@ vtkAlgorithmOutput* vtkMRMLDiffusionWeightedVolumeDisplayNode::GetOutputImageDat
 #endif
 
 //---------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLDiffusionWeightedVolumeDisplayNode::GetScalarImageData()
 {
   return vtkImageData::SafeDownCast(this->ExtractComponent->GetOutput());
 }
+#else
+vtkAlgorithmOutput* vtkMRMLDiffusionWeightedVolumeDisplayNode::GetScalarImageDataPort()
+{
+  return this->ExtractComponent->GetOutputPort();
+}
+#endif
 
 //----------------------------------------------------------------------------
 void vtkMRMLDiffusionWeightedVolumeDisplayNode::UpdateImageDataPipeline()

@@ -98,10 +98,18 @@ void vtkMRMLVectorVolumeDisplayNode::SetBackgroundImageDataPort(vtkAlgorithmOutp
 #endif
 
 //----------------------------------------------------------------------------
+#if VTK_MAJOR_VERSION <= 5
 vtkImageData* vtkMRMLVectorVolumeDisplayNode::GetInputImageData()
 {
   return vtkImageData::SafeDownCast(this->ShiftScale->GetInput());
 }
+#else
+vtkAlgorithmOutput* vtkMRMLVectorVolumeDisplayNode::GetInputImageDataPort()
+{
+  return this->ShiftScale->GetNumberOfInputConnections(0) ?
+    this->ShiftScale->GetInputConnection(0,0) : 0;
+}
+#endif
 
 //----------------------------------------------------------------------------
 #if (VTK_MAJOR_VERSION <= 5)
@@ -117,10 +125,17 @@ vtkAlgorithmOutput* vtkMRMLVectorVolumeDisplayNode::GetOutputImageDataPort()
 #endif
 
 //---------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION <= 5)
 vtkImageData* vtkMRMLVectorVolumeDisplayNode::GetScalarImageData()
 {
   return vtkImageData::SafeDownCast(this->ShiftScale->GetInput());
 }
+#else
+vtkAlgorithmOutput* vtkMRMLVectorVolumeDisplayNode::GetScalarImageDataPort()
+{
+  return this->GetInputImageDataPort();
+}
+#endif
 
 //----------------------------------------------------------------------------
 void vtkMRMLVectorVolumeDisplayNode::UpdateImageDataPipeline()
