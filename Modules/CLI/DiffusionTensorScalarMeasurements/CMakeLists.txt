@@ -2,6 +2,9 @@
 #-----------------------------------------------------------------------------
 set(MODULE_NAME DiffusionTensorScalarMeasurements)
 
+# HACK until each project find_package's required projects.
+include_directories(BEFORE ${vtkTeem_INCLUDE_DIRS})
+
 #-----------------------------------------------------------------------------
 SEMMacroBuildCLI(
   NAME ${MODULE_NAME}
@@ -10,6 +13,7 @@ SEMMacroBuildCLI(
   INCLUDE_DIRECTORIES
     ${vtkTeem_INCLUDE_DIRS}
     ${MRMLCore_INCLUDE_DIRS}
+    ${VTK_INCLUDE_DIRS}
   EXECUTABLE_ONLY
   )
 

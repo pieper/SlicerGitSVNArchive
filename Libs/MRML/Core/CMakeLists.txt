@@ -67,7 +67,7 @@ set(include_dirs
 if(MRML_USE_vtkTeem)
   list(APPEND include_dirs ${vtkTeem_INCLUDE_DIRS})
 endif()
-include_directories(${include_dirs})
+include_directories(BEFORE ${include_dirs})
 
 # --------------------------------------------------------------------------
 # Configure headers
