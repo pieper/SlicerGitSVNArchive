@@ -90,10 +90,6 @@ macro(SlicerMacroPythonWrapModuleVTKLibrary)
       vtksys
       vtktiff
       )
-    if (NOT WIN32)
-      list(APPEND VTK_NO_PYTHON_WRAP_LIBRARIES
-        vtkRenderingFreeTypeFontConfig)
-    endif()
   else()
     set(VTK_NO_PYTHON_WRAP_LIBRARIES "")
   endif()

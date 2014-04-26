@@ -89,10 +89,6 @@ macro(vtkMacroKitPythonWrap)
          vtkGUISupportQtSQL
          vtkGUISupportQtOpenGL
          )
-	 if (NOT WIN32)
-	   list(APPEND VTK_NO_PYTHON_WRAP_LIBRARIES
-             vtkRenderingFreeTypeFontConfig)
-	 endif()
        else()
          set(VTK_NO_PYTHON_WRAP_LIBRARIES "")
        endif()

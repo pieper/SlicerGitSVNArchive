@@ -59,12 +59,8 @@ if((NOT DEFINED VTK_DIR OR NOT DEFINED VTK_SOURCE_DIR) AND NOT ${CMAKE_PROJECT_N
       -DVTK_USE_CARBON:BOOL=OFF
       -DVTK_USE_COCOA:BOOL=ON # Default to Cocoa, VTK/CMakeLists.txt will enable Carbon and disable cocoa if needed
       -DVTK_USE_X:BOOL=OFF
+      -DVTK_REQUIRED_OBJCXX_FLAGS:STRING=
       #-DVTK_USE_RPATH:BOOL=ON # Unused
-      )
-  endif()
-  if(NOT WIN32)
-    list(APPEND EXTERNAL_PROJECT_OPTIONAL_ARGS
-      -DModule_vtkRenderingFreeTypeFontConfig:BOOL=ON
       )
   endif()
 

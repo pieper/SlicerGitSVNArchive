@@ -128,11 +128,6 @@ set(libs
   ${LibArchive_LIBRARY}
   )
 
-if((${VTK_VERSION_MAJOR} GREATER 5) AND NOT WIN32)
-  list(APPEND libs
-    vtkRenderingFreeTypeFontConfig
-    )
-endif()
 
 target_link_libraries(${lib_name} ${libs})
 

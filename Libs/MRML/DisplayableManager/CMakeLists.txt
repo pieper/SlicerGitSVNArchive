@@ -173,11 +173,6 @@ set(libs
   MRMLLogic
   )
 
-if ((${VTK_VERSION_MAJOR} GREATER 5) AND NOT WIN32)
-  list(APPEND libs
-    vtkRenderingFreeTypeFontConfig
-    )
-endif()
 
 if(MRMLDisplayableManager_USE_PYTHON)
   if(${VTK_VERSION_MAJOR} GREATER 5)
