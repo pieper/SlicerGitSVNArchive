@@ -33,6 +33,8 @@ Version:   $Revision: 1.2 $
 // ITK includes
 #include <itkAffineTransform.h>
 #include <itkBSplineDeformableTransform.h>
+#include <itkCompositeTransform.h>
+#include <itkCompositeTransformIOHelper.h>
 #include <itkIdentityTransform.h>
 #include <itkTransformFileWriter.h>
 #include <itkTransformFileReader.h>
@@ -52,6 +54,8 @@ typedef TransformReaderType::TransformType TransformType;
 typedef itk::TransformFileWriter TransformWriterType;
 
 typedef itk::VectorImage< double, 3 > GridImageType;
+
+typedef itk::CompositeTransform< double > CompositeTransformType;
 
 //----------------------------------------------------------------------------
 vtkMRMLNodeNewMacro(vtkMRMLTransformStorageNode);
@@ -566,6 +570,10 @@ template <typename T> bool SetITKBSplineFromVTK(vtkObject* self,
 //----------------------------------------------------------------------------
 int vtkMRMLTransformStorageNode::ReadBSplineTransform(vtkMRMLNode *refNode)
 {
+  // Note: this method is hard coded to only be used with legacy ITKv3
+  // BSpline files.  It creates a vtkOrientedBSpline with unfortunate
+  // mathematical properties as described in the vtkOrientedBSpline
+  // class description.
   TransformReaderType::Pointer reader = itk::TransformFileReader::New();
   std::string fullName =  this->GetFullNameFromFileName();
   reader->SetFileName( fullName );
@@ -869,6 +877,96 @@ int vtkMRMLTransformStorageNode::ReadGridTransform(vtkMRMLNode *refNode)
 }
 
 //----------------------------------------------------------------------------
+int vtkMRMLTransformStorageNode::ReadCompositeTransform(vtkMRMLNode *refNode)
+{
+  // Note: this method reads composite transforms (as of Slicer 4.4, these will
+  // come from .h5 files).  While the format of h5 files can be very general,
+  // here we only deal with certain combinations that are used by existing
+  // CLI code (BRAINSFit, for example)
+  TransformReaderType::Pointer reader = TransformReaderType::New();
+  std::string fullName =  this->GetFullNameFromFileName();
+  reader->SetFileName( fullName );
+  try
+    {
+    reader->Update();
+    }
+  catch (itk::ExceptionObject &exc)
+    {
+    vtkErrorMacro("ITK exception caught reading transform file: "<< fullName.c_str() << "\n" << exc);
+    return 0;
+    }
+  catch (...)
+    {
+    vtkErrorMacro("Unknown exception caught while reading transform file: "<< fullName.c_str());
+    return 0;
+    }
+
+  // Based on personal communication with the ITK developer group (Brad and Hans) the
+  // transform list will contain only one transform, which is a composite transform.
+  TransformListType *transforms = reader->GetTransformList();
+  TransformListType::iterator transformsIT = (*transforms).begin();
+  TransformType *compositeTransform = (*transformsIT);
+
+  // the composite transform is itself a list of transforms.  There is a
+  // helper class in ITK to convert the internal transform list into a
+  // list that is possible to iterate over.  So we get this transformList.
+  typedef const itk::CompositeTransformIOHelper::TransformType ComponentTransformType;
+  itk::CompositeTransformIOHelper compositeTransformIOHelper;
+
+  typedef itk::CompositeTransformIOHelper::ConstTransformListType ConstTransformListType;
+  ConstTransformListType transformList =
+    compositeTransformIOHelper.GetTransformList(compositeTransform);
+
+  ConstTransformListType::iterator compositeIT = transformList.begin();
+  ++compositeIT; // skip first element of list, which is duplicate of individual
+                 // transforms that are included in the list
+
+
+  // Now we have the iterator (compositeIT) pointing to the first real transform
+  // in the list.  While in the general case this could itself be a composite transform
+  // and create a hierarchy, for now the only existing use case that we will support
+  // is a pair of transforms that a linear and a bspline, that are just like the
+  // ones that had been stored in the tfm bspline files from ITKv3.
+
+  TransformType::Pointer componentTransform0, componentTransform1;
+  componentTransform0 = const_cast<TransformType *>((*compositeIT).GetPointer());
+  ++compositeIT;
+  componentTransform1 = const_cast<TransformType *>((*compositeIT).GetPointer());
+
+  if( !componentTransform0 || !componentTransform1 )
+    {
+    vtkErrorMacro("Could not find valid transforms in composite file: "<< fullName.c_str());
+    return 0;
+    }
+
+  vtkMRMLBSplineTransformNode *btn = vtkMRMLBSplineTransformNode::SafeDownCast(refNode);
+
+  vtkNew<vtkOrientedBSplineTransform> bsplineVtk;
+  if (SetVTKBSplineFromITK<double>(this, bsplineVtk.GetPointer(), componentTransform1, componentTransform0)
+    || SetVTKBSplineFromITK<float>(this, bsplineVtk.GetPointer(), componentTransform1, componentTransform0) )
+    {
+    if (btn->GetReadWriteAsTransformToParent())
+      {
+      // Convert the sense of the transform (from an ITK resampling
+      // transform to a Slicer modeling transform)
+      btn->SetAndObserveTransformToParent( bsplineVtk.GetPointer() );
+      }
+    else
+      {
+      btn->SetAndObserveTransformFromParent( bsplineVtk.GetPointer() );
+      }
+    return 1;
+    }
+  else
+    {
+    // Log only at debug level because trial-and-error method is used for finding out
+    // what node can be retrieved from a transform file
+    vtkDebugMacro("Failed to retrieve BSpline transform from file: "<< fullName.c_str());
+    return 0;
+    }
+}
+
+//----------------------------------------------------------------------------
 int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
 {
   std::string fullName =  this->GetFullNameFromFileName();
@@ -884,7 +982,11 @@ int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
     }
   else if (refNode->IsA("vtkMRMLBSplineTransformNode"))
     {
-    return ReadBSplineTransform(refNode);
+    int returnCode = ReadBSplineTransform(refNode);
+    if (returnCode == 0)
+      {
+      return ReadCompositeTransform(refNode);
+      }
     }
   else if (refNode->IsA("vtkMRMLLinearTransformNode"))
     {
@@ -1001,7 +1103,7 @@ int vtkMRMLTransformStorageNode::WriteBSplineTransform(vtkMRMLBSplineTransformNo
 #else
   vtkImageData* bsplineCoefficients=bsplineVtk->GetCoefficientData();
 #endif
-  
+
   if (bsplineCoefficients==NULL)
     {
     vtkErrorMacro("Cannot write an inverse BSpline transform to file: coefficients are not specified");
@@ -1159,7 +1261,7 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
 //----------------------------------------------------------------------------
 void vtkMRMLTransformStorageNode::InitializeSupportedWriteFileTypes()
 {
-  this->SupportedWriteFileTypes->InsertNextValue("Transform (.tfm)");
+  this->SupportedWriteFileTypes->InsertNextValue("Transform (.h5)");
   this->SupportedWriteFileTypes->InsertNextValue("Transform (.mat)");
   this->SupportedWriteFileTypes->InsertNextValue("Text (.txt)");
   this->SupportedWriteFileTypes->InsertNextValue("Transform (.*)");
@@ -1173,5 +1275,5 @@ void vtkMRMLTransformStorageNode::InitializeSupportedWriteFileTypes()
 //----------------------------------------------------------------------------
 const char* vtkMRMLTransformStorageNode::GetDefaultWriteFileExtension()
 {
-  return "tfm";
+  return "h5";
 }
