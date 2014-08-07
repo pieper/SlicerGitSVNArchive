@@ -301,7 +301,7 @@ template <typename T> bool SetVTKBSplineFromITKv3(vtkObject* self,
 
   typedef itk::BSplineDeformableTransform< T,VTKDimension,BSPLINE_TRANSFORM_ORDER > BSplineTransformType;
   typename BSplineTransformType::Pointer bsplineItk = dynamic_cast< BSplineTransformType* >( warpTransformItk.GetPointer() );
-  if (!bsplineItk)
+  if (!bsplineItk.GetPointer())
     {
     return false;
     }
@@ -466,30 +466,36 @@ template <typename T> bool SetVTKBSplineFromITKv4(vtkObject* self,
   typedef itk::BSplineTransform< T,VTKDimension,BSPLINE_TRANSFORM_ORDER > BSplineTransformType;
   typename BSplineTransformType::Pointer bsplineItk =
     dynamic_cast< BSplineTransformType* >( warpTransformItk.GetPointer() );
-  if (!bsplineItk)
+  if (!bsplineItk.GetPointer())
     {
     return false;
     }
 
-
   // now get the fixed parameters and map them to the vtk analogs
+
+  // it turns out that for a BSplineTransform, the TransformDomain information
+  // is not populated when reading from a file, so instead we access these
+  // fields from one of the coefficient images (they are assumed to be
+  // identical)
+  const typename BSplineTransformType::CoefficientImageArray coefficientImages =
+    bsplineItk->GetCoefficientImages();
 
   // * mesh size X, Y, Z (including the BSPLINE_TRANSFORM_ORDER=3 boundary nodes,
   //   1 before and 2 after the grid)
   typename BSplineTransformType::MeshSizeType meshSize =
-    bsplineItk->GetTransformDomainMeshSize();
+    coefficientImages[0]->GetLargestPossibleRegion().GetSize();
 
   // * mesh origin X, Y, Z (position of the boundary node before the grid)
   typename BSplineTransformType::OriginType origin =
-    bsplineItk->GetTransformDomainOrigin();
+    coefficientImages[0]->GetOrigin();
 
   // * mesh spacing X, Y, Z
   typename BSplineTransformType::SpacingType spacing =
-    bsplineItk->GetTransformDomainPhysicalDimensions();
+    coefficientImages[0]->GetSpacing();
 
   // * mesh direction 3x3 matrix (first row, second row, third row)
   typename BSplineTransformType::DirectionType direction =
-    bsplineItk->GetTransformDomainDirection();
+    coefficientImages[0]->GetDirection();
 
   vtkNew<vtkMatrix4x4> gridDirectionMatrix_LPS;
   int fpIndex=9;
@@ -545,7 +551,9 @@ template <typename T> bool SetVTKBSplineFromITKv4(vtkObject* self,
 
   const unsigned int expectedNumberOfVectors = meshSize[0]*meshSize[1]*meshSize[2];
   const unsigned int expectedNumberOfParameters = expectedNumberOfVectors*VTKDimension;
-  if( bsplineItk->GetNumberOfParameters() != expectedNumberOfParameters )
+  const unsigned int actualNumberOfParameters = bsplineItk->GetNumberOfParameters();
+
+  if( actualNumberOfParameters != expectedNumberOfParameters )
     {
     vtkErrorWithObjectMacro(self,"Mismatch in number of BSpline parameters in the transform file and the MRML node");
     return false;
