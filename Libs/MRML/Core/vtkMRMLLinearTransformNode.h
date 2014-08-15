@@ -20,13 +20,14 @@
 #include "vtkMRMLTransformNode.h"
 
 class vtkMRMLStorageNode;
+class vtkTransform;
+class InternalTransformToParentMatrix;
 
-/// \brief MRML node for representing a linear transformation to the parent
-/// node.
+/// \brief MRML node for representing a linear transformation.
 ///
-/// MRML node for representing
-/// a linear transformation to the parent node in the form vtkMatrix4x4
-/// MatrixTransformToParent.
+/// Internally, always the TransformToParent matrix is stored and TransformFromParent is computed by inverting
+/// the matrix. It makes the code simpler and faster to hardcode this. ToParent is stored because this is what
+/// we usually display to the user (it is more intuitive than the FromParent resampling transform).
 class VTK_MRML_EXPORT vtkMRMLLinearTransformNode : public vtkMRMLTransformNode
 {
   public:
