@@ -320,7 +320,7 @@ template <typename BSplineTransformType> bool vtkITKTransformConverter::SetVTKBS
   //
   // this version uses the itk::BSplineTransform not the itk::BSplineDeformableTransform
   //
-  typename typedef BSplineTransformType::ScalarType T;
+  typedef typename BSplineTransformType::ScalarType T;
   if (bsplineVtk==NULL)
     {
     vtkErrorWithObjectMacro(loggerObject, "vtkMRMLTransformStorageNode::SetVTKBSplineFromITKv4 failed: bsplineVtk is invalid");
@@ -586,7 +586,7 @@ bool vtkITKTransformConverter::SetVTKBSplineFromITKv3(vtkObject* loggerObject, v
 template <typename BSplineTransformType> bool vtkITKTransformConverter::SetITKBSplineParametersFromVTKGeneric(vtkObject* loggerObject,
   typename itk::Transform< typename BSplineTransformType::ScalarType,VTKDimension,VTKDimension>::Pointer& warpTransformItk, vtkOrientedBSplineTransform* bsplineVtk)
 {
-  typename typedef BSplineTransformType::ScalarType T;
+  typedef typename BSplineTransformType::ScalarType T;
   if (bsplineVtk==NULL)
     {
     vtkErrorWithObjectMacro(loggerObject, "vtkMRMLTransformStorageNode::SetITKBSplineFromVTK failed: bsplineVtk is invalid");
@@ -1126,7 +1126,7 @@ vtkAbstractTransform* vtkITKTransformConverter::CreateVTKTransformFromITK(vtkObj
     return bsplineTransformVtk.GetPointer();
     }
 
-  return false;
+  return 0;
 }
 
 //----------------------------------------------------------------------------
