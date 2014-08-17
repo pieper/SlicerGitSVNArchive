@@ -248,7 +248,9 @@ set(BRAINSTools_options
   )
 Slicer_Remote_Add(BRAINSTools
   GIT_REPOSITORY "${git_protocol}://github.com/Slicer/BRAINSTools.git"
-  GIT_TAG "e46c99795cedd4c6aeec98e881af9c2b28dc5cf5" # Version e5c9c8c including fixes for EMSegment backported from BRAINS master
+  # GIT_TAG "e46c99795cedd4c6aeec98e881af9c2b28dc5cf5" # Version e5c9c8c including fixes for EMSegment backported from BRAINS master
+  GIT_REPOSITORY "${git_protocol}://github.com/BRAINSia/BRAINSTools.git"
+  GIT_TAG "master"
   OPTION_NAME Slicer_BUILD_BRAINSTOOLS
   OPTION_DEPENDS "Slicer_BUILD_CLI_SUPPORT;Slicer_BUILD_CLI"
   LABELS REMOTE_MODULE
