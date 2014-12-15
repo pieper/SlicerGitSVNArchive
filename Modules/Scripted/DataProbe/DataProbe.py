@@ -68,6 +68,7 @@ See <a>http://www.slicer.org</a> for details.  Module implemented by Steve Piepe
 class DataProbeInfoWidget(object):
 
   def __init__(self, parent=None,type='small'):
+    self.parent = parent
     self.type = type
     self.nameSize = 24
     # the currentLayoutName is tag on the slice node that corresponds
@@ -184,7 +185,7 @@ class DataProbeInfoWidget(object):
     return pixel[:-2]
 
 
-  def processEvent(self,observee,event):
+  def processEvent(self,observee=None,event=None):
     # TODO: use a timer to delay calculation and compress events
     insideView = False
     ras = [0.0,0.0,0.0]
@@ -213,7 +214,14 @@ class DataProbeInfoWidget(object):
         self.layerNames[layer].setText( "" )
         self.layerIJKs[layer].setText( "" )
         self.layerValues[layer].setText( "" )
+      # show logo and not text
+      self.slicerLogo.show()
+      self.parent.hide()
       return
+
+    # we have things to display, so hide logo
+    self.slicerLogo.hide()
+    self.parent.show()
 
     self.currentLayoutName = sliceNode.GetLayoutName()
 
@@ -333,6 +341,14 @@ class DataProbeInfoWidget(object):
       self.layerGrid.layout().setColumnStretch(col,100)
       col += 1
       row += 1
+
+    # add a slicer logo to display when nothing else if visible
+    self.slicerLogo = qt.QLabel(self.frame.parent())
+    self.slicerLogo.setPixmap(qt.QPixmap(":/Logos/Slicer3.png"))
+    self.parent.parent().layout().addWidget(self.slicerLogo)
+
+    # initially show logo and not data probe - this is changed on mouse move
+    qt.QTimer.singleShot(0, self.processEvent);
 
     # goto module button
     self.goToModule = qt.QPushButton('->', self.frame)
