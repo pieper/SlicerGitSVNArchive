@@ -6,6 +6,7 @@ set(MODULE_NAME DICOMPlugins)
 set(MODULE_PYTHON_SCRIPTS
   DICOMScalarVolumePlugin.py
   DICOMSlicerDataBundlePlugin.py
+  DICOMUltrasoundPlugin.py
   )
 
 if(Slicer_BUILD_DIFFUSION_SUPPORT)
