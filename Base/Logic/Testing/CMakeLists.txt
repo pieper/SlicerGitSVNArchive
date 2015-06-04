@@ -21,3 +21,9 @@ simple_test( vtkArchiveTest1 ${CMAKE_CURRENT_SOURCE_DIR}/vol.zip)
 simple_test( vtkDataIOManagerLogicTest1 )
 simple_test( vtkSlicerApplicationLogicTest1 )
 simple_test( vtkSlicerTransformLogicTest1 ${CMAKE_CURRENT_SOURCE_DIR}/affineTransform.txt)
+
+
+slicer_add_python_test(
+  SCRIPT ScriptedActorTest.py
+  SLICER_ARGS --disable-cli-modules --disable-loadable-modules --disable-scripted-loadable-modules
+  )

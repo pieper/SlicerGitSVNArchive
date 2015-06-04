@@ -128,6 +128,8 @@ set(SlicerBaseLogic_SRCS
 if(Slicer_USE_PYTHONQT)
   list(APPEND SlicerBaseLogic_SRCS
     vtkSlicerScriptedLoadableModuleLogic.cxx
+    vtkOpenGLScriptedActor.cxx
+    vtkOpenGLScriptedActor.h
     )
 endif()
 
