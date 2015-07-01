@@ -205,29 +205,92 @@ def patchPhilipsDICOM(dirPath):
 
   [1] https://github.com/commontk/CTK/blob/16aa09540dcb59c6eafde4d9a88dfee1f0948edc/Libs/DICOM/Core/ctkDICOMDatabase.cpp#L1283-L1287
   """
-  randomStudyUID = dicom.UID.generate_uid(None)
-  randomPatientID = dicom.UID.generate_uid(None)
-  requiredTags = ['PatientName', 'PatientID', 'StudyInstanceUID', 'SeriesInstanceUID']
+
+  tagsToSave = [
+    'ImageType',
+    'SOPClassUID',
+    'SOPInstanceUID',
+    'StudyDate',
+    'ContentDate',
+    'StudyTime',
+    'ContentTime',
+    'AccessionNumber',
+    'Modality',
+    'Manufacturer',
+    'ReferringPhysiciansName',
+    'PatientsName',
+    'PatientID',
+    'PatientsBirthDate',
+    'PatientsSex',
+    'FrameTime',
+    'PhysicalUnitsXDirection',
+    'PhysicalUnitsYDirection',
+    'PhysicalDeltaX',
+    'PhysicalDeltaY',
+    'StudyInstanceUID',
+    'SeriesInstanceUID',
+    'StudyID',
+    'SeriesNumber',
+    'InstanceNumber',
+    'ImageComments',
+    'SamplesperPixel',
+    'PhotometricInterpretation',
+    'NumberofFrames',
+    'Rows',
+    'Columns',
+    'BitsAllocated',
+    'BitsStored',
+    'HighBit',
+    'PixelRepresentation',
+    'PixelData']
+  studyUIDToRandomUIDMap = {}
+  seriesUIDToRandomUIDMap = {}
+  patientIDToRandomIDMap = {}
   for root, subFolders, files in os.walk(dirPath):
     for file in files:
       filePath = os.path.join(root,file)
       print('Examining %s...' % file)
+
       try:
         ds = dicom.read_file(filePath)
-        for tag in requiredTags:
-          if not hasattr(ds,tag):
-            setattr(ds,tag,'')
-        if ds.PatientName == '':
-          ds.PatientName = "Unspecified Patient"
-        if ds.PatientID == '':
-          ds.PatientID = randomPatientID
-        if ds.StudyInstanceUID == '':
-          ds.StudyInstanceUID = randomStudyUID
-        if ds.SeriesInstanceUID == '':
-          ds.SeriesInstanceUID = dicom.UID.generate_uid(None)
-        patchedFilePath = filePath + "-patched"
-        dicom.write_file(patchedFilePath, ds)
-        print('Writing patched %s...' % file)
       except IOError:
         print('Skipping non-dicom file')
+        continue
+
+      # first, remove any keys that are not known to be safe
+      for key in ds.keys():
+        tagName = dicom.datadict.get_entry(key)[3]
+        if not tagName in tagsToSave:
+          ds.__delattr__(tagName)
+
+      # next get the random ids - re-use if we have
+      # seen them before
+      if ds.StudyInstanceUID not in studyUIDToRandomUIDMap:
+        studyUIDToRandomUIDMap[ds.StudyInstanceUID] = dicom.UID.generate_uid(None)
+      ds.StudyInstanceUID = studyUIDToRandomUIDMap[ds.StudyInstanceUID]
+      if ds.SeriesInstanceUID not in studyUIDToRandomUIDMap:
+        seriesUIDToRandomUIDMap[ds.SeriesInstanceUID] = dicom.UID.generate_uid(None)
+      ds.SeriesInstanceUID = seriesUIDToRandomUIDMap[ds.SeriesInstanceUID]
+      if ds.PatientID not in patientUIDToRandomUIDMap:
+        patientUIDToRandomUIDMap[ds.PatientID] = dicom.UID.generate_uid(None)
+      ds.PatientID = patientUIDToRandomUIDMap[ds.PatientID]
+
+
+      # now explicitly set the values that we want to override
+      ds.SOPInstanceUID = dicom.UID.generate_uid(None)
+      if ds.PatientName == '':
+        ds.PatientName = "Unspecified Patient"
+      ds.StudyDate = "19000101"
+      ds.ContentDate = "19000101"
+      ds.StudyTime = "000000"
+      ds.ContentTime = "000000"
+      ds.AccessionNumber = "unknown"
+      ds.ReferringPhysiciansName = "unknown"
+      ds.PatientsBirthDate = "19000101"
+      ds.PatientsSex = "O"
+      ds.StudyID = "unknown"
+
+      patchedFilePath = filePath + "-patched"
+      dicom.write_file(patchedFilePath, ds)
+      print('Writing patched %s...' % file)
 
