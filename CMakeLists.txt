@@ -240,6 +240,14 @@ option(Slicer_USE_FOLDERS "Organize build targets into folders" ON)
 mark_as_superbuild(Slicer_USE_FOLDERS)
 mark_as_advanced(Slicer_USE_FOLDERS)
 
+
+#-----------------------------------------------------------------------------
+# Build python or use miniconda ?
+#-----------------------------------------------------------------------------
+set(Slicer_PYTHON_DISTRIBUTION_NAME "python" CACHE STRING "Choose the python distribution.")
+set_property(CACHE Slicer_PYTHON_DISTRIBUTION_NAME PROPERTY STRINGS "python" "miniconda")
+mark_as_superbuild(Slicer_PYTHON_DISTRIBUTION_NAME)
+
 #-----------------------------------------------------------------------------
 # External projects related options
 #-----------------------------------------------------------------------------
@@ -252,6 +260,12 @@ CMAKE_DEPENDENT_OPTION(
   Slicer_USE_PYTHONQT_WITH_TCL "Enable PythonQt Tcl adapter layer" ON
   "Slicer_USE_PYTHONQT" OFF)
 mark_as_superbuild(Slicer_USE_PYTHONQT_WITH_TCL)
+
+# XXX For now, disable TCL if miniconda is used
+if(${Slicer_PYTHON_DISTRIBUTION_NAME} STREQUAL "miniconda")
+  message(STATUS "Forcing option Slicer_USE_PYTHONQT_WITH_TCL to OFF when using 'miniconda'")
+  set(Slicer_USE_PYTHONQT_WITH_TCL OFF CACHE BOOL "Forced to OFF when using 'miniconda'" FORCE)
+endif()
 
 CMAKE_DEPENDENT_OPTION(
   Slicer_USE_NUMPY "Build Slicer with NumPy" ON

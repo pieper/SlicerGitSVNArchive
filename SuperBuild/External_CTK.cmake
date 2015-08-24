@@ -4,7 +4,7 @@ set(proj CTK)
 # Set dependency list
 set(${proj}_DEPENDENCIES ${VTK_EXTERNAL_NAME} ${ITK_EXTERNAL_NAME})
 if(Slicer_USE_PYTHONQT)
-  list(APPEND ${proj}_DEPENDENCIES python)
+  list(APPEND ${proj}_DEPENDENCIES ${Slicer_PYTHON_DISTRIBUTION_NAME})
 endif()
 if(Slicer_BUILD_DICOM_SUPPORT)
   list(APPEND ${proj}_DEPENDENCIES DCMTK)

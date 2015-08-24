@@ -2,7 +2,10 @@
 set(proj SimpleITK)
 
 # Set dependency list
-set(${proj}_DEPENDENCIES ITKv4 Swig python python-setuptools)
+set(${proj}_DEPENDENCIES ITKv4 Swig ${Slicer_PYTHON_DISTRIBUTION_NAME})
+if(${Slicer_PYTHON_DISTRIBUTION_NAME} STREQUAL "python")
+  list(APPEND ${proj}_DEPENDENCIES python-setuptools)
+endif()
 
 # Include dependent projects if any
 ExternalProject_Include_Dependencies(${proj} PROJECT_VAR proj DEPENDS_VAR ${proj}_DEPENDENCIES)

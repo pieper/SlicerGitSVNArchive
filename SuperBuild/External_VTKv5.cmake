@@ -4,7 +4,7 @@ set(proj VTKv5)
 # Set dependency list
 set(${proj}_DEPENDENCIES "zlib")
 if (Slicer_USE_PYTHONQT)
-  list(APPEND ${proj}_DEPENDENCIES python)
+  list(APPEND ${proj}_DEPENDENCIES ${Slicer_PYTHON_DISTRIBUTION_NAME})
 endif()
 
 # Include dependent projects if any

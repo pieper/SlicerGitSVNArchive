@@ -111,11 +111,13 @@ if(Slicer_BUILD_DICOM_SUPPORT)
   list(APPEND Slicer_DEPENDENCIES DCMTK)
 endif()
 
-if(Slicer_BUILD_DICOM_SUPPORT AND Slicer_USE_PYTHONQT_WITH_OPENSSL)
+if(Slicer_BUILD_DICOM_SUPPORT AND Slicer_USE_PYTHONQT_WITH_OPENSSL
+  AND ${Slicer_PYTHON_DISTRIBUTION_NAME} STREQUAL "python")
   list(APPEND Slicer_DEPENDENCIES python-pydicom)
 endif()
 
-if(Slicer_USE_PYTHONQT AND Slicer_BUILD_EXTENSIONMANAGER_SUPPORT)
+if(Slicer_USE_PYTHONQT AND Slicer_BUILD_EXTENSIONMANAGER_SUPPORT
+  AND ${Slicer_PYTHON_DISTRIBUTION_NAME} STREQUAL "python")
   list(APPEND Slicer_DEPENDENCIES python-GitPython python-chardet)
   if(Slicer_USE_PYTHONQT_WITH_OPENSSL OR Slicer_USE_SYSTEM_python)
     # python-PyGithub requires SSL support in Python
@@ -135,10 +137,10 @@ endif()
 
 if(Slicer_USE_PYTHONQT)
   set(PYTHON_ENABLE_SSL ${Slicer_USE_PYTHONQT_WITH_OPENSSL})
-  list(APPEND Slicer_DEPENDENCIES python)
+  list(APPEND Slicer_DEPENDENCIES ${Slicer_PYTHON_DISTRIBUTION_NAME})
 endif()
 
-if(Slicer_USE_NUMPY)
+if(Slicer_USE_NUMPY AND ${Slicer_PYTHON_DISTRIBUTION_NAME} STREQUAL "python")
   list(APPEND Slicer_DEPENDENCIES NUMPY)
 endif()
 

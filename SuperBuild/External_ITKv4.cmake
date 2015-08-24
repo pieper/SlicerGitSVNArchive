@@ -7,7 +7,7 @@ if(Slicer_BUILD_DICOM_SUPPORT)
   list(APPEND ${proj}_DEPENDENCIES DCMTK)
 endif()
 if(Slicer_USE_ITKPython)
-  list(APPEND ${proj}_DEPENDENCIES Swig python)
+  list(APPEND ${proj}_DEPENDENCIES Swig ${Slicer_PYTHON_DISTRIBUTION_NAME})
 endif()
 
 # Include dependent projects if any
