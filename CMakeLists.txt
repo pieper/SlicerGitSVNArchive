@@ -247,6 +247,7 @@ mark_as_advanced(Slicer_USE_FOLDERS)
 set(Slicer_PYTHON_DISTRIBUTION_NAME "python" CACHE STRING "Choose the python distribution.")
 set_property(CACHE Slicer_PYTHON_DISTRIBUTION_NAME PROPERTY STRINGS "python" "miniconda")
 mark_as_superbuild(Slicer_PYTHON_DISTRIBUTION_NAME)
+message(STATUS "Configuring ${PROJECT_NAME} using '${Slicer_PYTHON_DISTRIBUTION_NAME}' distribution")
 
 #-----------------------------------------------------------------------------
 # External projects related options
