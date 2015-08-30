@@ -1,0 +1,11 @@
+'/c/Program Files (x86)/CMake-331/bin/cmake.exe' \
+  -DCMAKE_CONFIGURATION_TYPES:STRING=Release \
+  -DCMAKE_CFG_INTDIR:STRING=Release \
+  -DCMAKE_BUILD_TYPE:STRING=Release \
+  -DSlicer_USE_SimpleITK:BOOL=OFF \
+  -DSlicer_BUILD_CLI_SUPPORT:BOOL=OFF \
+  -DSlicer_BUILD_CLI:BOOL=OFF \
+  -DSlicer_USE_PYTHONQT_WITH_OPENSSL:BOOL=OFF \
+  -DSlicer_PYTHON_DISTRIBUTION_NAME:STRING=miniconda \
+  -DQT_QMAKE_EXECUTABLE:FILEPATH=/d/Downloads/qt/latest/qt4.8.2-release/bin/qmake.exe \
+  ../Slicer
