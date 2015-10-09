@@ -50,27 +50,87 @@ class EditColor(VTKObservationMixin):
   def create(self):
     self.frame = qt.QFrame(self.parent)
     self.frame.objectName = 'EditColorFrame'
-    self.frame.setLayout(qt.QHBoxLayout())
+    self.frame.setLayout(qt.QVBoxLayout())
     self.parent.layout().addWidget(self.frame)
 
-    self.label = qt.QLabel(self.frame)
+    self.colorFrame = qt.QFrame(self.frame)
+    self.colorFrame.setLayout(qt.QHBoxLayout())
+    self.frame.layout().addWidget(self.colorFrame)
+
+    self.label = qt.QLabel(self.colorFrame)
     self.label.setText("Label: ")
-    self.frame.layout().addWidget(self.label)
+    self.colorFrame.layout().addWidget(self.label)
 
-    self.labelName = qt.QLabel(self.frame)
+    self.labelName = qt.QLabel(self.colorFrame)
     self.labelName.setText("")
-    self.frame.layout().addWidget(self.labelName)
+    self.colorFrame.layout().addWidget(self.labelName)
 
-    self.colorSpin = qt.QSpinBox(self.frame)
+    self.colorSpin = qt.QSpinBox(self.colorFrame)
     self.colorSpin.objectName = 'ColorSpinBox'
     self.colorSpin.setMaximum( 64000)
     self.colorSpin.setValue( EditUtil.getLabel() )
     self.colorSpin.setToolTip( "Click colored patch at right to bring up color selection pop up window.  Use the 'c' key to bring up color popup menu." )
-    self.frame.layout().addWidget(self.colorSpin)
+    self.colorFrame.layout().addWidget(self.colorSpin)
 
-    self.colorPatch = qt.QPushButton(self.frame)
+    self.colorPatch = qt.QPushButton(self.colorFrame)
     self.colorPatch.setObjectName('ColorPatchButton')
-    self.frame.layout().addWidget(self.colorPatch)
+    self.colorFrame.layout().addWidget(self.colorPatch)
+
+    # hidden until needed terminology frames:
+    # Category
+    self.terminologyCategoryFrame = qt.QFrame(self.frame)
+    self.terminologyCategoryFrame.setLayout(qt.QHBoxLayout())
+    self.frame.layout().addWidget(self.terminologyCategoryFrame)
+
+    self.terminologyCategoryLabel = qt.QLabel(self.terminologyCategoryFrame)
+    self.terminologyCategoryLabel.setText("Category: ")
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryLabel)
+
+    self.terminologyCategoryLineEdit = qt.QLineEdit(self.terminologyCategoryFrame)
+    self.terminologyCategoryLineEdit.setText("")
+    # for now, read only
+    self.terminologyCategoryLineEdit.setReadOnly(1);
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryLineEdit )
+
+    # Category modifier:
+    self.terminologyCategoryModifierLabel = qt.QLabel(self.terminologyCategoryFrame)
+    self.terminologyCategoryModifierLabel.setText("Modifier: ")
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryModifierLabel)
+
+    self.terminologyCategoryModifierLineEdit = qt.QLineEdit(self.terminologyCategoryFrame)
+    self.terminologyCategoryModifierLineEdit.setText("")
+    # for now, read only
+    self.terminologyCategoryModifierLineEdit.setReadOnly(1);
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryModifierLineEdit )
+
+    # Region
+    self.terminologyRegionFrame = qt.QFrame(self.frame)
+    self.terminologyRegionFrame.setLayout(qt.QHBoxLayout())
+    self.frame.layout().addWidget(self.terminologyRegionFrame)
+
+    self.terminologyRegionLabel = qt.QLabel(self.terminologyRegionFrame)
+    self.terminologyRegionLabel.setText("Region: ")
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionLabel)
+
+    self.terminologyRegionLineEdit = qt.QLineEdit(self.terminologyRegionFrame)
+    self.terminologyRegionLineEdit.setText("")
+    # for now, read only
+    self.terminologyRegionLineEdit.setReadOnly(1);
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionLineEdit )
+
+    # Region modifier:
+    self.terminologyRegionModifierLabel = qt.QLabel(self.terminologyRegionFrame)
+    self.terminologyRegionModifierLabel.setText("Modifier: ")
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionModifierLabel)
+
+    self.terminologyRegionModifierLineEdit = qt.QLineEdit(self.terminologyRegionFrame)
+    self.terminologyRegionModifierLineEdit.setText("")
+    # for now, read only
+    self.terminologyRegionModifierLineEdit.setReadOnly(1);
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionModifierLineEdit )
+
+    # hide the terminology until a LUT with associated terminology is chosen
+    self.hideTerminology(1)
 
     self.updateParameterNode(slicer.mrmlScene, vtk.vtkCommand.ModifiedEvent)
     self.updateGUIFromMRML(self.parameterNode, vtk.vtkCommand.ModifiedEvent)
@@ -126,6 +186,22 @@ class EditColor(VTKObservationMixin):
 
     try:
       self.colorSpin.setValue(label)
+      # check to see if there's an associated terminology with this color node
+      if self.colorNode:
+        terminologyName = self.colorNode.GetAttribute("TerminologyName")
+        if terminologyName:
+          print 'Have a terminology: ', terminologyName
+          colorLogic = slicer.modules.colors.logic()
+          if colorLogic:
+            # enable the terminology widgets
+            self.hideTerminology(0)
+            category = colorLogic.GetCategoryFromLabel(label, terminologyName)
+            categoryModifier = colorLogic.GetCategoryModifierFromLabel(label, terminologyName)
+            self.terminologyCategoryLineEdit.setText(category)
+            self.terminologyCategoryModifierLineEdit.setText(categoryModifier)
+        else:
+          self.hideTerminology(1)
+
     except ValueError:
       # TODO: why does the python class still exist if the widget is destroyed?
       # - this only happens when reloading the module.  The owner of the
@@ -143,3 +219,9 @@ class EditColor(VTKObservationMixin):
       self.colorBox = ColorBox.ColorBox(parameterNode=self.parameterNode, parameter=self.parameter, colorNode=self.colorNode)
 
     self.colorBox.show(parameterNode=self.parameterNode, parameter=self.parameter, colorNode=self.colorNode)
+
+  def hideTerminology(self, flag):
+
+    self.terminologyRegionFrame.setHidden(flag)
+    # always hide Region until implementation is done
+    self.terminologyRegionFrame.setHidden(1)

@@ -39,6 +39,43 @@ class vtkMRMLColorTableNode;
 class VTK_MRML_LOGIC_EXPORT vtkMRMLColorLogic : public vtkMRMLAbstractLogic
 {
 public:
+  struct StandardTerm
+    {
+    std::string CodeValue;
+    std::string CodeMeaning;
+    std::string CodingSchemeDesignator;
+
+    StandardTerm(){
+      CodeValue = "";
+      CodeMeaning = "";
+      CodingSchemeDesignator = "";
+    }
+
+    void PrintSelf(ostream &os){
+      os << "Code value: " << CodeValue << " Code meaning: " << CodeMeaning << " Code scheme designator: " << CodingSchemeDesignator << std::endl;
+    }
+    };
+
+  struct ColorLabelCategorization
+    {
+    unsigned LabelValue;
+    StandardTerm SegmentedPropertyCategory;
+    StandardTerm SegmentedPropertyType;
+    StandardTerm SegmentedPropertyTypeModifier;
+
+    void PrintSelf(ostream &os){
+      os << "Label: " << LabelValue << std::endl <<
+        "   Segmented property category: ";
+      SegmentedPropertyCategory.PrintSelf(os);
+        os << "   Segmented property type: ";
+      SegmentedPropertyType.PrintSelf(os);
+        os << "   Segmented property type modifier: ";
+      SegmentedPropertyTypeModifier.PrintSelf(os);
+      os << std::endl;
+    };
+    };
+
+
   /// The Usual vtk class functions
   static vtkMRMLColorLogic *New();
   vtkTypeMacro(vtkMRMLColorLogic,vtkMRMLAbstractLogic);
@@ -93,7 +130,7 @@ public:
   /// Return a default color node id for a chart
   virtual const char * GetDefaultChartColorNodeID();
 
-  /// Add a file to the input list list, checking first for null, duplicates
+  /// Add a file to the input list Files, checking first for null, duplicates
   void AddColorFile(const char *fileName, std::vector<std::string> *Files);
 
   /// Load in a color file, creating a storage node. Returns a pointer to the
@@ -124,6 +161,15 @@ public:
   /// input node, for example if it's a color table node, it will return a
   /// procedural node with a blank color transfer function.
   static vtkMRMLProceduralColorNode* CopyProceduralNode(vtkMRMLColorNode* colorNode, const char* copyName);
+
+  bool LookupCategorizationFromLabel(int label, ColorLabelCategorization&, const char *lutName = NULL);
+  bool LookupLabelFromCategorization(ColorLabelCategorization&, int&, const char *lutName = NULL);
+  bool PrintCategorizationFromLabel(int label, const char *lutName = NULL);
+
+  /// utility methods to look up the terminology
+  /// If the lutName is null, defaults to GenericAnatomyColors
+  std::string GetCategoryFromLabel(int label, const char *lutName = NULL);
+  std::string GetCategoryModifierFromLabel(int label, const char *lutName = NULL);
 
 protected:
   vtkMRMLColorLogic();
@@ -171,6 +217,10 @@ protected:
 
   virtual std::vector<std::string> FindDefaultColorFiles();
   virtual std::vector<std::string> FindUserColorFiles();
+  virtual std::vector<std::string> FindDefaultTerminologyColorFiles();
+
+  void AddDefaultTerminologyColors();
+  bool InitializeTerminologyMappingFromFile(std::string mapFile);
 
   /// Return the ID of a node that doesn't belong to a scene.
   /// It is the concatenation of the node class name and its type.
@@ -181,6 +231,22 @@ protected:
   /// int name r g b a
   /// with rgba in the range 0-255
   std::vector<std::string> ColorFiles;
+
+  /// a vector holding discovered default terminology files that are
+  /// linked with default Slicer color files (not all color files
+  /// have terminology files). Found in the Terminology subdirectory
+  /// of the ColorFiles directory, they are comma separated value files
+  /// with:
+  /// Integer Label,Text Label,Segmented Property Category -- CID 7150++,Segmented Property Type,Segmented Property Type Modifier,Color
+  /// Integer Label is a number
+  /// Text Label is the name of the color
+  /// Segmented Property * is as defined by the terminology standard, inside brackets
+  /// Color is rgb(r;g;b) where each of r, g, b are in teh range 0-255
+  /// The first non commented line in the file gives the name of the Slicer LUT,
+  /// for example:
+  /// SlicerLUT=GenericAnatomyColors
+  std::vector<std::string> TerminologyColorFiles;
+
   /// a vector holding discovered user defined colour files, found in the
   /// UserColorFilesPath directories.
   std::vector<std::string> UserColorFiles;
@@ -189,7 +255,17 @@ protected:
   /// vtkMRMLApplication::GetColorFilePaths
   char *UserColorFilePaths;
 
+  // mappings used for terminology color look ups
+  typedef std::map<int,ColorLabelCategorization> ColorCategorizationMapType;
+  std::map<std::string, ColorCategorizationMapType> colorCategorizationMaps;
+
   static std::string TempColorNodeID;
+
+ private:
+
+  std::string RemoveLeadAndTrailSpaces(std::string);
+  bool ParseTerm(std::string, StandardTerm&);
+
 };
 
 #endif
