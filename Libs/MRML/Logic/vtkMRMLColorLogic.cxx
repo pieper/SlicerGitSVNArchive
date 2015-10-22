@@ -1357,6 +1357,25 @@ std::string vtkMRMLColorLogic::GetCategoryFromLabel(int label, const char *lutNa
 }
 
 //----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryTypeFromLabel(int label, const char *lutName)
+{
+  std::string categoryType = std::string("N/A");
+
+if (lutName == NULL)
+    {
+    lutName = "GenericAnatomyColors";
+    }
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+    categoryType = labelCat.SegmentedPropertyType.CodeMeaning;
+    }
+
+  return categoryType;
+}
+
+//----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetCategoryModifierFromLabel(int label, const char *lutName)
 {
   std::string categoryModifier = std::string("N/A");

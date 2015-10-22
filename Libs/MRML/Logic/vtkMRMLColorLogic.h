@@ -169,6 +169,7 @@ public:
   /// utility methods to look up the terminology
   /// If the lutName is null, defaults to GenericAnatomyColors
   std::string GetCategoryFromLabel(int label, const char *lutName = NULL);
+  std::string GetCategoryTypeFromLabel(int label, const char *lutName = NULL);
   std::string GetCategoryModifierFromLabel(int label, const char *lutName = NULL);
 
 protected:

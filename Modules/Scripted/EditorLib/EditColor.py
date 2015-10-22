@@ -1,6 +1,7 @@
 import slicer
 import qt
 import vtk
+# from ctk import ctkCollapsibleButton
 import ColorBox
 from EditUtil import EditUtil
 from slicer.util import VTKObservationMixin
@@ -77,11 +78,17 @@ class EditColor(VTKObservationMixin):
     self.colorFrame.layout().addWidget(self.colorPatch)
 
     # hidden until needed terminology frames:
-    # Category
-    self.terminologyCategoryFrame = qt.QFrame(self.frame)
-    self.terminologyCategoryFrame.setLayout(qt.QHBoxLayout())
-    self.frame.layout().addWidget(self.terminologyCategoryFrame)
+    self.terminologyCollapsibleButton = slicer.qMRMLCollapsibleButton(self.frame)
+    self.terminologyCollapsibleButton.setText('Terminology')
+    self.terminologyCollapsibleButton .setLayout(qt.QVBoxLayout())
+    self.frame.layout().addWidget(self.terminologyCollapsibleButton)
 
+    # Category row:
+    self.terminologyCategoryFrame = qt.QFrame(self.terminologyCollapsibleButton)
+    self.terminologyCategoryFrame.setLayout(qt.QHBoxLayout())
+    self.terminologyCollapsibleButton.layout().addWidget(self.terminologyCategoryFrame)
+
+    # Category
     self.terminologyCategoryLabel = qt.QLabel(self.terminologyCategoryFrame)
     self.terminologyCategoryLabel.setText("Category: ")
     self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryLabel)
@@ -91,6 +98,17 @@ class EditColor(VTKObservationMixin):
     # for now, read only
     self.terminologyCategoryLineEdit.setReadOnly(1);
     self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryLineEdit )
+
+    # Category type:
+    self.terminologyCategoryTypeLabel = qt.QLabel(self.terminologyCategoryFrame)
+    self.terminologyCategoryTypeLabel.setText("Type: ")
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryTypeLabel)
+
+    self.terminologyCategoryTypeLineEdit = qt.QLineEdit(self.terminologyCategoryFrame)
+    self.terminologyCategoryTypeLineEdit.setText("")
+    # for now, read only
+    self.terminologyCategoryTypeLineEdit.setReadOnly(1);
+    self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryTypeLineEdit )
 
     # Category modifier:
     self.terminologyCategoryModifierLabel = qt.QLabel(self.terminologyCategoryFrame)
@@ -103,11 +121,12 @@ class EditColor(VTKObservationMixin):
     self.terminologyCategoryModifierLineEdit.setReadOnly(1);
     self.terminologyCategoryFrame.layout().addWidget(self.terminologyCategoryModifierLineEdit )
 
-    # Region
-    self.terminologyRegionFrame = qt.QFrame(self.frame)
+    # Region row
+    self.terminologyRegionFrame = qt.QFrame(self.terminologyCollapsibleButton)
     self.terminologyRegionFrame.setLayout(qt.QHBoxLayout())
-    self.frame.layout().addWidget(self.terminologyRegionFrame)
+    self.terminologyCollapsibleButton.layout().addWidget(self.terminologyRegionFrame)
 
+    # Region:
     self.terminologyRegionLabel = qt.QLabel(self.terminologyRegionFrame)
     self.terminologyRegionLabel.setText("Region: ")
     self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionLabel)
@@ -117,6 +136,17 @@ class EditColor(VTKObservationMixin):
     # for now, read only
     self.terminologyRegionLineEdit.setReadOnly(1);
     self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionLineEdit )
+
+    # Region type:
+    self.terminologyRegionTypeLabel = qt.QLabel(self.terminologyRegionFrame)
+    self.terminologyRegionTypeLabel.setText("Type: ")
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionTypeLabel)
+
+    self.terminologyRegionTypeLineEdit = qt.QLineEdit(self.terminologyRegionFrame)
+    self.terminologyRegionTypeLineEdit.setText("")
+    # for now, read only
+    self.terminologyRegionTypeLineEdit.setReadOnly(1);
+    self.terminologyRegionFrame.layout().addWidget(self.terminologyRegionTypeLineEdit )
 
     # Region modifier:
     self.terminologyRegionModifierLabel = qt.QLabel(self.terminologyRegionFrame)
@@ -196,8 +226,10 @@ class EditColor(VTKObservationMixin):
             # enable the terminology widgets
             self.hideTerminology(0)
             category = colorLogic.GetCategoryFromLabel(label, terminologyName)
+            categoryType = colorLogic.GetCategoryTypeFromLabel(label, terminologyName)
             categoryModifier = colorLogic.GetCategoryModifierFromLabel(label, terminologyName)
             self.terminologyCategoryLineEdit.setText(category)
+            self.terminologyCategoryTypeLineEdit.setText(categoryType)
             self.terminologyCategoryModifierLineEdit.setText(categoryModifier)
         else:
           self.hideTerminology(1)
@@ -221,7 +253,4 @@ class EditColor(VTKObservationMixin):
     self.colorBox.show(parameterNode=self.parameterNode, parameter=self.parameter, colorNode=self.colorNode)
 
   def hideTerminology(self, flag):
-
-    self.terminologyRegionFrame.setHidden(flag)
-    # always hide Region until implementation is done
-    self.terminologyRegionFrame.setHidden(1)
+    self.terminologyCollapsibleButton.collapsed = flag
