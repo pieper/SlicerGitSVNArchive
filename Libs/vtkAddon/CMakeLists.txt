@@ -63,6 +63,10 @@ set(vtkAddon_SRCS
   vtkOrientedBSplineTransform.h
   vtkOrientedGridTransform.cxx
   vtkOrientedGridTransform.h
+  vtkOpenGLTextureImage.cxx
+  vtkOpenGLTextureImage.h
+  vtkOpenGLShaderComputation.cxx
+  vtkOpenGLShaderComputation.h
   )
 
 # Abstract/pure virtual classes
