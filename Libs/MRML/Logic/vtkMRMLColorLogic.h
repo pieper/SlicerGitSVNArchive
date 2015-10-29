@@ -39,22 +39,27 @@ class vtkMRMLColorTableNode;
 class VTK_MRML_LOGIC_EXPORT vtkMRMLColorLogic : public vtkMRMLAbstractLogic
 {
 public:
-  struct StandardTerm
+  typedef struct
     {
-    std::string CodeValue;
-    std::string CodeMeaning;
-    std::string CodingSchemeDesignator;
+      std::string CodeValue;
+      std::string CodeMeaning;
+      std::string CodingSchemeDesignator;
 
-    StandardTerm(){
-      CodeValue = "";
-      CodeMeaning = "";
-      CodingSchemeDesignator = "";
-    }
+      void StandardTerm() {
+        CodeValue = "";
+        CodeMeaning = "";
+        CodingSchemeDesignator = "";
+      }
+      void StandardTerm(std::string value, std::string meaning, std::string designator) {
+        CodeValue = value;
+        CodeMeaning = meaning;
+        CodingSchemeDesignator = designator;
+      }
 
-    void PrintSelf(ostream &os){
-      os << "Code value: " << CodeValue << " Code meaning: " << CodeMeaning << " Code scheme designator: " << CodingSchemeDesignator << std::endl;
-    }
-    };
+      void PrintSelf(ostream &os) {
+        os << "Code meaning: " << CodeMeaning<< "\n\tCode value: " << CodeValue << "\n\tCode scheme designator: " << CodingSchemeDesignator << std::endl;
+      }
+    } StandardTerm;
 
   struct ColorLabelCategorization
     {
@@ -172,6 +177,31 @@ public:
   std::string GetCategoryTypeFromLabel(int label, const char *lutName = NULL);
   std::string GetCategoryModifierFromLabel(int label, const char *lutName = NULL);
 
+  /// Create a new empty terminology for this LUT and try to associate it with a color
+  /// node of the same name.
+  /// Returns true on success, false if lutName is empty or can't associate the new
+  /// terminology with a color node
+  /// \sa AssociateTerminologyWithColorNode
+  bool CreateNewTerminology(std::string lutName);
+  /// Return true if a terminology mapping already exists for this lutName,
+  // false if empty name or none found.
+  bool TerminologyExists(std::string lutName);
+  /// Link the color node with the terminology
+  /// Returns true on success, false if empty lut name, unable to find the color node
+  /// \sa CreateNewTerminology
+  bool AssociateTerminologyWithColorNode(std::string lutName);
+  /// For this label value, construct standard terms for category, type and modifier, then
+  /// add them to the terminology associated with the lutName.
+  /// Returns the result of AddTermToTerminologyMapping
+  /// \sa AddTermToTerminologyMapping
+  bool AddTermToTerminology(std::string lutName, int labelValue,
+                            std::string categoryValue, std::string categoryMeaning,
+                            std::string categorySchemeDesignator,
+                            std::string typeValue, std::string typeMeaning,
+                            std::string typeSchemeDesignator,
+                            std::string modifierValue, std::string modifierMeaning,
+                            std::string modifierSchemeDesignator);
+
 protected:
   vtkMRMLColorLogic();
   virtual ~vtkMRMLColorLogic();
@@ -220,7 +250,23 @@ protected:
   virtual std::vector<std::string> FindUserColorFiles();
   virtual std::vector<std::string> FindDefaultTerminologyColorFiles();
 
+  /// Get the list default terminology color files then initialise
+  /// terminology mappings for each one.
+  /// \sa FindDefaultTerminologyColorFiles, InitializeTerminologyMappingFromFile
   void AddDefaultTerminologyColors();
+
+  /// For this labelValue, add the passed in terms of category, type, modifier to the
+  /// terminology associated with the lutName. Will create the terminology for the lutName
+  /// if it doesn't exist already.
+  /// Returns true on success, false if lutName is empty
+  /// \sa TerminologyExists
+  bool AddTermToTerminologyMapping(std::string lutName, int labelValue,
+                                   StandardTerm category, StandardTerm type,
+                                   StandardTerm modifier);
+  /// Create a new terminology mapping from the given file.
+  /// Returns true on success, false if unable to open the file, add terms, or associate
+  /// the terminology with a color node.
+  /// \sa CreateNewTerminology, AddTermToTerminologyMapping, AssociateTerminologyWithColorNode
   bool InitializeTerminologyMappingFromFile(std::string mapFile);
 
   /// Return the ID of a node that doesn't belong to a scene.

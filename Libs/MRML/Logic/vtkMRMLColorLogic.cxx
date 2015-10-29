@@ -1106,6 +1106,97 @@ void vtkMRMLColorLogic::AddDefaultTerminologyColors()
 }
 
 //------------------------------------------------------------------------------
+bool vtkMRMLColorLogic::CreateNewTerminology(std::string lutName)
+{
+  if (lutName.length() == 0)
+    {
+    return false;
+    }
+  this->colorCategorizationMaps[lutName] = ColorCategorizationMapType();
+  return this->AssociateTerminologyWithColorNode(lutName);
+}
+
+//------------------------------------------------------------------------------
+bool vtkMRMLColorLogic::TerminologyExists(std::string lutName)
+{
+  if (lutName.length() == 0)
+    {
+    return false;
+    }
+
+  if (this->colorCategorizationMaps.find(lutName) !=
+      this->colorCategorizationMaps.end())
+    {
+    return true;
+    }
+  else
+    {
+    return false;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool vtkMRMLColorLogic
+::AddTermToTerminology(std::string lutName, int labelValue,
+                       std::string categoryValue, std::string categoryMeaning,
+                       std::string categorySchemeDesignator,
+                       std::string typeValue, std::string typeMeaning,
+                       std::string typeSchemeDesignator,
+                       std::string modifierValue, std::string modifierMeaning,
+                       std::string modifierSchemeDesignator)
+{
+  StandardTerm category = {categoryValue, categoryMeaning, categorySchemeDesignator};
+  StandardTerm type = {typeValue, typeMeaning, typeSchemeDesignator};
+  StandardTerm modifier = {modifierValue, modifierMeaning, modifierSchemeDesignator};
+  return this->AddTermToTerminologyMapping(lutName, labelValue, category, type, modifier);
+}
+
+//------------------------------------------------------------------------------
+bool vtkMRMLColorLogic::AddTermToTerminologyMapping(std::string lutName, int labelValue, StandardTerm category, StandardTerm type, StandardTerm modifier)
+{
+  if (lutName.length() == 0)
+    {
+    return false;
+    }
+
+ // check if the terminology mapping exists already, if not, create it
+ if (!this->TerminologyExists(lutName))
+   {
+   this->CreateNewTerminology(lutName);
+   }
+
+ ColorLabelCategorization termMapping;
+ termMapping.LabelValue = labelValue;
+ termMapping.SegmentedPropertyCategory = category;
+ termMapping.SegmentedPropertyType = type;
+ termMapping.SegmentedPropertyTypeModifier = modifier;
+
+ this->colorCategorizationMaps[lutName][termMapping.LabelValue] = termMapping;
+
+ return true;
+}
+
+//------------------------------------------------------------------------------
+bool vtkMRMLColorLogic::AssociateTerminologyWithColorNode(std::string lutName)
+{
+  if (lutName.length() == 0)
+    {
+    return false;
+    }
+
+  vtkMRMLNode *colorNode = this->GetMRMLScene()->GetFirstNodeByName(lutName.c_str());
+  if (!colorNode)
+    {
+    vtkWarningMacro("Unable to find color node with name " << lutName);
+    return false;
+    }
+  std::cout << "Setting TerminologyName attribute on node "
+            << colorNode->GetID() << std::endl;
+  colorNode->SetAttribute("TerminologyName", lutName.c_str());
+
+  return true;
+}
+//------------------------------------------------------------------------------
 bool vtkMRMLColorLogic::InitializeTerminologyMappingFromFile(std::string mapFileName)
 {
   std::cout << "Initializing terminology mapping for map file " << mapFileName << std::endl;
@@ -1113,7 +1204,8 @@ bool vtkMRMLColorLogic::InitializeTerminologyMappingFromFile(std::string mapFile
   std::ifstream mapFile(mapFileName.c_str());
   bool status = mapFile.is_open();
   std::string lutName = "";
-
+  bool addFlag = true;
+  bool assocFlag = true;
   if (status)
     {
     while (!mapFile.eof())
@@ -1131,15 +1223,12 @@ bool vtkMRMLColorLogic::InitializeTerminologyMappingFromFile(std::string mapFile
         }
       size_t delim = lineIn.find("=");
       lutName = lineIn.substr(delim+1,lineIn.length()-delim);
-      this->colorCategorizationMaps[lutName] = ColorCategorizationMapType();
-
+      assocFlag = this->CreateNewTerminology(lutName);
       break;
       }
 
     while (!mapFile.eof())
       {
-      StandardTerm term;
-      ColorLabelCategorization termMapping;
       std::string lineIn, lineLeft;
       std::getline(mapFile, lineIn);
       if (lineIn.length()<30 || lineIn[0] == '#')
@@ -1154,35 +1243,19 @@ bool vtkMRMLColorLogic::InitializeTerminologyMappingFromFile(std::string mapFile
         tokens.push_back(item);
         }
 
-      termMapping.LabelValue = atoi(tokens[0].c_str());
-      this->ParseTerm(tokens[2],term);
-      termMapping.SegmentedPropertyCategory = term;
-      term = StandardTerm();
-      this->ParseTerm(tokens[3],term);
-      termMapping.SegmentedPropertyType = term;
-      term = StandardTerm();
-      this->ParseTerm(tokens[4],term);
-      termMapping.SegmentedPropertyTypeModifier = term;
+      int labelValue = atoi(tokens[0].c_str());
+      StandardTerm category, type, modifier;
+      this->ParseTerm(tokens[2],category);
+      this->ParseTerm(tokens[3],type);
+      this->ParseTerm(tokens[4],modifier);
 
-      this->colorCategorizationMaps[lutName][termMapping.LabelValue] = termMapping;
-
+      addFlag = addFlag && this->AddTermToTerminologyMapping(lutName, labelValue, category, type, modifier);
      }
   }
   std::cout << this->colorCategorizationMaps[lutName].size()
             << " terms were read for Slicer LUT " << lutName << std::endl;
-  // associate it to the color node
-  vtkMRMLNode *colorNode = this->GetMRMLScene()->GetFirstNodeByName(lutName.c_str());
-  if (colorNode)
-    {
-    std::cout << "Setting TerminologyName attribute on node " << colorNode->GetID() << std::endl;
-    colorNode->SetAttribute("TerminologyName", lutName.c_str());
-    }
-  else
-    {
-    vtkWarningMacro("Unable to find color node with name " << lutName);
-    }
 
-  return status;
+  return status && addFlag && assocFlag;
 }
 
 //-------------------------------------------------------------------------------
@@ -1196,8 +1269,7 @@ bool vtkMRMLColorLogic::
     lutName = "GenericAnatomyColors";
     }
 
-  std::cout << "Looking up categorization for label " << label << std::endl;
-  if (this->colorCategorizationMaps.find(lutName) != this->colorCategorizationMaps.end())
+  if (this->TerminologyExists(lutName))
     {
     if (this->colorCategorizationMaps[lutName].find(label) !=
       this->colorCategorizationMaps[lutName].end())
@@ -1217,14 +1289,12 @@ LookupLabelFromCategorization(ColorLabelCategorization& labelCat, int& label, co
     {
     lutName = "GenericAnatomyColors";
     }
-  if (this->colorCategorizationMaps.find(lutName) == this->colorCategorizationMaps.end())
+  if (this->TerminologyExists(lutName))
     {
     return false;
     }
 
-  std::cout << "Looking up label from " << std::endl;
   labelCat.PrintSelf(std::cout);
-  std::cout << std::endl;
 
   int labelFound = -1;
 
@@ -1280,7 +1350,6 @@ LookupLabelFromCategorization(ColorLabelCategorization& labelCat, int& label, co
     {
     label = labelFound;
     }
-  std::cout << "Label found: " << label << std::endl;
   return (labelFound==-1) ? false: true;
 }
 
@@ -1292,7 +1361,7 @@ bool vtkMRMLColorLogic::PrintCategorizationFromLabel(int label, const char *lutN
     {
     lutName = "GenericAnatomyColors";
     }
-  if (this->colorCategorizationMaps.find(lutName) == this->colorCategorizationMaps.end())
+  if (!this->TerminologyExists(lutName))
     {
     return false;
     }
