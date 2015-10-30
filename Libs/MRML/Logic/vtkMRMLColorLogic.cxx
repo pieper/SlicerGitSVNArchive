@@ -1162,7 +1162,13 @@ bool vtkMRMLColorLogic::AddTermToTerminologyMapping(std::string lutName, int lab
  // check if the terminology mapping exists already, if not, create it
  if (!this->TerminologyExists(lutName))
    {
-   this->CreateNewTerminology(lutName);
+   vtkDebugMacro("Adding a new terminology for " << lutName);
+   bool createFlag = this->CreateNewTerminology(lutName);
+   if (!createFlag)
+     {
+     vtkWarningMacro("Unable to create new terminology for " << lutName.c_str() << " or associate it with a color node.");
+     return false;
+     }
    }
 
  ColorLabelCategorization termMapping;
@@ -1187,11 +1193,9 @@ bool vtkMRMLColorLogic::AssociateTerminologyWithColorNode(std::string lutName)
   vtkMRMLNode *colorNode = this->GetMRMLScene()->GetFirstNodeByName(lutName.c_str());
   if (!colorNode)
     {
-    vtkWarningMacro("Unable to find color node with name " << lutName);
+    vtkWarningMacro("Unable to associate terminology with named color node: " << lutName);
     return false;
     }
-  std::cout << "Setting TerminologyName attribute on node "
-            << colorNode->GetID() << std::endl;
   colorNode->SetAttribute("TerminologyName", lutName.c_str());
 
   return true;
@@ -1271,6 +1275,8 @@ bool vtkMRMLColorLogic::
 
   if (this->TerminologyExists(lutName))
     {
+    // set the label value so that if it's not found, it's still a valid categorisation
+    labelCat.LabelValue = label;
     if (this->colorCategorizationMaps[lutName].find(label) !=
       this->colorCategorizationMaps[lutName].end())
       {
@@ -1289,12 +1295,10 @@ LookupLabelFromCategorization(ColorLabelCategorization& labelCat, int& label, co
     {
     lutName = "GenericAnatomyColors";
     }
-  if (this->TerminologyExists(lutName))
+  if (!this->TerminologyExists(lutName))
     {
     return false;
     }
-
-  labelCat.PrintSelf(std::cout);
 
   int labelFound = -1;
 

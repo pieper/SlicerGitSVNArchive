@@ -196,7 +196,6 @@ class EditColor(VTKObservationMixin):
       if self.colorNode:
         terminologyName = self.colorNode.GetAttribute("TerminologyName")
         if terminologyName:
-          print 'Have a terminology: ', terminologyName
           colorLogic = slicer.modules.colors.logic()
           if colorLogic:
             # enable the terminology widgets

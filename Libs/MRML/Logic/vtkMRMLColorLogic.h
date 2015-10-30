@@ -57,7 +57,9 @@ public:
       }
 
       void PrintSelf(ostream &os) {
-        os << "Code meaning: " << CodeMeaning<< "\n\tCode value: " << CodeValue << "\n\tCode scheme designator: " << CodingSchemeDesignator << std::endl;
+        os << "\tCode meaning: " << CodeMeaning
+           << "\n\tCode value: " << CodeValue
+           << "\n\tCode scheme designator: " << CodingSchemeDesignator << std::endl;
       }
     } StandardTerm;
 
@@ -70,11 +72,11 @@ public:
 
     void PrintSelf(ostream &os){
       os << "Label: " << LabelValue << std::endl <<
-        "   Segmented property category: ";
+        "Segmented property category:\n";
       SegmentedPropertyCategory.PrintSelf(os);
-        os << "   Segmented property type: ";
+        os << "Segmented property type:\n";
       SegmentedPropertyType.PrintSelf(os);
-        os << "   Segmented property type modifier: ";
+        os << "Segmented property type modifier:\n";
       SegmentedPropertyTypeModifier.PrintSelf(os);
       os << std::endl;
     };

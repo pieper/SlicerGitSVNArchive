@@ -301,7 +301,6 @@ std::vector<std::string> vtkSlicerColorLogic::
         if (fileType == vtksys::SystemTools::FileTypeText)
           {
           // check that it's a supported file type, a comma separated value file
-          std::cout << "file to check = " << fileToCheck.c_str() << ", with len " << fileToCheck.length() << std::endl;
           if (fileToCheck.rfind(".csv", fileToCheck.length() - 4, 4) != std::string::npos)
             {
             vtkDebugMacro("FindTerminologyColorFiles: Adding " << fileToCheck.c_str() << " to list of potential terminology colour files. Type = " << fileType);
