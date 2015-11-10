@@ -175,17 +175,34 @@ public:
   /// procedural node with a blank color transfer function.
   static vtkMRMLProceduralColorNode* CopyProceduralNode(vtkMRMLColorNode* colorNode, const char* copyName);
 
-  bool LookupCategorizationFromLabel(int label, ColorLabelCategorization&, const char *lutName = NULL);
-  bool LookupLabelFromCategorization(ColorLabelCategorization&, int&, const char *lutName = NULL);
-  bool PrintCategorizationFromLabel(int label, const char *lutName = NULL);
+  /// Return the label's terminology in this color table.
+  bool LookupCategorizationFromLabel(int label, ColorLabelCategorization&, const char *lutName = "GenericAnatomyColors");
+  /// From a given terminology, find the label value that corresponds to it for this color table.
+  bool LookupLabelFromCategorization(ColorLabelCategorization&, int&, const char *lutName = "GenericAnatomyColors");
+  /// Print the terminology for this label in the color table to standard output.
+  bool PrintCategorizationFromLabel(int label, const char *lutName = "GenericAnatomyColors");
 
-  /// utility methods to look up the terminology
-  /// If the lutName is null, defaults to GenericAnatomyColors
-  std::string GetRegionFromLabel(int label, const char *lutName = NULL);
-  std::string GetRegionModifierFromLabel(int label, const char *lutName = NULL);
-  std::string GetCategoryFromLabel(int label, const char *lutName = NULL);
-  std::string GetCategoryTypeFromLabel(int label, const char *lutName = NULL);
-  std::string GetCategoryModifierFromLabel(int label, const char *lutName = NULL);
+  /// Utility methods to look up the terminology meanings.
+  /// Returns an empty string if not found or defined.
+  std::string GetRegionFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetRegionModifierFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryTypeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryModifierFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+
+  /// Utility methods to look up the terminology code (CodeValue) and scheme
+  /// (CodingSchemeDesignator) for a specific label in a color node.
+  /// Returns an empty string if not found or defined.
+  std::string GetRegionCodeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetRegionSchemeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetRegionModifierCodeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetRegionModifierSchemeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryCodeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategorySchemeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryTypeCodeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryTypeSchemeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryModifierCodeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
+  std::string GetCategoryModifierSchemeFromLabel(int label, const char *lutName = "GenericAnatomyColors");
 
   /// Create a new empty terminology for this LUT and try to associate it with a color
   /// node of the same name.

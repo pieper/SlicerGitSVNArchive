@@ -1279,10 +1279,6 @@ bool vtkMRMLColorLogic::
 {
   bool success = false;
 
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
 
   if (this->TerminologyExists(lutName))
     {
@@ -1302,10 +1298,6 @@ bool vtkMRMLColorLogic::
 bool vtkMRMLColorLogic::
 LookupLabelFromCategorization(ColorLabelCategorization& labelCat, int& label, const char *lutName)
 {
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
   if (!this->TerminologyExists(lutName))
     {
     return false;
@@ -1372,10 +1364,6 @@ LookupLabelFromCategorization(ColorLabelCategorization& labelCat, int& label, co
 bool vtkMRMLColorLogic::PrintCategorizationFromLabel(int label, const char *lutName)
 {
   ColorLabelCategorization labelCat;
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
   if (!this->TerminologyExists(lutName))
     {
     return false;
@@ -1424,12 +1412,7 @@ bool vtkMRMLColorLogic::ParseTerm(std::string str, StandardTerm& term)
 //----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetRegionFromLabel(int label, const char *lutName)
 {
-  std::string region = std::string("N/A");
-
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
+  std::string region;
 
   ColorLabelCategorization labelCat;
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
@@ -1442,12 +1425,8 @@ std::string vtkMRMLColorLogic::GetRegionFromLabel(int label, const char *lutName
 //----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetRegionModifierFromLabel(int label, const char *lutName)
 {
-  std::string regionModifier = std::string("N/A");
+  std::string regionModifier;
 
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
 
   ColorLabelCategorization labelCat;
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
@@ -1460,12 +1439,7 @@ std::string vtkMRMLColorLogic::GetRegionModifierFromLabel(int label, const char 
 //----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetCategoryFromLabel(int label, const char *lutName)
 {
-  std::string category = std::string("N/A");
-
-  if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
+  std::string category;
 
   ColorLabelCategorization labelCat;
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
@@ -1478,12 +1452,7 @@ std::string vtkMRMLColorLogic::GetCategoryFromLabel(int label, const char *lutNa
 //----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetCategoryTypeFromLabel(int label, const char *lutName)
 {
-  std::string categoryType = std::string("N/A");
-
-if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
+  std::string categoryType;
 
   ColorLabelCategorization labelCat;
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
@@ -1497,12 +1466,7 @@ if (lutName == NULL)
 //----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetCategoryModifierFromLabel(int label, const char *lutName)
 {
-  std::string categoryModifier = std::string("N/A");
-
-if (lutName == NULL)
-    {
-    lutName = "GenericAnatomyColors";
-    }
+  std::string categoryModifier;
 
   ColorLabelCategorization labelCat;
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
@@ -1511,4 +1475,144 @@ if (lutName == NULL)
     }
 
   return categoryModifier;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionCodeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.AnatomicRegion.CodeValue;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionSchemeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.AnatomicRegion.CodingSchemeDesignator;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionModifierCodeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.AnatomicRegionModifier.CodeValue;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionModifierSchemeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.AnatomicRegionModifier.CodingSchemeDesignator;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryCodeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyCategory.CodeValue;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategorySchemeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyCategory.CodingSchemeDesignator;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryTypeCodeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyType.CodeValue;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryTypeSchemeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyType.CodingSchemeDesignator;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryModifierCodeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyTypeModifier.CodeValue;
+    }
+
+  return returnString;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetCategoryModifierSchemeFromLabel(int label, const char *lutName)
+{
+  std::string returnString;
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+      returnString = labelCat.SegmentedPropertyTypeModifier.CodingSchemeDesignator;
+    }
+
+  return returnString;
 }

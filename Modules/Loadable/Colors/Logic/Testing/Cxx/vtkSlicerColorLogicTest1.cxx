@@ -212,6 +212,30 @@ bool TestTerminology()
               << std::endl;
     return false;
     }
+  // check the utility methods to access the values
+  if (regionMeaning.compare(colorLogic->GetRegionFromLabel(1, pelvisLUTName.c_str())) &&
+      regionValue.compare(colorLogic->GetRegionCodeFromLabel(1, pelvisLUTName.c_str())) &&
+      regionScheme.compare(colorLogic->GetRegionSchemeFromLabel(1, pelvisLUTName.c_str())) &&
+      regionModMeaning.compare(colorLogic->GetRegionModifierFromLabel(1, pelvisLUTName.c_str())) &&
+      regionModValue.compare(colorLogic->GetRegionModifierCodeFromLabel(1, pelvisLUTName.c_str())) &&
+      regionModScheme.compare(colorLogic->GetRegionModifierSchemeFromLabel(1, pelvisLUTName.c_str())) &&
+      catMeaning.compare(colorLogic->GetCategoryFromLabel(1, pelvisLUTName.c_str())) &&
+      catValue.compare(colorLogic->GetCategoryCodeFromLabel(1, pelvisLUTName.c_str())) &&
+      catScheme.compare(colorLogic->GetCategorySchemeFromLabel(1, pelvisLUTName.c_str())) &&
+      typeMeaning.compare(colorLogic->GetCategoryTypeFromLabel(1, pelvisLUTName.c_str())) &&
+      typeValue.compare(colorLogic->GetCategoryTypeCodeFromLabel(1, pelvisLUTName.c_str())) &&
+      typeScheme.compare(colorLogic->GetCategoryTypeSchemeFromLabel(1, pelvisLUTName.c_str())) &&
+      modMeaning.compare(colorLogic->GetCategoryModifierFromLabel(1, pelvisLUTName.c_str())) &&
+      modValue.compare(colorLogic->GetCategoryModifierCodeFromLabel(1, pelvisLUTName.c_str())) &&
+      modScheme.compare(colorLogic->GetCategoryModifierSchemeFromLabel(1, pelvisLUTName.c_str())))
+    {
+      std::cerr << "Line " << __LINE__
+              << ": for label 1, LUT "
+              << pelvisLUTName
+              << ", failed comparing terminology accessors with what they were set to."
+              << std::endl;
+    return false;
+    }
 
   // look for a label that doesn't have a terminology
   std::cout << "Testing new terminology for known missing label:" << std::endl;

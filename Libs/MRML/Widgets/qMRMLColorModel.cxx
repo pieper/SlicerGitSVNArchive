@@ -374,6 +374,11 @@ void qMRMLColorModel::updateItemFromColor(QStandardItem* item, int color, int co
           {
           terminology = terminology + QString("\nRegion Modifier: %1").arg(regionMod.c_str());
           }
+        // check if no terminology was found and use an empty tool tip
+        if (!terminology.compare("Terminology:"))
+          {
+          terminology = QString("");
+          }
         item->setToolTip(terminology);
         }
       else
