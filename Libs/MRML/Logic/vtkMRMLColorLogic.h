@@ -66,17 +66,23 @@ public:
   struct ColorLabelCategorization
     {
     unsigned LabelValue;
+    StandardTerm AnatomicRegion;
+    StandardTerm AnatomicRegionModifier;
     StandardTerm SegmentedPropertyCategory;
     StandardTerm SegmentedPropertyType;
     StandardTerm SegmentedPropertyTypeModifier;
 
     void PrintSelf(ostream &os){
-      os << "Label: " << LabelValue << std::endl <<
-        "Segmented property category:\n";
+      os << "Label: " << LabelValue << std::endl;
+      os << "Anatomic region:\n";
+      AnatomicRegion.PrintSelf(os);
+      os << "Antatomic region modifier:\n";
+      AnatomicRegionModifier.PrintSelf(os);
+      os << "Segmented property category:\n";
       SegmentedPropertyCategory.PrintSelf(os);
-        os << "Segmented property type:\n";
+      os << "Segmented property type:\n";
       SegmentedPropertyType.PrintSelf(os);
-        os << "Segmented property type modifier:\n";
+      os << "Segmented property type modifier:\n";
       SegmentedPropertyTypeModifier.PrintSelf(os);
       os << std::endl;
     };
@@ -175,6 +181,8 @@ public:
 
   /// utility methods to look up the terminology
   /// If the lutName is null, defaults to GenericAnatomyColors
+  std::string GetRegionFromLabel(int label, const char *lutName = NULL);
+  std::string GetRegionModifierFromLabel(int label, const char *lutName = NULL);
   std::string GetCategoryFromLabel(int label, const char *lutName = NULL);
   std::string GetCategoryTypeFromLabel(int label, const char *lutName = NULL);
   std::string GetCategoryModifierFromLabel(int label, const char *lutName = NULL);
@@ -197,6 +205,11 @@ public:
   /// Returns the result of AddTermToTerminologyMapping
   /// \sa AddTermToTerminologyMapping
   bool AddTermToTerminology(std::string lutName, int labelValue,
+                            std::string regionValue, std::string regionMeaning,
+                            std::string regionSchemeDesignator,
+                            std::string regionModifierValue,
+                            std::string regionModifierMeaning,
+                            std::string regionModifierSchemeDesignator,
                             std::string categoryValue, std::string categoryMeaning,
                             std::string categorySchemeDesignator,
                             std::string typeValue, std::string typeMeaning,
@@ -257,12 +270,13 @@ protected:
   /// \sa FindDefaultTerminologyColorFiles, InitializeTerminologyMappingFromFile
   void AddDefaultTerminologyColors();
 
-  /// For this labelValue, add the passed in terms of category, type, modifier to the
-  /// terminology associated with the lutName. Will create the terminology for the lutName
-  /// if it doesn't exist already.
+  /// For this labelValue, add the passed in terms of region, region modifier, category,
+  /// type, modifier to the terminology associated with the lutName. Will create the
+  /// terminology for the lutName if it doesn't exist already.
   /// Returns true on success, false if lutName is empty
   /// \sa TerminologyExists
   bool AddTermToTerminologyMapping(std::string lutName, int labelValue,
+                                   StandardTerm region, StandardTerm regionModifier,
                                    StandardTerm category, StandardTerm type,
                                    StandardTerm modifier);
   /// Create a new terminology mapping from the given file.

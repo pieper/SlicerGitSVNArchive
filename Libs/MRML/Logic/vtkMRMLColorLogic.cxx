@@ -1138,6 +1138,11 @@ bool vtkMRMLColorLogic::TerminologyExists(std::string lutName)
 //------------------------------------------------------------------------------
 bool vtkMRMLColorLogic
 ::AddTermToTerminology(std::string lutName, int labelValue,
+                       std::string regionValue, std::string regionMeaning,
+                       std::string regionSchemeDesignator,
+                       std::string regionModifierValue,
+                       std::string regionModifierMeaning,
+                       std::string regionModifierSchemeDesignator,
                        std::string categoryValue, std::string categoryMeaning,
                        std::string categorySchemeDesignator,
                        std::string typeValue, std::string typeMeaning,
@@ -1145,14 +1150,16 @@ bool vtkMRMLColorLogic
                        std::string modifierValue, std::string modifierMeaning,
                        std::string modifierSchemeDesignator)
 {
+  StandardTerm region = {regionValue, regionMeaning, regionSchemeDesignator};
+  StandardTerm regionModifier = {regionModifierValue, regionModifierMeaning, regionModifierSchemeDesignator};
   StandardTerm category = {categoryValue, categoryMeaning, categorySchemeDesignator};
   StandardTerm type = {typeValue, typeMeaning, typeSchemeDesignator};
   StandardTerm modifier = {modifierValue, modifierMeaning, modifierSchemeDesignator};
-  return this->AddTermToTerminologyMapping(lutName, labelValue, category, type, modifier);
+  return this->AddTermToTerminologyMapping(lutName, labelValue, region, regionModifier, category, type, modifier);
 }
 
 //------------------------------------------------------------------------------
-bool vtkMRMLColorLogic::AddTermToTerminologyMapping(std::string lutName, int labelValue, StandardTerm category, StandardTerm type, StandardTerm modifier)
+bool vtkMRMLColorLogic::AddTermToTerminologyMapping(std::string lutName, int labelValue, StandardTerm region, StandardTerm regionModifier, StandardTerm category, StandardTerm type, StandardTerm modifier)
 {
   if (lutName.length() == 0)
     {
@@ -1173,6 +1180,8 @@ bool vtkMRMLColorLogic::AddTermToTerminologyMapping(std::string lutName, int lab
 
  ColorLabelCategorization termMapping;
  termMapping.LabelValue = labelValue;
+ termMapping.AnatomicRegion = region;
+ termMapping.AnatomicRegionModifier = regionModifier;
  termMapping.SegmentedPropertyCategory = category;
  termMapping.SegmentedPropertyType = type;
  termMapping.SegmentedPropertyTypeModifier = modifier;
@@ -1253,7 +1262,9 @@ bool vtkMRMLColorLogic::InitializeTerminologyMappingFromFile(std::string mapFile
       this->ParseTerm(tokens[3],type);
       this->ParseTerm(tokens[4],modifier);
 
-      addFlag = addFlag && this->AddTermToTerminologyMapping(lutName, labelValue, category, type, modifier);
+      // for now region doesn't appear in the file
+      StandardTerm region, regionModifier;
+      addFlag = addFlag && this->AddTermToTerminologyMapping(lutName, labelValue, region, regionModifier, category, type, modifier);
      }
   }
   std::cout << this->colorCategorizationMaps[lutName].size()
@@ -1411,6 +1422,42 @@ bool vtkMRMLColorLogic::ParseTerm(std::string str, StandardTerm& term)
 }
 
 //----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionFromLabel(int label, const char *lutName)
+{
+  std::string region = std::string("N/A");
+
+  if (lutName == NULL)
+    {
+    lutName = "GenericAnatomyColors";
+    }
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+    region = labelCat.AnatomicRegion.CodeMeaning;
+    }
+  return region;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkMRMLColorLogic::GetRegionModifierFromLabel(int label, const char *lutName)
+{
+  std::string regionModifier = std::string("N/A");
+
+  if (lutName == NULL)
+    {
+    lutName = "GenericAnatomyColors";
+    }
+
+  ColorLabelCategorization labelCat;
+  if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
+    {
+    regionModifier = labelCat.AnatomicRegionModifier.CodeMeaning;
+    }
+  return regionModifier;
+}
+
+//----------------------------------------------------------------------------
 std::string vtkMRMLColorLogic::GetCategoryFromLabel(int label, const char *lutName)
 {
   std::string category = std::string("N/A");
@@ -1424,7 +1471,6 @@ std::string vtkMRMLColorLogic::GetCategoryFromLabel(int label, const char *lutNa
   if (this->LookupCategorizationFromLabel(label, labelCat, lutName))
     {
     category = labelCat.SegmentedPropertyCategory.CodeMeaning;
-    // or SegmentedPropertyCategory?
     }
   return category;
 }

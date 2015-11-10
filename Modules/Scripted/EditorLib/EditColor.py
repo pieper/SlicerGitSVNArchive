@@ -80,7 +80,7 @@ class EditColor(VTKObservationMixin):
     # hidden until needed terminology frames:
     self.terminologyCollapsibleButton = slicer.qMRMLCollapsibleButton(self.frame)
     self.terminologyCollapsibleButton.setText('Terminology')
-    self.terminologyCollapsibleButton .setLayout(qt.QHBoxLayout())
+    self.terminologyCollapsibleButton .setLayout(qt.QVBoxLayout())
     self.frame.layout().addWidget(self.terminologyCollapsibleButton)
 
     # Category section:
@@ -120,13 +120,6 @@ class EditColor(VTKObservationMixin):
     # for now, read only
     # self.terminologyRegion.setReadOnly(1);
     self.terminologyRegionFrame.layout().addRow("Region:", self.terminologyRegion )
-
-    # Region type:
-    self.terminologyRegionType = qt.QLabel(self.terminologyRegionFrame)
-    self.terminologyRegionType.setText("")
-    # for now, read only
-    # self.terminologyRegionType.setReadOnly(1);
-    self.terminologyRegionFrame.layout().addRow("Type:", self.terminologyRegionType )
 
     # Region modifier:
     self.terminologyRegionModifier = qt.QLabel(self.terminologyRegionFrame)
@@ -200,12 +193,21 @@ class EditColor(VTKObservationMixin):
           if colorLogic:
             # enable the terminology widgets
             self.hideTerminology(0)
+            region = colorLogic.GetRegionFromLabel(label, terminologyName)
+            regionModifier = colorLogic.GetRegionModifierFromLabel(label, terminologyName)
             category = colorLogic.GetCategoryFromLabel(label, terminologyName)
             categoryType = colorLogic.GetCategoryTypeFromLabel(label, terminologyName)
             categoryModifier = colorLogic.GetCategoryModifierFromLabel(label, terminologyName)
+            self.terminologyRegion.setText(region)
+            self.terminologyRegionModifier.setText(regionModifier)
             self.terminologyCategory.setText(category)
             self.terminologyCategoryType.setText(categoryType)
             self.terminologyCategoryModifier.setText(categoryModifier)
+            # if no region information, hide the region panel
+            if region is "" and regionModifier is "":
+              self.terminologyRegionFrame.setHidden(1)
+            else:
+              self.terminologyRegionFrame.setHidden(0)
         else:
           self.hideTerminology(1)
 
@@ -229,5 +231,3 @@ class EditColor(VTKObservationMixin):
 
   def hideTerminology(self, flag):
     self.terminologyCollapsibleButton.collapsed = flag
-    # for now, always hide the region
-    self.terminologyRegionFrame.setHidden(1)

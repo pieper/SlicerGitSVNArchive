@@ -139,15 +139,21 @@ bool TestTerminology()
   // create a new terminology
   std::string pelvisLUTName = "PelvisColor";
   std::cout << "Creating a terminology for lut named " << pelvisLUTName << std::endl;
+  std::string regionValue = "T-02480";
+  std::string regionMeaning = "Skin of abdomen";
+  std::string regionScheme= "SRT";
   std::string catValue = "T-D0050";
   std::string catMeaning = "Tissue";
   std::string catScheme = "SRT";
   std::string typeValue = "T-01000";
   std::string typeMeaning = "Skin";
   std::string typeScheme = "SRT";
-  std::string modMeaning, modValue, modScheme;
+  std::string regionModMeaning, regionModValue, regionModScheme, modMeaning, modValue, modScheme;
   std::cout << "Testing AddTermToTerminology:" << std::endl;
-  if (!colorLogic->AddTermToTerminology(pelvisLUTName, 1, catValue, catMeaning, catScheme,
+  if (!colorLogic->AddTermToTerminology(pelvisLUTName, 1,
+                                        regionValue, regionMeaning, regionScheme,
+                                        regionModValue, regionModMeaning, regionModScheme,
+                                        catValue, catMeaning, catScheme,
                                         typeValue, typeMeaning, typeScheme,
                                         modMeaning, modValue, modScheme))
     {
@@ -183,7 +189,13 @@ bool TestTerminology()
     }
   pelvisLabelCat.PrintSelf(std::cout);
   // check the strings
-  if (pelvisLabelCat.SegmentedPropertyCategory.CodeMeaning.compare(catMeaning) &&
+  if (pelvisLabelCat.AnatomicRegion.CodeMeaning.compare(regionMeaning) &&
+    pelvisLabelCat.AnatomicRegion.CodeValue.compare(regionValue) &&
+    pelvisLabelCat.AnatomicRegion.CodingSchemeDesignator.compare(regionScheme) &&
+    pelvisLabelCat.AnatomicRegionModifier.CodeMeaning.compare(regionModMeaning) &&
+    pelvisLabelCat.AnatomicRegionModifier.CodeValue.compare(regionModValue) &&
+    pelvisLabelCat.AnatomicRegionModifier.CodingSchemeDesignator.compare(regionModScheme) &&
+    pelvisLabelCat.SegmentedPropertyCategory.CodeMeaning.compare(catMeaning) &&
     pelvisLabelCat.SegmentedPropertyCategory.CodeValue.compare(catValue) &&
     pelvisLabelCat.SegmentedPropertyCategory.CodingSchemeDesignator.compare(catScheme) &&
     pelvisLabelCat.SegmentedPropertyType.CodeMeaning.compare(typeMeaning) &&
@@ -214,7 +226,13 @@ bool TestTerminology()
     }
   missingPelvisLabelCat.PrintSelf(std::cout);
   // check all are empty strings
-  if (missingPelvisLabelCat.SegmentedPropertyCategory.CodeMeaning.length() ||
+  if (missingPelvisLabelCat.AnatomicRegion.CodeMeaning.length() ||
+    missingPelvisLabelCat.AnatomicRegion.CodeValue.length() ||
+    missingPelvisLabelCat.AnatomicRegion.CodingSchemeDesignator.length() ||
+    missingPelvisLabelCat.AnatomicRegionModifier.CodeMeaning.length() ||
+    missingPelvisLabelCat.AnatomicRegionModifier.CodeValue.length() ||
+    missingPelvisLabelCat.AnatomicRegionModifier.CodingSchemeDesignator.length() ||
+    missingPelvisLabelCat.SegmentedPropertyCategory.CodeMeaning.length() ||
     missingPelvisLabelCat.SegmentedPropertyCategory.CodeValue.length() ||
     missingPelvisLabelCat.SegmentedPropertyCategory.CodingSchemeDesignator.length() ||
     missingPelvisLabelCat.SegmentedPropertyType.CodeMeaning.length() ||
