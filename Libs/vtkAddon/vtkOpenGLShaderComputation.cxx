@@ -91,30 +91,38 @@ static GLuint CompileShader ( vtkOpenGLShaderComputation *self, GLenum type, con
 
   // Compile the shader
   glCompileShader ( shader );
+  vtkOpenGLStaticCheckErrorMacro("after compiling shader");
 
   // Check the compile status
   glGetShaderiv ( shader, GL_COMPILE_STATUS, &compiled );
-
   if ( !compiled )
     {
     GLint infoLen = 0;
-
     glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &infoLen );
-
     if ( infoLen > 1 )
       {
       char *infoLog = (char *) malloc ( sizeof ( char ) * infoLen );
-
       glGetShaderInfoLog ( shader, infoLen, NULL, infoLog );
-      vtkErrorWithObjectMacro (self, "Error compiling shader\n" << infoLog );
-
+      switch(type)
+        {
+        case GL_VERTEX_SHADER:
+          vtkErrorWithObjectMacro (self, "Error compiling vertex shader\n" << infoLog );
+          break;
+        case GL_FRAGMENT_SHADER:
+          vtkErrorWithObjectMacro (self, "Error compiling fragment shader\n" << infoLog );
+          break;
+        default:
+          vtkErrorWithObjectMacro (self, "Error compiling unknown shader type!\n" << infoLog );
+          break;
+        }
       free ( infoLog );
       }
-
+      vtkOpenGLStaticCheckErrorMacro("after checking compile status");
       glDeleteShader ( shader );
       vtkOpenGLStaticCheckErrorMacro("after deleting bad shader");
       return 0;
     }
+
   vtkOpenGLStaticCheckErrorMacro("after compiling shader");
   return shader;
 }
