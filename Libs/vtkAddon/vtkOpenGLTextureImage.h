@@ -62,6 +62,11 @@ public:
   vtkGetMacro(TextureName, vtkTypeUInt32);
 
   // Description:
+  // True (default) to interpolate samples
+  vtkGetMacro(Interpolate, int);
+  vtkSetMacro(Interpolate, int);
+
+  // Description:
   // Make the image data available as GL_TEXTUREn
   // where n is the texture unit.  There are at least
   // GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, which is variable
@@ -115,6 +120,7 @@ private:
   vtkOpenGLShaderComputation *ShaderComputation;
   vtkImageData *ImageData;
   vtkTypeUInt32 TextureName;
+  int Interpolate;
   unsigned long TextureMTime;
 
 };
