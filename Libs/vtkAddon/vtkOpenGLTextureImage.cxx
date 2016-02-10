@@ -255,6 +255,26 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
 }
 
 //----------------------------------------------------------------------------
+void vtkOpenGLTextureImage::Get()
+{
+
+  vtkOpenGLCheckErrorMacro("before getting");
+
+  if (!this->ShaderComputation || !this->ShaderComputation->GetInitialized())
+    {
+    vtkErrorMacro("No initialized ShaderComputation instance is set.");
+    return;
+    }
+  this->ShaderComputation->GetRenderWindow()->MakeCurrent();
+
+  // TODO:
+  glActiveTexture(GL_TEXTURE0 + unit);
+  glBindTexture(GL_TEXTURE_3D, this->TextureName);
+
+  vtkOpenGLCheckErrorMacro("after getting");
+}
+
+//----------------------------------------------------------------------------
 void vtkOpenGLTextureImage::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
