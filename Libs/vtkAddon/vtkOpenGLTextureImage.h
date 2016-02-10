@@ -97,10 +97,9 @@ public:
   void AttachAsDrawTarget(int layer=0, int attachement=0, int attachmentIndex=0);
 
   // Description:
-  // TODO
   // Read the texture data back into the image data
   // (assumes it has been written as a target)
-  //void Get();
+  void Get();
 
   // Description:
   // TODO: options for min and mag filter, wrapping...
