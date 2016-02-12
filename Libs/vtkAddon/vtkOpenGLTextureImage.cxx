@@ -255,7 +255,7 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
 }
 
 //----------------------------------------------------------------------------
-void vtkOpenGLTextureImage::Get()
+void vtkOpenGLTextureImage::ReadBack()
 {
 
   vtkOpenGLCheckErrorMacro("before getting");
@@ -267,9 +267,37 @@ void vtkOpenGLTextureImage::Get()
     }
   this->ShaderComputation->GetRenderWindow()->MakeCurrent();
 
+  int componentCount = this->ImageData->GetNumberOfScalarComponents();
+  GLenum format;
+  if ( componentCount == 1 )
+    {
+    format = GL_LUMINANCE;
+    }
+  else if ( componentCount == 4 )
+    {
+    format = GL_RGBA;
+    }
+  else
+    {
+    vtkErrorMacro("Must have 1 or 4 component image data for texture");
+    return;
+    }
+
+  vtkPointData *pointData = this->ImageData->GetPointData();
+  vtkDataArray *scalars = pointData->GetScalars();
+  void *pixels = scalars->GetVoidPointer(0);
+
   // TODO:
-  glActiveTexture(GL_TEXTURE0 + unit);
   glBindTexture(GL_TEXTURE_3D, this->TextureName);
+
+  glGetTexImage(
+    /* target */ GL_TEXTURE_3D,
+    /* level */  0,
+    /* format */ format,
+    /* type */   vtkScalarTypeToGLType(this->ImageData->GetScalarType()),
+    /* pixels */ pixels);
+
+  pointData->Modified();
 
   vtkOpenGLCheckErrorMacro("after getting");
 }
