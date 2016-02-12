@@ -99,7 +99,10 @@ public:
   // Description:
   // Read the texture data back into the image data
   // (assumes it has been written as a target)
-  void Get();
+  // Warning: probably best to only use this to read back into the same buffer that was used
+  // when the data was uploaded (i.e. this will assume that the vtkImageData buffer pointer
+  // is the right size for the data).
+  void ReadBack();
 
   // Description:
   // TODO: options for min and mag filter, wrapping...
