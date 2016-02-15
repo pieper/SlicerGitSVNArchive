@@ -341,7 +341,7 @@ void vtkOpenGLShaderComputation::ReleaseResultRenderbuffer()
 //----------------------------------------------------------------------------
 // Perform the computation
 //
-void vtkOpenGLShaderComputation::Compute()
+void vtkOpenGLShaderComputation::Compute(float slice)
 {
   // bail out early if we aren't configured corretly
   if (this->VertexShaderSource == NULL || this->FragmentShaderSource == NULL)
@@ -438,6 +438,14 @@ void vtkOpenGLShaderComputation::Compute()
       }
     }
   vtkOpenGLCheckErrorMacro("after setting texture unit uniforms");
+
+  // pass in the slice location.
+  // TODO: generalize uniform arguments, create vtkVariantMap
+  GLint sliceLocation = glGetUniformLocation(this->ProgramObject, "slice");
+  if ( sliceLocation >= 0 )
+    {
+    glUniform1f(sliceLocation, slice);
+    }
 
   //
   // GO!

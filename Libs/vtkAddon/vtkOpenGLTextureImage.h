@@ -77,6 +77,10 @@ public:
   void Activate(vtkTypeUInt32 unit);
 
   // Description:
+  // Creates/transfers image data to texture if needed.
+  bool UpdateTexture();
+
+  // Description:
   // Make the specified layer (slice) be the draw target.
   // This is used to direct the output of the shading into
   // the specified slice of the texture and can be used to
@@ -110,10 +114,6 @@ public:
 protected:
   vtkOpenGLTextureImage();
   ~vtkOpenGLTextureImage();
-
-  // Description:
-  // Creates/transfers image data to texture if needed.
-  bool UpdateTexture();
 
 private:
   vtkOpenGLTextureImage(const vtkOpenGLTextureImage&);  // Not implemented.
