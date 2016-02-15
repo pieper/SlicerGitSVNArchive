@@ -228,6 +228,7 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
 
   vtkOpenGLClearErrorMacro();
 
+  glBindTexture(GL_TEXTURE_3D, this->TextureName);
   vtkgl::FramebufferTexture3D(
     /* target */      vtkgl::FRAMEBUFFER,
     /* attachment */  vtkgl::COLOR_ATTACHMENT0,
