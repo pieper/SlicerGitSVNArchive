@@ -241,6 +241,8 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
   // https://www.opengl.org/wiki/Framebuffer_Object_Examples
   //
 
+  this->RenderWindow->MakeCurrent();
+
   int resultDimensions[3];
   this->ResultImageData->GetDimensions(resultDimensions);
 
