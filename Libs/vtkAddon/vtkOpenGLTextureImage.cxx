@@ -86,6 +86,13 @@ static GLenum vtkScalarTypeToGLType(int vtk_scalar_type)
 //
 bool vtkOpenGLTextureImage::UpdateTexture()
 {
+  if (!this->ShaderComputation || !this->ShaderComputation->GetInitialized())
+    {
+    vtkErrorMacro("No initialized ShaderComputation instance is set.");
+    return false;
+    }
+  this->ShaderComputation->MakeCurrent();
+
   if (this->ImageData->GetMTime() > this->TextureMTime)
     {
     if (this->TextureName != 0)
@@ -171,7 +178,7 @@ void vtkOpenGLTextureImage::Activate(vtkTypeUInt32 unit)
     vtkErrorMacro("No initialized ShaderComputation instance is set.");
     return;
     }
-  this->ShaderComputation->GetRenderWindow()->MakeCurrent();
+  this->ShaderComputation->MakeCurrent();
 
   // TODO: check the actual number (also expose way to check the
   // number from a wrapped language).  For now use the minimum max value.
@@ -208,7 +215,7 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
     vtkErrorMacro("No initialized ShaderComputation instance is set.");
     return;
     }
-  this->ShaderComputation->GetRenderWindow()->MakeCurrent();
+  this->ShaderComputation->MakeCurrent();
 
   // attachment is 0 (color), 1 (depth), 2 (stencil), 3 (depth-stencil)
   if (attachmentIndex != 0 || attachment != 0)
@@ -266,7 +273,7 @@ void vtkOpenGLTextureImage::ReadBack()
     vtkErrorMacro("No initialized ShaderComputation instance is set.");
     return;
     }
-  this->ShaderComputation->GetRenderWindow()->MakeCurrent();
+  this->ShaderComputation->MakeCurrent();
 
   int componentCount = this->ImageData->GetNumberOfScalarComponents();
   GLenum format;

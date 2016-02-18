@@ -42,6 +42,10 @@ public:
   void Initialize(vtkRenderWindow *renderWindow);
 
   // Description:
+  // Make this the target for OpenGL operations
+  void MakeCurrent();
+
+  // Description:
   // Rebuild the shader program if needed
   bool UpdateProgram();
 
