@@ -48,6 +48,7 @@ vtkOpenGLShaderComputation::vtkOpenGLShaderComputation()
 //----------------------------------------------------------------------------
 vtkOpenGLShaderComputation::~vtkOpenGLShaderComputation()
 {
+  this->MakeCurrent();
   //Bind 0, which means render to back buffer, as a result, this->FramebufferID is unbound
   vtkgl::BindFramebuffer(vtkgl::FRAMEBUFFER, 0);
   if (this->FramebufferID != 0)
@@ -67,12 +68,28 @@ vtkOpenGLShaderComputation::~vtkOpenGLShaderComputation()
 }
 
 //----------------------------------------------------------------------------
+// Make sure OpenGL calls are sent to our render context
+//
+void vtkOpenGLShaderComputation::MakeCurrent()
+{
+  if (this->RenderWindow)
+    {
+    this->RenderWindow->MakeCurrent();
+    }
+  else
+    {
+    vtkErrorMacro ( "Trying to make current but render window is null" );
+    }
+}
+
+//----------------------------------------------------------------------------
 ///
 // Create a shader object, load the shader source, and
 // compile the shader.
 //
 static GLuint CompileShader ( vtkOpenGLShaderComputation *self, GLenum type, const char *shaderSource )
 {
+  self->MakeCurrent();
   vtkOpenGLClearErrorMacro();
 
   GLuint shader;
@@ -136,6 +153,8 @@ bool vtkOpenGLShaderComputation::UpdateProgram()
   GLuint vertexShader;
   GLuint fragmentShader;
   GLint linked;
+
+  this->MakeCurrent();
 
   if (this->GetMTime() > this->ProgramObjectMTime)
     {
@@ -218,6 +237,8 @@ void vtkOpenGLShaderComputation::Initialize(vtkRenderWindow *renderWindow)
     return;
     }
 
+  this->MakeCurrent();
+
   // load required extensions
   vtkOpenGLClearErrorMacro();
   vtkOpenGLExtensionManager *extensions = openGLRenderWindow->GetExtensionManager();
@@ -241,7 +262,7 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
   // https://www.opengl.org/wiki/Framebuffer_Object_Examples
   //
 
-  this->RenderWindow->MakeCurrent();
+  this->MakeCurrent();
 
   int resultDimensions[3];
   this->ResultImageData->GetDimensions(resultDimensions);
@@ -327,6 +348,8 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
 //----------------------------------------------------------------------------
 void vtkOpenGLShaderComputation::ReleaseResultRenderbuffer()
 {
+
+  this->MakeCurrent();
   vtkOpenGLClearErrorMacro();
   //Delete temp resources
   if (this->ColorRenderbufferID != 0)
@@ -353,7 +376,7 @@ void vtkOpenGLShaderComputation::Compute(float slice)
     }
 
   // ensure that all our OpenGL calls go to the correct context
-  this->RenderWindow->MakeCurrent();
+  this->MakeCurrent();
 
   //
   // Does the GPU support current Framebuffer configuration?
@@ -465,6 +488,8 @@ void vtkOpenGLShaderComputation::Compute(float slice)
 //----------------------------------------------------------------------------
 void vtkOpenGLShaderComputation::ReadResult()
 {
+
+  this->MakeCurrent();
   vtkOpenGLClearErrorMacro();
   // check and set up the result area
   if (this->ResultImageData == NULL
