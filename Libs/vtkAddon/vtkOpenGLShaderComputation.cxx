@@ -122,7 +122,6 @@ static GLuint CompileShader ( vtkOpenGLShaderComputation *self, GLenum type, con
       vtkOpenGLStaticCheckErrorMacro("after deleting bad shader");
       return 0;
     }
-
   vtkOpenGLStaticCheckErrorMacro("after compiling shader");
   return shader;
 }
