@@ -42,10 +42,10 @@ if(BUILD_TESTING)
       qSlicerScriptedLoadableModuleTest.cxx
       qSlicerScriptedLoadableModuleWidgetTest.cxx
       )
-    QT4_GENERATE_MOCS(${KIT_TEST_MOC_SRCS})
+    QT5_GENERATE_MOCS(${KIT_TEST_MOC_SRCS})
   endif()
 
-  QT4_ADD_RESOURCES(Tests Resources/${KIT}Testing.qrc)
+  QT5_ADD_RESOURCES(Tests Resources/${KIT}Testing.qrc)
 
   add_executable(${KIT}CxxTests ${Tests})
   target_link_libraries(${KIT}CxxTests ${KIT})

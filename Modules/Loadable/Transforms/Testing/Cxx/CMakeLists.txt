@@ -6,7 +6,7 @@ set(KIT_TEST_SRCS
   )
 
 #-----------------------------------------------------------------------------
-QT4_GENERATE_MOCS(
+QT5_GENERATE_MOCS(
   qSlicer${MODULE_NAME}ModuleWidgetTest.cxx
   )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

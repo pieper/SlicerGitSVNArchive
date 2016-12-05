@@ -12,7 +12,7 @@ set(KIT_TEST_SRCS
   vtkSlicerModelsLogicAddFileTest
   )
 
-QT4_GENERATE_MOCS(
+QT5_GENERATE_MOCS(
   qSlicerModelsModuleWidgetTest.cxx
   )
 

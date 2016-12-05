@@ -137,8 +137,8 @@ set(Tests_UtilityFiles
   qMRMLNodeObject.h
   )
 
-QT4_WRAP_CPP(Tests_MOC_CXX ${Tests_MOC_SRCS})
-QT4_GENERATE_MOCS(
+QT5_WRAP_CPP(Tests_MOC_CXX ${Tests_MOC_SRCS})
+QT5_GENERATE_MOCS(
   qMRMLCheckableNodeComboBoxTest.cxx
   qMRMLColorModelTest.cxx
   qMRMLDisplayNodeViewComboBoxTest.cxx

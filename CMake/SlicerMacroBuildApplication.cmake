@@ -138,10 +138,10 @@ macro(slicerMacroBuildAppLibrary)
   #-----------------------------------------------------------------------------
   # Sources
   # --------------------------------------------------------------------------
-  QT4_WRAP_CPP(SLICERAPPLIB_MOC_OUTPUT ${SLICERAPPLIB_MOC_SRCS})
-  QT4_WRAP_UI(SLICERAPPLIB_UI_CXX ${SLICERAPPLIB_UI_SRCS})
+  QT5_WRAP_CPP(SLICERAPPLIB_MOC_OUTPUT ${SLICERAPPLIB_MOC_SRCS})
+  QT5_WRAP_UI(SLICERAPPLIB_UI_CXX ${SLICERAPPLIB_UI_SRCS})
   if(DEFINED SLICERAPPLIB_RESOURCES)
-    QT4_ADD_RESOURCES(SLICERAPPLIB_QRC_SRCS ${SLICERAPPLIB_RESOURCES})
+    QT5_ADD_RESOURCES(SLICERAPPLIB_QRC_SRCS ${SLICERAPPLIB_RESOURCES})
   endif(DEFINED SLICERAPPLIB_RESOURCES)
 
   set_source_files_properties(

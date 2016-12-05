@@ -80,9 +80,9 @@ macro(SlicerMacroTranslation)
   # ---------------------------------------------------------------------------------
 
   if(Slicer_UPDATE_TRANSLATION)
-    QT4_CREATE_TRANSLATION(QM_OUTPUT_FILES ${FILES_TO_TRANSLATE} ${TS_FILES})
+    QT5_CREATE_TRANSLATION(QM_OUTPUT_FILES ${FILES_TO_TRANSLATE} ${TS_FILES})
   else()
-    QT4_ADD_TRANSLATION(QM_OUTPUT_FILES ${TS_FILES})
+    QT5_ADD_TRANSLATION(QM_OUTPUT_FILES ${TS_FILES})
   endif()
 
   # ---------------------------------------------------------------------------------

@@ -34,24 +34,24 @@ if(BUILD_TESTING)
     EXTRA_INCLUDE vtkMRMLDebugLeaksMacro.h
     )
 
-  QT4_GENERATE_MOCS(
+  QT5_GENERATE_MOCS(
     qSlicerSslTest.cxx
     )
 
   if(Slicer_BUILD_EXTENSIONMANAGER_SUPPORT)
-    QT4_GENERATE_MOCS(
+    QT5_GENERATE_MOCS(
       qSlicerExtensionsManagerModelTest.cxx
       qSlicerPersistentCookieJarTest.cxx
       )
   endif()
 
   if(Slicer_USE_PYTHONQT)
-    QT4_GENERATE_MOCS(
+    QT5_GENERATE_MOCS(
       qSlicerCorePythonManagerWithoutApplicationTest.cxx
       )
   endif()
 
-  QT4_ADD_RESOURCES(Tests Resources/${KIT}Testing.qrc)
+  QT5_ADD_RESOURCES(Tests Resources/${KIT}Testing.qrc)
 
   set(KIT_TEST_TARGET_LIBRARIES ${KIT})
   if(CTK_QT_VERSION VERSION_GREATER "4")

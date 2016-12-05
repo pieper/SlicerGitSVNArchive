@@ -370,9 +370,15 @@ if(Slicer_USE_QtTesting)
     )
 endif()
 
-QT4_WRAP_CPP(MRMLWidgets_MOC_CXX ${MRMLWidgets_MOC_SRCS})
-QT4_WRAP_UI(MRMLWidgets_UI_CXX ${MRMLWidgets_UI_SRCS})
-QT4_ADD_RESOURCES(MRMLWidgets_QRC_CXX ${MRMLWidgets_QRC_SRCS})
+if(Slicer_QT_VERSION STREQUAL "4")
+  QT4_WRAP_CPP(MRMLWidgets_MOC_CXX ${MRMLWidgets_MOC_SRCS})
+  QT4_WRAP_UI(MRMLWidgets_UI_CXX ${MRMLWidgets_UI_SRCS})
+  QT4_ADD_RESOURCES(MRMLWidgets_QRC_CXX ${MRMLWidgets_QRC_SRCS})
+else()
+  QT5_WRAP_CPP(MRMLWidgets_MOC_CXX ${MRMLWidgets_MOC_SRCS})
+  QT5_WRAP_UI(MRMLWidgets_UI_CXX ${MRMLWidgets_UI_SRCS})
+  QT5_ADD_RESOURCES(MRMLWidgets_QRC_CXX ${MRMLWidgets_QRC_SRCS})
+endif()
 
 source_group("Resources" FILES
   ${MRMLWidgets_UI_SRCS}
