@@ -160,6 +160,9 @@ mark_as_superbuild(GIT_EXECUTABLE)
 #-----------------------------------------------------------------------------
 # Qt requirements
 #-----------------------------------------------------------------------------
+
+set(Slicer_QT_VERSION "4" CACHE STRING "Version of Qt (use 4 or 5)")
+
 if(NOT DEFINED Slicer_REQUIRED_QT_VERSION)
   set(Slicer_REQUIRED_QT_VERSION "4.7.4" CACHE STRING "Minimum required Qt version" FORCE)
 endif()

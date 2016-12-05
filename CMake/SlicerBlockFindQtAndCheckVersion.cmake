@@ -19,34 +19,42 @@
 ################################################################################
 
 #
-# The CMake code used to find Qt4 has been factored out into this CMake script so that
+# The CMake code used to find Qt has been factored out into this CMake script so that
 # it can be used in both Slicer/CMakelists.txt and Slicer/UseSlicer.cmake
 #
 
 macro(__SlicerBlockFindQtAndCheckVersion_find_qt)
-  find_package(Qt4)
-  if(NOT QT4_FOUND)
-    message(FATAL_ERROR "error: Qt ${Slicer_REQUIRED_QT_VERSION} was not found on your system."
-                        "You probably need to set the QT_QMAKE_EXECUTABLE variable.")
-  endif()
-
-  # Check version
-  if("${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}" VERSION_LESS "${Slicer_REQUIRED_QT_VERSION}")
-    message(FATAL_ERROR "error: Slicer requires at least Qt ${Slicer_REQUIRED_QT_VERSION} "
-                        "-- you cannot use Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}. ${extra_error_message}")
-  endif()
-
-  set(command_separated_module_list)
-  # Check if all expected Qt modules have been discovered
-  foreach(module ${Slicer_REQUIRED_QT_MODULES})
-    if(NOT "${QT_${module}_FOUND}")
-      message(FATAL_ERROR "error: Missing Qt module ${module}")
+  if (Slicer_QT_VERSION STREQUAL "4")
+    find_package(${Qt4})
+    if(NOT QT4_FOUND)
+      message(FATAL_ERROR "error: Qt ${Slicer_REQUIRED_QT_VERSION} was not found on your system."
+                          "You probably need to set the QT_QMAKE_EXECUTABLE variable.")
     endif()
-    if(NOT ${module} STREQUAL "QTCORE" AND NOT ${module} STREQUAL "QTGUI")
-      set(QT_USE_${module} ON)
+
+    # Check version
+    if("${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}" VERSION_LESS "${Slicer_REQUIRED_QT_VERSION}")
+      message(FATAL_ERROR "error: Slicer requires at least Qt ${Slicer_REQUIRED_QT_VERSION} "
+                          "-- you cannot use Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}. ${extra_error_message}")
     endif()
-    set(command_separated_module_list "${command_separated_module_list}${module}, ")
-  endforeach()
+
+    set(command_separated_module_list)
+    # Check if all expected Qt modules have been discovered
+    foreach(module ${Slicer_REQUIRED_QT_MODULES})
+      if(NOT "${QT_${module}_FOUND}")
+        message(FATAL_ERROR "error: Missing Qt module ${module}")
+      endif()
+      if(NOT ${module} STREQUAL "QTCORE" AND NOT ${module} STREQUAL "QTGUI")
+        set(QT_USE_${module} ON)
+      endif()
+      set(command_separated_module_list "${command_separated_module_list}${module}, ")
+    endforeach()
+
+    include(${QT_USE_FILE})
+
+  else()
+    set(Slicer_QT5_COMPONENTS Core Xml XmlPatterns Concurrent Sql Test Widgets OpenGL UiTools WebEngine WebEngineWidgets Script)
+    find_package(Qt5 COMPONENTS ${Slicer_QT5_COMPONENTS} REQUIRED)
+  endif()
 endmacro()
 
 # Sanity checks - Check if variable are defined
@@ -86,8 +94,6 @@ if(DEFINED CTK_QT_QMAKE_EXECUTABLE)
 endif()
 
 __SlicerBlockFindQtAndCheckVersion_find_qt()
-
-include(${QT_USE_FILE})
 
 set(_project_name ${Slicer_MAIN_PROJECT_APPLICATION_NAME})
 if(NOT Slicer_SOURCE_DIR)
