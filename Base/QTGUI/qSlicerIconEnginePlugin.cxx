@@ -21,7 +21,7 @@
 #include "qSlicerIconEnginePlugin.h"
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerIconEnginePlugin, qSlicerIconEnginePlugin)
+Q_EXPORT_PLUGIN2(qSlicerIconEnginePlugin, qSlicerIconEnginePlugin);
 
 //------------------------------------------------------------------------------
 qSlicerIconEnginePlugin::qSlicerIconEnginePlugin(QObject* parentObject)
