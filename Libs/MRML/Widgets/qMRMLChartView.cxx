@@ -21,7 +21,6 @@
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QToolButton>
-#include <QWebFrame>
 
 // STD includes
 #include <vector>
