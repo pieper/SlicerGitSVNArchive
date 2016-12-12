@@ -63,9 +63,9 @@ void qMRMLColorTableViewPrivate::init()
 
   q->setSelectionBehavior(QAbstractItemView::SelectRows);
   q->horizontalHeader()->setStretchLastSection(false);
-  q->horizontalHeader()->setResizeMode(qMRMLColorModel::ColorColumn, QHeaderView::ResizeToContents);
-  q->horizontalHeader()->setResizeMode(qMRMLColorModel::LabelColumn, QHeaderView::Stretch);
-  q->horizontalHeader()->setResizeMode(qMRMLColorModel::OpacityColumn, QHeaderView::ResizeToContents);
+  //q->horizontalHeader()->setResizeMode(qMRMLColorModel::ColorColumn, QHeaderView::ResizeToContents);
+  //q->horizontalHeader()->setResizeMode(qMRMLColorModel::LabelColumn, QHeaderView::Stretch);
+  //q->horizontalHeader()->setResizeMode(qMRMLColorModel::OpacityColumn, QHeaderView::ResizeToContents);
 
   q->setItemDelegate(new qMRMLItemDelegate(q));
 }

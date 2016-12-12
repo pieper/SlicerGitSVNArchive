@@ -33,10 +33,10 @@
 class QNetworkReply;
 class qSlicerWebWidgetPrivate;
 class QUrl;
-class QWebView;
+class QWebEngineView;
 
 #ifdef QT_NO_OPENSSL
-struct QSslError{};
+//struct QSslError{};
 #endif
 
 class Q_SLICER_BASE_QTGUI_EXPORT qSlicerWebWidget
@@ -53,8 +53,8 @@ public:
   /// Destructor
   virtual ~qSlicerWebWidget();
 
-  /// Return a reference to the QWebView used internally.
-  Q_INVOKABLE QWebView * webView();
+  /// Return a reference to the QWebEngineView used internally.
+  Q_INVOKABLE QWebEngineView * webEngineView();
 
   /// Convenient function to evaluate JS in main frame context
   QString evalJS(const QString &js);

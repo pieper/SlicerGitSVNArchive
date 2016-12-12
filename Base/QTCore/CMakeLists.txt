@@ -167,6 +167,7 @@ set(KIT_target_libraries
   CTKImageProcessingITKCore
   CTKVisualizationVTKCore
   ${ITK_LIBRARIES}
+  Qt5::Network
   )
 
 if(Slicer_BUILD_DICOM_SUPPORT)

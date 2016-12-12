@@ -79,8 +79,8 @@ void qMRMLNodeAttributeTableViewPrivate::init()
   this->setMessage(QString());
 
   // Set up initial look of node attributes table
-  this->NodeAttributesTable->horizontalHeader()->setResizeMode(
-    QHeaderView::ResizeToContents);
+  //this->NodeAttributesTable->horizontalHeader()->setResizeMode(
+    //QHeaderView::ResizeToContents);
 }
 
 // --------------------------------------------------------------------------

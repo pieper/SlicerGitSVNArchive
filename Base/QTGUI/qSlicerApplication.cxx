@@ -122,7 +122,7 @@ public:
   /// ErrorLogModel - It should exist only one instance of the ErrorLogModel
   QSharedPointer<ctkErrorLogModel>            ErrorLogModel;
 
-  QWeakPointer<qSlicerLayoutManager> LayoutManager;
+  QSharedPointer<qSlicerLayoutManager> LayoutManager;
   ctkToolTipTrapper*      ToolTipTrapper;
   ctkSettingsDialog*      SettingsDialog;
 #ifdef Slicer_BUILD_EXTENSIONMANAGER_SUPPORT
@@ -460,7 +460,7 @@ ctkQtTestingUtility* qSlicerApplication::testingUtility()
 void qSlicerApplication::setLayoutManager(qSlicerLayoutManager* layoutManager)
 {
   Q_D(qSlicerApplication);
-  d->LayoutManager = layoutManager;
+  d->LayoutManager = QSharedPointer<qSlicerLayoutManager>(layoutManager);
   if (this->applicationLogic())
     {
     this->applicationLogic()->SetSliceLogics(

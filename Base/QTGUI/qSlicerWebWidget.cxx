@@ -24,7 +24,7 @@
 #include <QNetworkReply>
 #include <QTime>
 #include <QUrl>
-#include <QWebFrame>
+#include <QWebEngineSettings>
 
 // QtCore includes
 #include <qSlicerPersistentCookieJar.h>
@@ -45,9 +45,6 @@ public:
 
   void init();
 
-  /// Convenient function to return the mainframe
-  QWebFrame* mainFrame();
-
   /// Convenient method to set "document.webkitHidden" property
   void setDocumentWebkitHidden(bool value);
 
@@ -66,44 +63,36 @@ void qSlicerWebWidgetPrivate::init()
   Q_Q(qSlicerWebWidget);
 
   this->setupUi(q);
-  this->WebView->installEventFilter(q);
+  this->WebEngineView->installEventFilter(q);
 
-  QNetworkAccessManager * networkAccessManager = this->WebView->page()->networkAccessManager();;
-  Q_ASSERT(networkAccessManager);
-  networkAccessManager->setCookieJar(new qSlicerPersistentCookieJar());
+  //this->WebEngineView->page()->setCookieJar(new qSlicerPersistentCookieJar());
 
-  QObject::connect(this->WebView, SIGNAL(loadStarted()),
+  QObject::connect(this->WebEngineView, SIGNAL(loadStarted()),
                    q, SLOT(onLoadStarted()));
 
-  QObject::connect(this->WebView, SIGNAL(loadFinished(bool)),
+  QObject::connect(this->WebEngineView, SIGNAL(loadFinished(bool)),
                    q, SLOT(onLoadFinished(bool)));
 
-  QObject::connect(this->WebView, SIGNAL(loadProgress(int)),
+  QObject::connect(this->WebEngineView, SIGNAL(loadProgress(int)),
                    this->ProgressBar, SLOT(setValue(int)));
 
-  QObject::connect(this->mainFrame(), SIGNAL(javaScriptWindowObjectCleared()),
-                   q, SLOT(initJavascript()));
+  //QObject::connect(this, SIGNAL(javaScriptWindowObjectCleared()),
+                   //q, SLOT(initJavascript()));
 
-  this->WebView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+  //this->WebEngineView->settings()->setAttribute(QWebEngineSettings::DeveloperExtrasEnabled, true);
 
   this->ProgressBar->setVisible(false);
 
-  this->mainFrame()->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOn);
+  //this->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOn);
 
-  QObject::connect(this->WebView->page(), SIGNAL(linkClicked(QUrl)),
+  QObject::connect(this->WebEngineView->page(), SIGNAL(linkClicked(QUrl)),
                    q, SLOT(onLinkClicked(QUrl)));
 
 #ifdef Slicer_USE_PYTHONQT_WITH_OPENSSL
-  QObject::connect(networkAccessManager,
+  QObject::connect(this->WebEngineView->page(),
                    SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError> & )),
                    q, SLOT(handleSslErrors(QNetworkReply*, const QList<QSslError> & )));
 #endif
-}
-
-// --------------------------------------------------------------------------
-QWebFrame* qSlicerWebWidgetPrivate::mainFrame()
-{
-  return this->WebView->page()->mainFrame();
 }
 
 // --------------------------------------------------------------------------
@@ -128,17 +117,19 @@ qSlicerWebWidget::~qSlicerWebWidget()
 }
 
 // --------------------------------------------------------------------------
-QWebView * qSlicerWebWidget::webView()
+QWebEngineView * qSlicerWebWidget::webEngineView()
 {
   Q_D(qSlicerWebWidget);
-  return d->WebView;
+  return d->WebEngineView;
 }
 
 //-----------------------------------------------------------------------------
 QString qSlicerWebWidget::evalJS(const QString &js)
 {
   Q_D(qSlicerWebWidget);
-  return d->mainFrame()->evaluateJavaScript(js).toString();
+  //return d->evaluateJavaScript(js).toString();
+  d->WebEngineView->page()->runJavaScript(js, [](const QVariant &result){ qDebug() << "Async javascript result " << result; });
+  return QString("JavaScript now runs async");
 }
 
 // --------------------------------------------------------------------------
@@ -191,7 +182,7 @@ void qSlicerWebWidget::onDownloadFinished(QNetworkReply* reply)
 void qSlicerWebWidget::initJavascript()
 {
   Q_D(qSlicerWebWidget);
-  d->setDocumentWebkitHidden(!d->WebView->isVisible());
+  d->setDocumentWebkitHidden(!d->WebEngineView->isVisible());
 }
 
 // --------------------------------------------------------------------------
@@ -214,7 +205,7 @@ void qSlicerWebWidget::onLoadFinished(bool ok)
 // --------------------------------------------------------------------------
 void qSlicerWebWidget::onLinkClicked(const QUrl& url)
 {
-  this->webView()->setUrl(url);
+  this->webEngineView()->setUrl(url);
 }
 
 // --------------------------------------------------------------------------
@@ -237,11 +228,11 @@ void qSlicerWebWidget::handleSslErrors(QNetworkReply* reply,
 bool qSlicerWebWidget::eventFilter(QObject* obj, QEvent* event)
 {
   Q_D(qSlicerWebWidget);
-  Q_ASSERT(d->WebView == obj);
-  if (d->WebView == obj && !event->spontaneous() &&
+  Q_ASSERT(d->WebEngineView == obj);
+  if (d->WebEngineView == obj && !event->spontaneous() &&
       (event->type() == QEvent::Show || event->type() == QEvent::Hide))
     {
-    d->setDocumentWebkitHidden(!d->WebView->isVisible());
+    d->setDocumentWebkitHidden(!d->WebEngineView->isVisible());
     this->evalJS("if (typeof $ != 'undefined') {"
                  "  $.event.trigger({type: 'webkitvisibilitychange'})"
                  "} else { console.info('JQuery not loaded - Failed to trigger webkitvisibilitychange') }");

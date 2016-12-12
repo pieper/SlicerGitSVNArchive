@@ -92,6 +92,12 @@ set(APP_SRCS
   Main.cxx
   )
 
+# TODO:
+# need to install from
+# Qt/5.7/clang_64/plugins/platforms/libqcocoa*.dylib
+# to
+# Slicer-build/bin/Slicer.app/Contents/MacOS/platforms/
+
 slicerMacroBuildApplication(
   NAME ${PROJECT_NAME}
   APPLICATION_NAME ${${PROJECT_NAME}_APPLICATION_NAME}

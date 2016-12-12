@@ -159,9 +159,10 @@ void qMRMLTableModel::updateModelFromMRML()
   if (table==NULL || table->GetNumberOfColumns()==0)
     {
     // setRowCount and setColumnCount to 0 would not be enough, it's necessary to remove the header as well
+    beginResetModel();
     setRowCount(0);
     setColumnCount(0);
-    reset();
+    endResetModel();
     QObject::connect(this, SIGNAL(itemChanged(QStandardItem*)), this, SLOT(onItemChanged(QStandardItem*)), Qt::UniqueConnection);
     return;
     }

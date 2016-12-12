@@ -429,6 +429,7 @@ add_library(${lib_name}
   ${MRMLWidgets_QRC_CXX}
   )
 
+
 set(MRMLWidgets_LIBRARIES
   ${QT_LIBRARIES}
   ${CTK_LIBRARIES}
@@ -437,6 +438,11 @@ set(MRMLWidgets_LIBRARIES
   )
 list(APPEND MRMLWidgets_LIBRARIES
   vtkRenderingQt
+  )
+
+list(APPEND MRMLWidgets_LIBRARIES
+  Qt5::WebEngineWidgets
+  Qt5::DBus
   )
 
 
@@ -508,7 +514,7 @@ endif()
 # --------------------------------------------------------------------------
 # Qt Designer Plugins
 # --------------------------------------------------------------------------
-add_subdirectory(DesignerPlugins)
+#add_subdirectory(DesignerPlugins)
 
 # --------------------------------------------------------------------------
 # Set INCLUDE_DIRS variable

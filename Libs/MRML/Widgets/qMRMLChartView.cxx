@@ -106,7 +106,8 @@ void qMRMLChartViewPrivate::init()
   q->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
   // Expose the ChartView class to Javascript
-  q->page()->mainFrame()->addToJavaScriptWindowObject(QString("qtobject"), this);
+  // TODO: change to webchannel
+  // q->page()->addToJavaScriptWindowObject(QString("qtobject"), this);
 
   this->PopupWidget = new ctkPopupWidget;
   QHBoxLayout* popupLayout = new QHBoxLayout;
@@ -346,7 +347,8 @@ void qMRMLChartViewPrivate::updateWidgetFromMRML()
 
   // expose this object to the Javascript code so Javascript can call
   // slots in this Qt object, e.g. onDataPointClicked()
-  q->page()->mainFrame()->addToJavaScriptWindowObject(QString("qtobject"), this);
+  // TODO: change to webchannel
+  //q->page()->addToJavaScriptWindowObject(QString("qtobject"), this);
 
 }
 

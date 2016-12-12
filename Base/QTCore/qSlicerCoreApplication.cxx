@@ -23,7 +23,6 @@
 
 // Qt includes
 #include <QDebug>
-#include <QDesktopServices>
 #include <QDir>
 #include <QLocale>
 #include <QMessageBox>
@@ -31,6 +30,7 @@
 #include <QNetworkProxyFactory>
 #include <QResource>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QTranslator>
 
 // For:
@@ -1100,7 +1100,7 @@ QString qSlicerCoreApplication::defaultScenePath() const
   Q_D(const qSlicerCoreApplication);
   QSettings* appSettings = this->userSettings();
   Q_ASSERT(appSettings);
-  QString defaultScenePath = appSettings->value("DefaultScenePath", QDesktopServices::storageLocation(QDesktopServices::DocumentsLocation)).toString();
+  QString defaultScenePath = appSettings->value("DefaultScenePath", QStandardPaths::DocumentsLocation).toString();
   return defaultScenePath;
 }
 

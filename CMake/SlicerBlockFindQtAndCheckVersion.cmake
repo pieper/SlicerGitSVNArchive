@@ -52,8 +52,11 @@ macro(__SlicerBlockFindQtAndCheckVersion_find_qt)
     include(${QT_USE_FILE})
 
   else()
-    set(Slicer_QT5_COMPONENTS Core Xml XmlPatterns Concurrent Sql Test Widgets OpenGL UiTools WebEngine WebEngineWidgets Script)
+
+    set(Slicer_QT5_COMPONENTS Core Xml XmlPatterns Concurrent Sql Test Widgets OpenGL UiTools WebEngine WebEngineWidgets Script DBus)
     find_package(Qt5 COMPONENTS ${Slicer_QT5_COMPONENTS} REQUIRED)
+    message("Found Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} (using modules: ${Slicer_QT5_COMPONENTS})")
+
   endif()
 endmacro()
 

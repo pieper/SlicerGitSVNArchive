@@ -318,18 +318,18 @@ SlicerMacroBuildBaseQtLibrary(
 #
 set(CTK_LIBRARIES CTKWidgets)
 
-ctkMacroBuildQtIconEnginesPlugin(
-  NAME qSlicerIconEnginePlugin
-  EXPORT_DIRECTIVE "Q_SLICER_BASE_QTGUI_ICON_ENGINE_EXPORT"
-  FOLDER "Core-Base"
-  SRCS qSlicerIconEnginePlugin.cxx qSlicerIconEnginePlugin.h
-  MOC_SRCS qSlicerIconEnginePlugin.h
-  TARGET_LIBRARIES ${QT_LIBRARIES} ${CTK_LIBRARIES}
-  )
+#ctkMacroBuildQtIconEnginesPlugin(
+#NAME qSlicerIconEnginePlugin
+#EXPORT_DIRECTIVE "Q_SLICER_BASE_QTGUI_ICON_ENGINE_EXPORT"
+#FOLDER "Core-Base"
+#SRCS qSlicerIconEnginePlugin.cxx qSlicerIconEnginePlugin.h
+#MOC_SRCS qSlicerIconEnginePlugin.h
+#TARGET_LIBRARIES ${QT_LIBRARIES} ${CTK_LIBRARIES}
+#)
 
 # Qt Plugins
-add_subdirectory(DesignerPlugins)
-add_subdirectory(StylePlugins)
+#add_subdirectory(DesignerPlugins)
+#add_subdirectory(StylePlugins)
 
 # Testing
 # Note: Within both Testing/Cxx and Testing/Python, some code is useful to both Slicer and the

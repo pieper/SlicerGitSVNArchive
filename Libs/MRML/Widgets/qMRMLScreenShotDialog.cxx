@@ -145,7 +145,7 @@ qMRMLScreenShotDialog::~qMRMLScreenShotDialog()
 void qMRMLScreenShotDialog::setLayoutManager(qMRMLLayoutManager* newlayoutManager)
 {
   Q_D(qMRMLScreenShotDialog);
-  d->LayoutManager = newlayoutManager;
+  //d->LayoutManager = newlayoutManager;
 }
 
 //-----------------------------------------------------------------------------
