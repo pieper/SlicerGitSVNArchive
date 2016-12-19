@@ -51,9 +51,6 @@
 #include <vtkSmartPointer.h>
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerDataModule, qSlicerDataModule);
-
-//-----------------------------------------------------------------------------
 class qSlicerDataModulePrivate
 {
 public:

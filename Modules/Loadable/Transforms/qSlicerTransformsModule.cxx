@@ -45,10 +45,6 @@
 #include "qSlicerSubjectHierarchyTransformsPlugin.h"
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerTransformsModule, qSlicerTransformsModule);
-
-
-//-----------------------------------------------------------------------------
 class qSlicerTransformsModulePrivate
 {
 public:

@@ -39,9 +39,6 @@
 #include <vtkMRMLScene.h>
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerSubjectHierarchyModule, qSlicerSubjectHierarchyModule);
-
-//-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_SubjectHierarchy
 class qSlicerSubjectHierarchyModulePrivate
 {

@@ -40,9 +40,6 @@
 #include "qSlicerSubjectHierarchyTablesPlugin.h"
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerTablesModule, qSlicerTablesModule);
-
-//-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class qSlicerTablesModulePrivate
 {

@@ -35,9 +35,6 @@
 #include <vtkMRMLViewNode.h>
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerViewControllersModule, qSlicerViewControllersModule);
-
-//-----------------------------------------------------------------------------
 class qSlicerViewControllersModulePrivate
 {
 public:

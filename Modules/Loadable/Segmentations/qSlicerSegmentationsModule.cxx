@@ -54,9 +54,6 @@
 #include "PythonQt.h"
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerSegmentationsModule, qSlicerSegmentationsModule);
-
-//-----------------------------------------------------------------------------
 /// \ingroup SlicerRt_QtModules_Segmentations
 class qSlicerSegmentationsModulePrivate
 {

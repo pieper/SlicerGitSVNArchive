@@ -26,9 +26,6 @@
 #include "qSlicerMultiVolumeRenderingModuleWidget.h"
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerMultiVolumeRenderingModule, qSlicerMultiVolumeRenderingModule);
-
-//-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_MultiVolumeRendering
 class qSlicerMultiVolumeRenderingModulePrivate
 {

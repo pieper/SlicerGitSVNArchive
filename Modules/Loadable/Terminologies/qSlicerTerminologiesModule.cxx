@@ -34,9 +34,6 @@
 #include <qSlicerModuleManager.h>
 
 //-----------------------------------------------------------------------------
-Q_EXPORT_PLUGIN2(qSlicerTerminologiesModule, qSlicerTerminologiesModule);
-
-//-----------------------------------------------------------------------------
 /// \ingroup SlicerRt_QtModules_Terminologies
 class qSlicerTerminologiesModulePrivate
 {
