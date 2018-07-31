@@ -24,7 +24,10 @@
 #ifndef __vtkOpenGLTextureImage_h
 #define __vtkOpenGLTextureImage_h
 
+#include "vtk_glew.h"
+
 #include "vtkOpenGLShaderComputation.h"
+#include "vtkOpenGL.h"
 
 #include "vtkImageData.h"
 
@@ -67,6 +70,11 @@ public:
   vtkSetMacro(Interpolate, int);
 
   // Description:
+  // Texture wrap mode (ClampToEdge, MirroredRepeat)
+  vtkGetMacro(TextureWrap, int);
+  vtkSetMacro(TextureWrap, int);
+
+  // Description:
   // Make the image data available as GL_TEXTUREn
   // where n is the texture unit.  There are at least
   // GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, which is variable
@@ -100,6 +108,12 @@ public:
     };
   void AttachAsDrawTarget(int layer=0, int attachement=0, int attachmentIndex=0);
 
+  enum TextureWrap
+    {
+    ClampToEdge,
+    MirroredRepeat,
+    };
+
   // Description:
   // Read the texture data back into the image data
   // (assumes it has been written as a target)
@@ -108,6 +122,7 @@ public:
   // is the right size for the data).
   void ReadBack();
 
+  static GLenum vtkScalarTypeToGLType(int vtk_scalar_type);
   // Description:
   // TODO: options for min and mag filter, wrapping...
 
@@ -124,6 +139,7 @@ private:
   vtkTypeUInt32 TextureName;
   int Interpolate;
   unsigned long TextureMTime;
+  int TextureWrap;
 
 };
 

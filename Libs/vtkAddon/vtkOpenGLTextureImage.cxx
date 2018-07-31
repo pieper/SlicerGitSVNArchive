@@ -51,7 +51,7 @@ vtkOpenGLTextureImage::~vtkOpenGLTextureImage()
 
 //----------------------------------------------------------------------------
 // adapted from Rendering/OpenGL2/vtkTextureObject.cxx
-static GLenum vtkScalarTypeToGLType(int vtk_scalar_type)
+GLenum vtkOpenGLTextureImage::vtkScalarTypeToGLType(int vtk_scalar_type)
 {
   // DON'T DEAL with VTK_CHAR as this is platform dependent.
   switch (vtk_scalar_type)
@@ -112,17 +112,25 @@ bool vtkOpenGLTextureImage::UpdateTexture()
     }
   int componentCount = this->ImageData->GetNumberOfScalarComponents();
   GLenum format;
+  GLenum internalFormat;
   if ( componentCount == 1 )
     {
-    format = GL_LUMINANCE;
+    format = GL_RED;
+    internalFormat = GL_RED;
+    }
+  else if ( componentCount == 3 )
+    {
+    format = GL_RGB;
+    internalFormat = GL_RGB;
     }
   else if ( componentCount == 4 )
     {
     format = GL_RGBA;
+    internalFormat = GL_RGBA;
     }
   else
     {
-    vtkErrorMacro("Must have 1 or 4 component image data for texture");
+    vtkErrorMacro("Must have 1, 3 or 4 component image data for texture");
     return false;
     }
 
@@ -146,13 +154,24 @@ bool vtkOpenGLTextureImage::UpdateTexture()
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  glTexImage3D(/* target */            GL_TEXTURE_3D,
+  if (this->TextureWrap == vtkOpenGLTextureImage::MirroredRepeat)
+    {
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    }
+  else
+    {
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+
+  glTexImage3D(
+               /* target */            GL_TEXTURE_3D,
                /* level */             0,
-               /* internal format */   componentCount,
+               /* internal format */   internalFormat,
                /* width */             dimensions[0],
                /* height */            dimensions[1],
                /* depth */             dimensions[2],
@@ -208,14 +227,14 @@ void vtkOpenGLTextureImage::Activate(vtkTypeUInt32 unit)
 //----------------------------------------------------------------------------
 void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, int attachment)
 {
-  vtkOpenGLCheckErrorMacro("before attaching");
-
   if (!this->ShaderComputation || !this->ShaderComputation->GetInitialized())
     {
     vtkErrorMacro("No initialized ShaderComputation instance is set.");
     return;
     }
   this->ShaderComputation->MakeCurrent();
+
+  vtkOpenGLCheckErrorMacro("before attaching");
 
   // attachment is 0 (color), 1 (depth), 2 (stencil), 3 (depth-stencil)
   if (attachmentIndex != 0 || attachment != 0)
@@ -235,11 +254,20 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
 
   vtkOpenGLClearErrorMacro();
 
+  int dimensions[3] = {0,0,0};
+  this->ImageData->GetDimensions(dimensions);
+
+  //
+  // Set up a normalized rendering environment
+  //
+  glViewport(0, 0, dimensions[0], dimensions[1]);
+  glDisable(GL_BLEND);
+  glEnable(GL_DEPTH_TEST);
+
   glBindTexture(GL_TEXTURE_3D, this->TextureName);
-  vtkgl::FramebufferTexture3D(
-    /* target */      vtkgl::FRAMEBUFFER,
-    /* attachment */  vtkgl::COLOR_ATTACHMENT0,
-    /* textarget */   GL_TEXTURE_3D,
+  glFramebufferTextureLayer(
+    /* target */      GL_FRAMEBUFFER,
+    /* attachment */  GL_COLOR_ATTACHMENT0,
     /* texture */     this->TextureName,
     /* level */       0,
     /* layer */       layer);
@@ -250,10 +278,10 @@ void vtkOpenGLTextureImage::AttachAsDrawTarget(int attachmentIndex, int layer, i
   // Does the GPU support current Framebuffer configuration?
   //
   GLenum status;
-  status = vtkgl::CheckFramebufferStatus(vtkgl::FRAMEBUFFER);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   switch(status)
     {
-    case vtkgl::FRAMEBUFFER_COMPLETE:
+    case GL_FRAMEBUFFER_COMPLETE:
       break;
     default:
       vtkOpenGLCheckErrorMacro("after bad framebuffer status");
@@ -279,7 +307,11 @@ void vtkOpenGLTextureImage::ReadBack()
   GLenum format;
   if ( componentCount == 1 )
     {
-    format = GL_LUMINANCE;
+    format = GL_RED;
+    }
+  else if (componentCount == 3)
+    {
+    format = GL_RGB;
     }
   else if ( componentCount == 4 )
     {
@@ -287,7 +319,7 @@ void vtkOpenGLTextureImage::ReadBack()
     }
   else
     {
-    vtkErrorMacro("Must have 1 or 4 component image data for texture");
+    vtkErrorMacro("Must have 1, 3 or 4 component image data for texture");
     return;
     }
 
