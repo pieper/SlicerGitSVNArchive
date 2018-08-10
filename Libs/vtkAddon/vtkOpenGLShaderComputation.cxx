@@ -14,18 +14,22 @@
 =========================================================================*/
 #include "vtkOpenGLShaderComputation.h"
 
+// VTK includes
+#include "vtk_glew.h"
 #include "vtkDataArray.h"
 #include "vtkImageData.h"
 #include "vtkObjectFactory.h"
+#include "vtkOpenGL.h"
 #include "vtkOpenGLError.h"
-#include "vtkOpenGLExtensionManager.h"
 #include "vtkOpenGLRenderWindow.h"
 #include "vtkPointData.h"
+#include "vtkRenderer.h"
 
-#include "vtkOpenGL.h"
-#include "vtkgl.h"
-
+// std includes
 #include <math.h>
+
+// vtkAddon includes
+#include "vtkOpenGLTextureImage.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkOpenGLShaderComputation);
@@ -41,8 +45,11 @@ vtkOpenGLShaderComputation::vtkOpenGLShaderComputation()
   this->ProgramObjectMTime = 0;
 
   this->RenderWindow = vtkRenderWindow::New();
-  this->RenderWindow->SetOffScreenRendering(1);
+  this->RenderWindow->OffScreenRenderingOn();
+
   this->Initialize(this->RenderWindow);
+
+  this->Uniforms = std::map<std::string, vtkVariant>();
 }
 
 //----------------------------------------------------------------------------
@@ -50,10 +57,10 @@ vtkOpenGLShaderComputation::~vtkOpenGLShaderComputation()
 {
   this->MakeCurrent();
   //Bind 0, which means render to back buffer, as a result, this->FramebufferID is unbound
-  vtkgl::BindFramebuffer(vtkgl::FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   if (this->FramebufferID != 0)
     {
-    vtkgl::DeleteFramebuffers(1, &(this->FramebufferID));
+    glDeleteFramebuffers(1, &(this->FramebufferID));
     }
   this->ReleaseResultRenderbuffer();
   this->SetVertexShaderSource(NULL);
@@ -239,15 +246,9 @@ void vtkOpenGLShaderComputation::Initialize(vtkRenderWindow *renderWindow)
 
   this->MakeCurrent();
 
-  // load required extensions
-  vtkOpenGLClearErrorMacro();
-  vtkOpenGLExtensionManager *extensions = openGLRenderWindow->GetExtensionManager();
-  extensions->LoadExtension("GL_ARB_framebuffer_object");
-  vtkOpenGLCheckErrorMacro("after extension load");
-
   // generate and bind our Framebuffer
-  vtkgl::GenFramebuffers(1, &(this->FramebufferID));
-  vtkgl::BindFramebuffer(vtkgl::FRAMEBUFFER, this->FramebufferID);
+  glGenFramebuffers(1, &(this->FramebufferID));
+  glBindFramebuffer(GL_FRAMEBUFFER, this->FramebufferID);
   vtkOpenGLCheckErrorMacro("after binding framebuffer");
 
   this->Initialized = true;
@@ -275,37 +276,37 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
   // * The storage format is RGBA8
   // * Attach color buffer to FBO
   //
-  vtkgl::GenRenderbuffers(1, &(this->ColorRenderbufferID));
-  vtkgl::BindRenderbuffer(vtkgl::RENDERBUFFER, this->ColorRenderbufferID);
-  vtkgl::RenderbufferStorage(vtkgl::RENDERBUFFER, GL_RGBA8,
-                             resultDimensions[0], resultDimensions[1]);
-  vtkgl::FramebufferRenderbuffer(vtkgl::FRAMEBUFFER,
-                                 vtkgl::COLOR_ATTACHMENT0,
-                                 vtkgl::RENDERBUFFER,
-                                 this->ColorRenderbufferID);
+  glGenRenderbuffers(1, &(this->ColorRenderbufferID));
+  glBindRenderbuffer(GL_RENDERBUFFER, this->ColorRenderbufferID);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8,
+                        resultDimensions[0], resultDimensions[1]);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                            GL_COLOR_ATTACHMENT0,
+                            GL_RENDERBUFFER,
+                            this->ColorRenderbufferID);
   vtkOpenGLCheckErrorMacro("after binding color renderbuffer");
 
   //
   // Now do the same for the depth buffer
   //
-  vtkgl::GenRenderbuffers(1, &(this->DepthRenderbufferID));
-  vtkgl::BindRenderbuffer(vtkgl::RENDERBUFFER, this->DepthRenderbufferID);
-  vtkgl::RenderbufferStorage(vtkgl::RENDERBUFFER, GL_DEPTH_COMPONENT24,
-                             resultDimensions[0], resultDimensions[1]);
-  vtkgl::FramebufferRenderbuffer(vtkgl::FRAMEBUFFER,
-                                 vtkgl::DEPTH_ATTACHMENT,
-                                 vtkgl::RENDERBUFFER,
-                                 this->DepthRenderbufferID);
+  glGenRenderbuffers(1, &(this->DepthRenderbufferID));
+  glBindRenderbuffer(GL_RENDERBUFFER, this->DepthRenderbufferID);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24,
+                        resultDimensions[0], resultDimensions[1]);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                            GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER,
+                            this->DepthRenderbufferID);
   vtkOpenGLCheckErrorMacro("after binding depth renderbuffer");
 
   //
   // Does the GPU support current Framebuffer configuration?
   //
   GLenum status;
-  status = vtkgl::CheckFramebufferStatus(vtkgl::FRAMEBUFFER);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   switch(status)
     {
-    case vtkgl::FRAMEBUFFER_COMPLETE:
+    case GL_FRAMEBUFFER_COMPLETE:
       break;
     default:
       vtkOpenGLCheckErrorMacro("after bad framebuffer status");
@@ -316,7 +317,7 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
   //
   // now we can render to the FBO (also called RenderBuffer)
   //
-  vtkgl::BindFramebuffer(vtkgl::FRAMEBUFFER, this->FramebufferID);
+  glBindFramebuffer(GL_FRAMEBUFFER, this->FramebufferID);
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   vtkOpenGLCheckErrorMacro("after clearing renderbuffers");
@@ -325,22 +326,8 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
   // Set up a normalized rendering environment
   //
   glViewport(0, 0, resultDimensions[0], resultDimensions[1]);
-  vtkOpenGLCheckErrorMacro("after 1 normalizing environment");
-  glMatrixMode(GL_PROJECTION);
-  vtkOpenGLCheckErrorMacro("after 2 normalizing environment");
-  glLoadIdentity();
-  vtkOpenGLCheckErrorMacro("after 3 normalizing environment");
-  glOrtho(0.0, resultDimensions[0], 0.0, resultDimensions[1], -1.0, 1.0);
-  vtkOpenGLCheckErrorMacro("after 4 normalizing environment");
-  glMatrixMode(GL_MODELVIEW);
-  vtkOpenGLCheckErrorMacro("after 5 normalizing environment");
-  glLoadIdentity();
-  vtkOpenGLCheckErrorMacro("after 6 normalizing environment");
   glDisable(GL_BLEND);
-  vtkOpenGLCheckErrorMacro("after 8 normalizing environment");
   glEnable(GL_DEPTH_TEST);
-  vtkOpenGLCheckErrorMacro("after 9 normalizing environment");
-
   vtkOpenGLCheckErrorMacro("after framebuffer acquisition");
   return true;
 }
@@ -348,17 +335,16 @@ bool vtkOpenGLShaderComputation::AcquireResultRenderbuffer()
 //----------------------------------------------------------------------------
 void vtkOpenGLShaderComputation::ReleaseResultRenderbuffer()
 {
-
   this->MakeCurrent();
   vtkOpenGLClearErrorMacro();
   //Delete temp resources
   if (this->ColorRenderbufferID != 0)
     {
-    vtkgl::DeleteRenderbuffers(1, &(this->ColorRenderbufferID));
+    glDeleteRenderbuffers(1, &(this->ColorRenderbufferID));
     }
   if (this->DepthRenderbufferID != 0)
     {
-    vtkgl::DeleteRenderbuffers(1, &(this->DepthRenderbufferID));
+    glDeleteRenderbuffers(1, &(this->DepthRenderbufferID));
     }
   vtkOpenGLCheckErrorMacro("after framebuffer release");
 }
@@ -382,10 +368,10 @@ void vtkOpenGLShaderComputation::Compute(float slice)
   // Does the GPU support current Framebuffer configuration?
   //
   GLenum status;
-  status = vtkgl::CheckFramebufferStatus(vtkgl::FRAMEBUFFER);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   switch(status)
     {
-    case vtkgl::FRAMEBUFFER_COMPLETE:
+    case GL_FRAMEBUFFER_COMPLETE:
       break;
     default:
       vtkErrorMacro("Can't compute in incompete framebuffer; status is: " << status);
@@ -402,14 +388,14 @@ void vtkOpenGLShaderComputation::Compute(float slice)
   // define a normalized computing surface
   GLfloat planeVertices[] = { -1.0f, -1.0f, 0.0f,
                               -1.0f,  1.0f, 0.0f,
+                               1.0f, -1.0f, 0.0f,
                                1.0f,  1.0f, 0.0f,
-                               1.0f, -1.0f, 0.0f
                         };
   GLuint planeVerticesSize = sizeof(GLfloat)*3*4;
   GLfloat planeTextureCoordinates[] = { 0.0f, 0.0f,
                                         0.0f, 1.0f,
+                                        1.0f, 0.0f,
                                         1.0f, 1.0f,
-                                        1.0f, 0.0f
                         };
   GLuint planeTextureCoordinatesSize = sizeof(GLfloat)*2*4;
 
@@ -421,6 +407,9 @@ void vtkOpenGLShaderComputation::Compute(float slice)
   // put vertices in a buffer and make it available to the program
   GLuint vertexLocation = glGetAttribLocation(this->ProgramObject, "vertexAttribute");
   GLuint planeVerticesBuffer;
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
   glGenBuffers(1, &planeVerticesBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, planeVerticesBuffer);
   glBufferData(GL_ARRAY_BUFFER, planeVerticesSize, planeVertices, GL_STATIC_DRAW);
@@ -472,17 +461,32 @@ void vtkOpenGLShaderComputation::Compute(float slice)
     glUniform1f(sliceLocation, slice);
     }
 
+  for (std::map<std::string, vtkVariant>::iterator uniformIt = this->Uniforms.begin(); uniformIt != this->Uniforms.end(); ++uniformIt)
+  {
+    // TODO: uniform support
+    std::string uniformString = uniformIt->first;
+    float uniform = uniformIt->second.ToFloat();
+
+    GLint uniformLocation = glGetUniformLocation(this->ProgramObject, uniformString.c_str());
+    glUniform1f(uniformLocation, uniform);
+  }
+
   //
   // GO!
   //
-  glDrawArrays ( GL_QUADS, 0, 4 );
-
+  glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
   vtkOpenGLCheckErrorMacro("after drawing");
 
   //
   // Don't use the program or the framebuffer anymore
   //
   glUseProgram ( 0 );
+}
+
+//----------------------------------------------------------------------------
+void vtkOpenGLShaderComputation::SetUniform(std::string uniformString, float uniform)
+{
+  this->Uniforms[uniformString] = vtkVariant(uniform);
 }
 
 //----------------------------------------------------------------------------
@@ -512,7 +516,28 @@ void vtkOpenGLShaderComputation::ReadResult()
   //
   // Collect the results of the calculation back into the image data
   //
-  glReadPixels(0, 0, resultDimensions[0], resultDimensions[1], GL_RGBA, GL_UNSIGNED_BYTE, resultPixels);
+  int componentCount = this->ResultImageData->GetNumberOfScalarComponents();
+  GLuint format;
+  if ( componentCount == 1 )
+    {
+    format = GL_RED;
+    }
+  else if ( componentCount == 3 )
+    {
+    format = GL_RGB;
+    }
+  else if ( componentCount == 4 )
+    {
+    format = GL_RGBA;
+    }
+  else
+    {
+    vtkErrorMacro("Must have 1, 3 or 4 component image data for texture");
+    return;
+    }
+
+  GLuint scalarType = vtkOpenGLTextureImage::vtkScalarTypeToGLType(this->ResultImageData->GetScalarType());
+  glReadPixels(0, 0, resultDimensions[0], resultDimensions[1], format, scalarType, resultPixels);
   pointData->Modified();
 
   vtkOpenGLCheckErrorMacro("after reading back");

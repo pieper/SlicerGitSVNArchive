@@ -20,13 +20,15 @@
 #ifndef __vtkOpenGLShaderComputation_h
 #define __vtkOpenGLShaderComputation_h
 
+// VTK includes
+#include "vtk_glew.h"
+#include "vtkAddon.h"
 #include "vtkImageData.h"
 #include "vtkRenderWindow.h"
+#include "vtkVariant.h"
 
-class vtkImageData;
-
-#include "vtkAddon.h"
-
+// STD includes
+#include <map>
 
 class VTK_ADDON_EXPORT vtkOpenGLShaderComputation : public vtkObject
 {
@@ -64,6 +66,10 @@ public:
   // renders to the current framebuffer configuration
   // Slice will be passed as a uniform float
   void Compute(float slice=0.);
+
+  // Description:
+  // Add a uniform value TODO: support types other than float
+  void SetUniform(std::string name, float uniform);
 
   // Description:
   // Copy the framebuffer pixels into the result image
@@ -111,6 +117,8 @@ private:
   vtkTypeUInt32 DepthRenderbufferID;
 
   vtkRenderWindow *RenderWindow;
+
+  std::map<std::string, vtkVariant> Uniforms;
 };
 
 #endif
